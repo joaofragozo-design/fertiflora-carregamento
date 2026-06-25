@@ -26,6 +26,9 @@ function prepararFala(texto: string): string {
       pronuncia
     )
   }
+  // Concordância de gênero: concha é feminino
+  result = result.replace(/\b1 concha/gi, 'uma concha')
+  result = result.replace(/\b2 concha/gi, 'duas concha')
   return result
 }
 
