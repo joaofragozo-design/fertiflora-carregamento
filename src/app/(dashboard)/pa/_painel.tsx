@@ -197,45 +197,45 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
     const semServico  = !tarefa
 
     return (
-      <div className="relative flex min-h-[70vh] flex-col items-center justify-center px-4">
+      <div className="relative flex min-h-[calc(100dvh-4rem)] flex-col items-center justify-center px-4 py-6">
 
         {/* Flash de tela ao receber liberação */}
         {flashing && (
           <div className="pointer-events-none fixed inset-0 z-50 animate-screen-flash bg-brand-400/30" />
         )}
 
-        <p className="mb-8 text-xs font-bold uppercase tracking-[0.25em] text-industrial-600">
+        <p className="mb-6 text-xs font-bold uppercase tracking-[0.25em] text-industrial-600">
           Centro Operacional
         </p>
 
         {semServico ? (
-          <div className="flex flex-col items-center gap-6 text-center">
-            <div className="text-6xl">⏳</div>
+          <div className="flex flex-col items-center gap-8 text-center">
+            <div className="text-7xl">⏳</div>
             <div>
-              <p className="text-3xl font-black uppercase tracking-widest text-industrial-300">
+              <p className="text-4xl font-black uppercase tracking-widest text-industrial-300">
                 Aguardando
               </p>
-              <p className="text-3xl font-black uppercase tracking-widest text-industrial-500">
+              <p className="text-4xl font-black uppercase tracking-widest text-industrial-500">
                 Solicitações
               </p>
             </div>
-            <p className="text-sm text-industrial-600 max-w-xs">
+            <p className="text-base text-industrial-600 max-w-xs">
               Nenhuma solicitação no momento.
             </p>
           </div>
         ) : (
-          <div className="w-full max-w-sm flex flex-col gap-6">
+          <div className="w-full max-w-md flex flex-col gap-5">
 
             {/* Badge de status */}
             <div className="flex justify-center">
               {tarefa.status === 'LIBERADO' ? (
-                <span className="flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-1.5 text-sm font-bold uppercase tracking-widest text-brand-700">
-                  <span className="h-2 w-2 animate-pulse rounded-full bg-brand-500" />
+                <span className="flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-5 py-2 text-base font-bold uppercase tracking-widest text-brand-700">
+                  <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-brand-500" />
                   Liberado — Execute
                 </span>
               ) : (
-                <span className="flex items-center gap-2 rounded-full border border-industrial-700 bg-industrial-900 px-4 py-1.5 text-sm font-bold uppercase tracking-widest text-industrial-400">
-                  <span className="h-2 w-2 rounded-full bg-industrial-600" />
+                <span className="flex items-center gap-2 rounded-full border border-industrial-700 bg-industrial-900 px-5 py-2 text-base font-bold uppercase tracking-widest text-industrial-400">
+                  <span className="h-2.5 w-2.5 rounded-full bg-industrial-600" />
                   Aguardando liberação
                 </span>
               )}
@@ -243,7 +243,7 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
 
             {/* Card principal */}
             <div className={cn(
-              'rounded-2xl border-2 p-8 text-center transition-all duration-300',
+              'rounded-2xl border-2 px-6 py-8 text-center transition-all duration-300',
               tarefa.status === 'LIBERADO'
                 ? 'border-brand-500'
                 : 'border-industrial-700'
@@ -251,23 +251,23 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
               <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-industrial-500">
                 Matéria Prima
               </p>
-              <p className="text-5xl font-black tracking-tight text-industrial-100 leading-none">
+              <p className="text-6xl font-black tracking-tight text-industrial-100 leading-none break-words">
                 {tarefa.insumo}
               </p>
 
-              <div className="my-6 border-t border-industrial-800" />
+              <div className="my-5 border-t border-industrial-800" />
 
               {/* Progresso de conchas */}
               <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-industrial-500">
                 Progresso
               </p>
               <p
-                className="cursor-default select-none text-8xl font-black leading-none text-industrial-100"
+                className="cursor-default select-none text-9xl font-black leading-none text-industrial-100"
                 onClick={handleBobClick}
                 title=""
               >
                 {tarefa.conchas_executadas ?? 0}
-                <span className="text-3xl text-industrial-500">/{tarefa.quantidade}</span>
+                <span className="text-4xl text-industrial-500">/{tarefa.quantidade}</span>
               </p>
               {easterModo === 1 && (
                 <p className="mt-1 animate-pulse text-xs text-yellow-500">🧽 Modo Bob Esponja</p>
@@ -275,22 +275,22 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
 
               {/* Barra de progresso */}
               {tarefa.status === 'LIBERADO' && (
-                <div className="mt-4 h-2 w-full rounded-full bg-industrial-800">
+                <div className="mt-5 h-3 w-full rounded-full bg-industrial-800">
                   <div
-                    className="h-2 rounded-full bg-brand-500 transition-all duration-500"
+                    className="h-3 rounded-full bg-brand-500 transition-all duration-500"
                     style={{ width: `${Math.round(((tarefa.conchas_executadas ?? 0) / tarefa.quantidade) * 100)}%` }}
                   />
                 </div>
               )}
             </div>
 
-            {/* Botão de execução */}
+            {/* Botão de execução — toque mínimo 48px */}
             <button
               type="button"
               disabled={tarefa.status !== 'LIBERADO' || loadingId === tarefa.id}
               onClick={() => executarConcha(tarefa)}
               className={cn(
-                'w-full rounded-2xl py-6 text-xl font-black uppercase tracking-wider transition-all active:scale-[0.98]',
+                'w-full rounded-2xl py-5 text-2xl font-black uppercase tracking-wider transition-all active:scale-[0.97] min-h-[64px]',
                 tarefa.status === 'LIBERADO' && loadingId !== tarefa.id
                   ? 'border-2 border-brand-500 bg-brand-600 text-white hover:bg-brand-500'
                   : 'border-2 border-industrial-700 text-industrial-500 cursor-not-allowed'
@@ -305,7 +305,7 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
 
             {/* Fila */}
             {ordens.filter((o) => o.status === 'SOLICITADO').length > 1 && (
-              <p className="text-center text-xs text-industrial-600">
+              <p className="text-center text-sm text-industrial-600">
                 +{ordens.filter((o) => o.status === 'SOLICITADO').length - 1} na fila
               </p>
             )}

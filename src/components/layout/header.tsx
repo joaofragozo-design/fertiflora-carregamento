@@ -3,6 +3,7 @@
 import { Wifi, WifiOff, LogOut, Menu } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LogoFull } from '@/components/brand/logo'
+import { InstallButton } from '@/components/pwa/install-button'
 import type { AppUser, ConnectionStatus } from '@/types'
 
 interface HeaderProps {
@@ -67,6 +68,8 @@ export function Header({ user, connectionStatus, onSignOut, onMenuToggle }: Head
             </div>
           </div>
         )}
+
+        <InstallButton />
 
         {onSignOut && (
           <button

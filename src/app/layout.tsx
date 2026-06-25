@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Providers } from '@/providers'
 import { getAuthUser } from '@/lib/supabase/get-user'
+import { SwRegister } from '@/components/pwa/sw-register'
 import '@/styles/globals.css'
 
 const geistSans = Geist({
@@ -16,19 +17,26 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'FERTI FLORA — Ordem de Carregamento',
-    template: '%s | FERTI FLORA',
+    default: 'FertiFlora Operações',
+    template: '%s | FertiFlora',
   },
-  description: 'Sistema de comunicação em tempo real para controle de ordens de carregamento.',
-  robots: {
-    index: false,
-    follow: false,
+  description: 'Sistema de controle de ordens de carregamento.',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'FertiFlora',
   },
+  robots: { index: false, follow: false },
 }
 
 export const viewport: Viewport = {
-  themeColor: '#080808',
+  themeColor: '#0F172A',
   colorScheme: 'dark',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default async function RootLayout({
@@ -36,15 +44,18 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  // Busca o perfil no servidor para hidratar o AuthProvider sem flash
   const initialUser = await getAuthUser()
 
   return (
     <html lang="pt-BR" className="dark">
+      <head>
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} bg-industrial-950 min-h-screen`}>
         <Providers initialUser={initialUser}>
           {children}
         </Providers>
+        <SwRegister />
       </body>
     </html>
   )
