@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-geist-sans: 'Geist', system-ui, sans-serif;
+    --font-geist-mono: 'Geist Mono', monospace;
+  }
+
+  * {
+    @apply border-industrial-700;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-industrial-950 text-industrial-100 antialiased;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+
+  /* Scrollbar dark industrial */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-industrial-950;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-industrial-700;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-industrial-600;
+  }
+
+  /* Seleção de texto */
+  ::selection {
+    @apply bg-brand-600/40 text-brand-100;
+  }
+}
+
+@layer components {
+  /* Container padrão da aplicação */
+  .app-container {
+    @apply mx-auto w-full max-w-7xl px-4 md:px-6;
+  }
+
+  /* Grid de cards de status */
+  .status-grid {
+    @apply grid grid-cols-2 gap-3 md:grid-cols-4;
+  }
+
+  /* Indicador pulsante para itens críticos */
+  .pulse-critical {
+    @apply animate-pulse-slow text-danger-400;
+  }
+
+  /* Fundo com textura industrial */
+  .bg-industrial-texture {
+    @apply bg-industrial-950 bg-grid-industrial;
+  }
+}
+
+@layer utilities {
+  /* Glassmorphism industrial */
+  .glass-industrial {
+    @apply border border-industrial-800 bg-industrial-900/80 backdrop-blur-sm;
+  }
+
+  /* Número de série / placa */
+  .font-plate {
+    @apply font-mono text-sm font-bold uppercase tracking-wider;
+  }
+
+  /* Truncate com tooltip */
+  .truncate-tooltip {
+    @apply truncate cursor-default;
+  }
+}
