@@ -44,6 +44,8 @@ function melhorVoz(): SpeechSynthesisVoice | null {
   )
 }
 
+let bobEsponjaAtivo = false
+
 function falar(texto: string, delayMs = 0) {
   const executar = () => {
     try {
@@ -52,8 +54,8 @@ function falar(texto: string, delayMs = 0) {
       const fala  = new SpeechSynthesisUtterance(prepararFala(texto))
       fala.lang   = 'pt-BR'
       fala.volume = 1
-      fala.rate   = 0.88
-      fala.pitch  = 1
+      fala.rate   = bobEsponjaAtivo ? 1.4 : 0.88
+      fala.pitch  = bobEsponjaAtivo ? 2.0 : 1.0
       const voz   = melhorVoz()
       if (voz) fala.voice = voz
       window.speechSynthesis.speak(fala)
@@ -95,6 +97,20 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
   const isAdmin    = user.role === 'admin'
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [flashing,  setFlashing]  = useState(false)
+  const [bobClicks, setBobClicks] = useState(0)
+  const [bobAtivo,  setBobAtivo]  = useState(false)
+
+  function handleBobClick() {
+    const next = bobClicks + 1
+    setBobClicks(next)
+    if (next >= 5) {
+      setBobClicks(0)
+      const novoModo = !bobAtivo
+      setBobAtivo(novoModo)
+      bobEsponjaAtivo = novoModo
+      falar(novoModo ? 'Modo Bob Esponja ativado!' : 'Voltando ao normal.')
+    }
+  }
 
   // ── Callbacks realtime ──────────────────────────────────
   const handleLiberar = useCallback((item: Carregamento) => {
@@ -224,10 +240,17 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
               <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-industrial-500">
                 Progresso
               </p>
-              <p className="text-8xl font-black leading-none text-industrial-100">
+              <p
+                className="cursor-default select-none text-8xl font-black leading-none text-industrial-100"
+                onClick={handleBobClick}
+                title=""
+              >
                 {tarefa.conchas_executadas ?? 0}
                 <span className="text-3xl text-industrial-500">/{tarefa.quantidade}</span>
               </p>
+              {bobAtivo && (
+                <p className="mt-1 animate-pulse text-xs text-yellow-500">🧽 Modo Bob Esponja</p>
+              )}
 
               {/* Barra de progresso */}
               {tarefa.status === 'LIBERADO' && (
