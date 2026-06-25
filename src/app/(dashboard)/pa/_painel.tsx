@@ -23,6 +23,7 @@ const PRONUNCIAS: Record<string, string> = {
   'CYSY+S':     'C Y S Y mais S',
   'CALTIMAG+S': 'CALTIMAG mais S',
   'HIPHOS':     'HIFOS',
+  'BORO':       'Bóro',
 }
 
 function prepararFala(texto: string): string {
