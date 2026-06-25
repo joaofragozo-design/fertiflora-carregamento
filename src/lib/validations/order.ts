@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const carregamentoStatusSchema = z.enum(['PENDENTE', 'CARREGANDO', 'CONCLUIDO'])
+export const carregamentoStatusSchema = z.enum(['PENDENTE', 'CARREGANDO', 'CONCLUIDO', 'CANCELADO'])
 
 export const createCarregamentoSchema = z.object({
   insumo: z
