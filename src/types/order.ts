@@ -1,4 +1,4 @@
-export type CarregamentoStatus = 'PENDENTE' | 'CARREGANDO' | 'CONCLUIDO'
+export type CarregamentoStatus = 'PENDENTE' | 'CARREGANDO' | 'CONCLUIDO' | 'CANCELADO'
 
 export interface Carregamento {
   id:          string

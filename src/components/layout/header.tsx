@@ -22,7 +22,7 @@ export function Header({ user, connectionStatus, onSignOut, onMenuToggle }: Head
   const isConnected = connectionStatus === 'connected'
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-industrial-800 bg-industrial-950 px-4 md:px-6">
+    <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-industrial-800 bg-industrial-950 px-4 md:px-6">
 
       <div className="flex items-center gap-3">
         {onMenuToggle && (

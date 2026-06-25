@@ -19,19 +19,27 @@ export function useNotificationSound() {
       osc.connect(gain)
       gain.connect(ctx.destination)
 
-      // Tom: dois pulsos rápidos (ping-ping industrial)
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(1046, ctx.currentTime)          // C6
-      osc.frequency.setValueAtTime(1318, ctx.currentTime + 0.12)   // E6
+      // Três bipes curtos e fortes (beep-beep-beep de alerta)
+      function bipe(startTime: number) {
+        const o = ctx.createOscillator()
+        const g = ctx.createGain()
+        o.connect(g)
+        g.connect(ctx.destination)
+        o.type = 'square'
+        o.frequency.setValueAtTime(880, startTime)
+        g.gain.setValueAtTime(0, startTime)
+        g.gain.linearRampToValueAtTime(1.0, startTime + 0.01)
+        g.gain.setValueAtTime(1.0, startTime + 0.10)
+        g.gain.linearRampToValueAtTime(0, startTime + 0.14)
+        o.start(startTime)
+        o.stop(startTime + 0.14)
+      }
 
-      gain.gain.setValueAtTime(0, ctx.currentTime)
-      gain.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 0.01)
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35)
+      bipe(ctx.currentTime)
+      bipe(ctx.currentTime + 0.22)
+      bipe(ctx.currentTime + 0.44)
 
-      osc.start(ctx.currentTime)
-      osc.stop(ctx.currentTime + 0.35)
-
-      osc.onended = () => ctx.close()
+      setTimeout(() => ctx.close(), 800)
     } catch {
       // Silencia erros de autoplay policy
     }

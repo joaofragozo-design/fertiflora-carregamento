@@ -3,12 +3,13 @@ import { OrderCard } from './order-card'
 import type { Carregamento } from '@/types'
 
 interface OrderListProps {
-  ordens:      Carregamento[]
-  emptyLabel?: string
-  loadingId?:  string | null
-  onIniciar?:  (item: Carregamento) => void
-  onConcluir?: (item: Carregamento) => void
-  compact?:    boolean
+  ordens:       Carregamento[]
+  emptyLabel?:  string
+  loadingId?:   string | null
+  onIniciar?:   (item: Carregamento) => void
+  onConcluir?:  (item: Carregamento) => void
+  onCancelar?:  (item: Carregamento) => void
+  compact?:     boolean
 }
 
 export function OrderList({
@@ -17,6 +18,7 @@ export function OrderList({
   loadingId,
   onIniciar,
   onConcluir,
+  onCancelar,
   compact,
 }: OrderListProps) {
   if (ordens.length === 0) {
@@ -37,6 +39,7 @@ export function OrderList({
           loading={loadingId === item.id}
           onIniciar={onIniciar}
           onConcluir={onConcluir}
+          onCancelar={onCancelar}
           compact={compact}
         />
       ))}

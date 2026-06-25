@@ -1,8 +1,11 @@
 'use client'
 
-import { useCallback } from 'react'
-import { ClipboardList, CheckCircle2, Loader2 } from 'lucide-react'
+import { useCallback, useState } from 'react'
+import { ClipboardList } from 'lucide-react'
+import { toast } from 'sonner'
 import { useOrdens } from '@/hooks/use-ordens'
+import { OrdemService } from '@/services/ordem.service'
+import { createClient } from '@/lib/supabase/client'
 import { CreateOrderForm } from '@/components/forms/create-order-form'
 import { OrderList } from '@/components/orders/order-list'
 import type { AppUser, Carregamento } from '@/types'
@@ -13,15 +16,30 @@ interface CarregamentoPainelProps {
 }
 
 export function CarregamentoPainel({ initialOrdens, user }: CarregamentoPainelProps) {
+  const [loadingId, setLoadingId] = useState<string | null>(null)
   const { ordens, setOrdens } = useOrdens(initialOrdens)
 
   const pendentes  = ordens.filter((o) => o.status === 'PENDENTE')
   const carregando = ordens.filter((o) => o.status === 'CARREGANDO')
   const concluidos = ordens.filter((o) => o.status === 'CONCLUIDO')
   const ativas     = [...carregando, ...pendentes]
+  // CANCELADO some de ambas as listas automaticamente
 
   const handleCriado = useCallback((novo: Carregamento) => {
     setOrdens((prev) => (prev.some((o) => o.id === novo.id) ? prev : [novo, ...prev]))
+  }, [setOrdens])
+
+  const handleCancelar = useCallback(async (item: Carregamento) => {
+    setLoadingId(item.id)
+    try {
+      await new OrdemService(createClient()).cancelar(item.id)
+      setOrdens((prev) => prev.filter((o) => o.id !== item.id))
+      toast.success(`Solicitação de ${item.insumo} cancelada.`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao cancelar.')
+    } finally {
+      setLoadingId(null)
+    }
   }, [setOrdens])
 
   return (
@@ -51,7 +69,7 @@ export function CarregamentoPainel({ initialOrdens, user }: CarregamentoPainelPr
       {ativas.length > 0 && (
         <section>
           <SectionLabel text={`Em andamento — ${ativas.length}`} />
-          <OrderList ordens={ativas} />
+          <OrderList ordens={ativas} loadingId={loadingId} onCancelar={handleCancelar} />
         </section>
       )}
 

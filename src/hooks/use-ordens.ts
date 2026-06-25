@@ -13,11 +13,14 @@ export function useOrdens(
   initialOrdens: Carregamento[],
   fetchAll = false,
   onInsert?: (item: Carregamento) => void,
+  onDelete?: () => void,
 ) {
   const [ordens, setOrdens] = useState<Carregamento[]>(initialOrdens)
   const wasConnected  = useRef(false)
   const onInsertRef   = useRef(onInsert)
   onInsertRef.current = onInsert
+  const onDeleteRef   = useRef(onDelete)
+  onDeleteRef.current = onDelete
 
   // Cliente Supabase estável — criado uma vez por montagem do hook
   const supabase = useRef(createClient()).current
@@ -31,7 +34,9 @@ export function useOrdens(
 
     if (!fetchAll) {
       // operador_pa só precisa de ordens ativas
-      query = query.neq('status', 'CONCLUIDO') as typeof query
+      query = query
+        .neq('status', 'CONCLUIDO')
+        .neq('status', 'CANCELADO') as typeof query
     }
 
     const { data } = await query
@@ -75,9 +80,15 @@ export function useOrdens(
         { event: 'UPDATE', schema: 'public', table: 'carregamentos' },
         (payload) => {
           const updated = payload.new as Carregamento
-          setOrdens((prev) =>
-            prev.map((o) => (o.id === updated.id ? updated : o))
-          )
+          if (updated.status === 'CANCELADO') {
+            // Dispara voz ANTES de remover do estado
+            onDeleteRef.current?.()
+            setOrdens((prev) => prev.filter((o) => o.id !== updated.id))
+          } else {
+            setOrdens((prev) =>
+              prev.map((o) => (o.id === updated.id ? updated : o))
+            )
+          }
         }
       )
       // Reconexão WebSocket — rebusca para recuperar eventos perdidos

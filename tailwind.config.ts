@@ -68,6 +68,7 @@ const config: Config = {
         'fade-in':       'fadeIn 0.2s ease-out',
         'new-item':      'newItem 0.5s ease-out',
         'alert-pulse':   'alertPulse 1.5s ease-in-out 3',
+        'screen-flash':  'screenFlash 0.5s ease-in-out 6',
       },
       keyframes: {
         blink: {
@@ -94,6 +95,10 @@ const config: Config = {
         alertPulse: {
           '0%, 100%': { boxShadow: '0 0 0 0 rgba(251,146,60,0)' },
           '50%':       { boxShadow: '0 0 0 8px rgba(251,146,60,0.25)' },
+        },
+        screenFlash: {
+          '0%, 100%': { opacity: '0' },
+          '50%':      { opacity: '1' },
         },
       },
       boxShadow: {

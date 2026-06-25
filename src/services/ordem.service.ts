@@ -32,6 +32,17 @@ export class OrdemService {
     return data as Carregamento
   }
 
+  async cancelar(id: string): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (this.supabase as any)
+      .from('carregamentos')
+      .update({ status: 'CANCELADO' })
+      .eq('id', id)
+      .eq('status', 'PENDENTE')
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'cancelar'))
+  }
+
   async concluir(id: string): Promise<Carregamento> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (this.supabase as any)

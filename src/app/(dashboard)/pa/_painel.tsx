@@ -17,20 +17,36 @@ interface PaPainelProps {
 export function PaPainel({ initialOrdens, user }: PaPainelProps) {
   const isAdmin   = user.role === 'admin'
   const playPing  = useNotificationSound()
-  const [newIds, setNewIds] = useState<Set<string>>(new Set())
+  const [newIds,   setNewIds]   = useState<Set<string>>(new Set())
+  const [flashing, setFlashing] = useState(false)
   const [loadingId, setLoadingId] = useState<string | null>(null)
+
+  const handleDelete = useCallback(() => {
+    try {
+      if (!window.speechSynthesis) return
+      window.speechSynthesis.cancel()
+      const fala = new SpeechSynthesisUtterance('Um insumo que estava na tela foi cancelado')
+      fala.lang   = 'pt-BR'
+      fala.volume = 1
+      fala.rate   = 0.9
+      fala.pitch  = 1
+      window.speechSynthesis.speak(fala)
+    } catch { /* silencia erros de autoplay policy */ }
+  }, [])
 
   const handleInsert = useCallback((item: Carregamento) => {
     if (isAdmin) return
     playPing()
+    // Flash de tela
+    setFlashing(true)
+    setTimeout(() => setFlashing(false), 3000)
     setNewIds((prev) => new Set([...prev, item.id]))
-    // Remove animação após 4 s
     setTimeout(() => setNewIds((prev) => {
       const next = new Set(prev); next.delete(item.id); return next
     }), 4000)
   }, [isAdmin, playPing])
 
-  const { ordens, setOrdens } = useOrdens(initialOrdens, isAdmin, handleInsert)
+  const { ordens, setOrdens } = useOrdens(initialOrdens, isAdmin, handleInsert, isAdmin ? undefined : handleDelete)
 
   const pendentes  = ordens.filter((o) => o.status === 'PENDENTE')
   const concluidos = ordens.filter((o) => o.status === 'CONCLUIDO')
@@ -73,7 +89,12 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
     const isNew       = tarefaAtiva ? newIds.has(tarefaAtiva.id) : false
 
     return (
-      <div className="flex min-h-[70vh] flex-col items-center justify-center px-4">
+      <div className="relative flex min-h-[70vh] flex-col items-center justify-center px-4">
+
+        {/* Flash de tela ao receber nova solicitação */}
+        {flashing && (
+          <div className="pointer-events-none fixed inset-0 z-50 animate-screen-flash bg-brand-400/30" />
+        )}
 
         {/* Título da tela */}
         <p className="mb-8 text-xs font-bold uppercase tracking-[0.25em] text-industrial-600">

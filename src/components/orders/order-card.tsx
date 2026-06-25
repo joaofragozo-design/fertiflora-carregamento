@@ -1,15 +1,16 @@
 import { cn } from '@/lib/utils'
-import { Clock, Package } from 'lucide-react'
+import { Clock, Package, Trash2 } from 'lucide-react'
 import { OrderStatusBadge } from './order-status-badge'
 import { Button } from '@/components/ui/button'
 import type { Carregamento } from '@/types'
 
 interface OrderCardProps {
-  order:       Carregamento
-  loading?:    boolean
-  onIniciar?:  (item: Carregamento) => void
-  onConcluir?: (item: Carregamento) => void
-  compact?:    boolean
+  order:        Carregamento
+  loading?:     boolean
+  onIniciar?:   (item: Carregamento) => void
+  onConcluir?:  (item: Carregamento) => void
+  onCancelar?:  (item: Carregamento) => void
+  compact?:     boolean
 }
 
 export function OrderCard({
@@ -17,6 +18,7 @@ export function OrderCard({
   loading,
   onIniciar,
   onConcluir,
+  onCancelar,
   compact = false,
 }: OrderCardProps) {
   const isActive = order.status === 'CARREGANDO'
@@ -49,20 +51,29 @@ export function OrderCard({
           </p>
         </div>
 
-        {(onIniciar || onConcluir) && (
-          <div className="shrink-0">
-            {order.status === 'PENDENTE' && onIniciar && (
-              <Button size="sm" variant="secondary" loading={loading} onClick={() => onIniciar(order)}>
-                Iniciar
-              </Button>
-            )}
-            {order.status === 'CARREGANDO' && onConcluir && (
-              <Button size="sm" variant="primary" loading={loading} onClick={() => onConcluir(order)}>
-                Finalizar
-              </Button>
-            )}
-          </div>
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          {order.status === 'PENDENTE' && onCancelar && (
+            <button
+              type="button"
+              title="Cancelar solicitação"
+              disabled={loading}
+              onClick={() => onCancelar(order)}
+              className="rounded-lg border border-danger-400/40 p-1.5 text-danger-400 transition-colors hover:bg-danger-400/10 hover:border-danger-400 disabled:opacity-40"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
+          {order.status === 'PENDENTE' && onIniciar && (
+            <Button size="sm" variant="secondary" loading={loading} onClick={() => onIniciar(order)}>
+              Iniciar
+            </Button>
+          )}
+          {order.status === 'CARREGANDO' && onConcluir && (
+            <Button size="sm" variant="primary" loading={loading} onClick={() => onConcluir(order)}>
+              Finalizar
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="mt-3 flex items-center gap-1.5 text-xs text-industrial-500">
