@@ -72,7 +72,7 @@ export function useOrdens(
           }
 
           // Para operador_pa: remove da lista quando CONCLUIDO
-          if (!fetchAll && (updated.status === 'CONCLUIDO' || updated.status === 'CANCELADO')) {
+          if (!fetchAll && updated.status === 'CONCLUIDO') {
             setOrdens((prev) => prev.filter((o) => o.id !== updated.id))
             return
           }

@@ -26,7 +26,7 @@ interface LogoFullProps {
 }
 
 /** Logo completo */
-export function LogoFull({ className, showTagline = true }: LogoFullProps) {
+export function LogoFull({ className, showTagline: _showTagline = true }: LogoFullProps) {
   return (
     <div className={`flex items-center ${className ?? ''}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}

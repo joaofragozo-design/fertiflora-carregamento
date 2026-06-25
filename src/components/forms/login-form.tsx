@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { Eye, EyeOff, LogIn, User } from 'lucide-react'
 import { loginSchema, type LoginInput } from '@/lib/validations/auth'
@@ -18,7 +18,6 @@ interface LoginFormProps {
 }
 
 export function LoginForm({ supabaseConfigured = true }: LoginFormProps) {
-  const router      = useRouter()
   const searchParams = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
 
