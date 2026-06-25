@@ -13,12 +13,35 @@ interface PaPainelProps {
   user: AppUser
 }
 
+// ── Pronúncias corretas para siglas ────────────────────────
+const PRONUNCIAS: Record<string, string> = {
+  'M.O':        'M O',
+  'MAP':        'M A P',
+  'KCL':        'K C L',
+  'SAM':        'S A M',
+  'TSP':        'T S P',
+  'CYSY+S':     'C Y S Y mais S',
+  'CALTIMAG+S': 'CALTIMAG mais S',
+  'HIPHOS':     'HIFOS',
+}
+
+function prepararFala(texto: string): string {
+  let result = texto
+  for (const [sigla, pronuncia] of Object.entries(PRONUNCIAS)) {
+    result = result.replace(
+      new RegExp(sigla.replace(/[.+]/g, '\\$&'), 'gi'),
+      pronuncia
+    )
+  }
+  return result
+}
+
 // ── Síntese de voz ─────────────────────────────────────────
 function falar(texto: string, delayMs = 0) {
   try {
     if (!window.speechSynthesis) return
     window.speechSynthesis.cancel()
-    const fala    = new SpeechSynthesisUtterance(texto)
+    const fala    = new SpeechSynthesisUtterance(prepararFala(texto))
     fala.lang     = 'pt-BR'
     fala.volume   = 1
     fala.rate     = 0.85
