@@ -15,6 +15,7 @@ interface PaPainelProps {
 
 // ── Pronúncias corretas para siglas ────────────────────────
 const PRONUNCIAS: Record<string, string> = {
+  'MAP':  'Mápi',
   'BORO': 'Bóro',
 }
 
