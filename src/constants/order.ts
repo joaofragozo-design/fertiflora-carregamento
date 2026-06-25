@@ -1,9 +1,10 @@
 import type { CarregamentoStatus } from '@/types'
 
 export const STATUS_LABELS: Record<CarregamentoStatus, string> = {
-  PENDENTE:   'Pendente',
+  PENDENTE: 'Pendente',
   CARREGANDO: 'Carregando',
-  CONCLUIDO:  'Concluído',
+  CONCLUIDO: 'Concluído',
+  CANCELADO: 'Cancelado',
 }
 
 export const STATUS_COLORS: Record<CarregamentoStatus, string> = {
@@ -39,3 +40,4 @@ export const INSUMOS_FIXOS = [
   'ENXOFRE',
   'BORO',
 ] as const
+
