@@ -45,32 +45,49 @@ function melhorVoz(): SpeechSynthesisVoice | null {
   )
 }
 
-let bobEsponjaAtivo = false
+let bobEsponjaAtivo  = false
+let elevenLabsAtivo  = false
+const ELEVEN_VOICE_ID = '4J31DrhygVjvFsoj7BsM'
+
+async function falarElevenLabs(texto: string) {
+  try {
+    const res = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: prepararFala(texto), voiceId: ELEVEN_VOICE_ID }),
+    })
+    if (!res.ok) { falarNavegador(texto); return }
+    const blob = await res.blob()
+    const url  = URL.createObjectURL(blob)
+    const audio = new Audio(url)
+    audio.onended = () => URL.revokeObjectURL(url)
+    audio.play()
+  } catch { falarNavegador(texto) }
+}
+
+function falarNavegador(texto: string) {
+  try {
+    if (!window.speechSynthesis) return
+    window.speechSynthesis.cancel()
+    const fala  = new SpeechSynthesisUtterance(prepararFala(texto))
+    fala.lang   = 'pt-BR'
+    fala.volume = 1
+    fala.rate   = bobEsponjaAtivo ? 1.4 : 0.88
+    fala.pitch  = bobEsponjaAtivo ? 2.0 : 1.0
+    const voz   = melhorVoz()
+    if (voz) fala.voice = voz
+    window.speechSynthesis.speak(fala)
+  } catch { /* silencia */ }
+}
 
 function falar(texto: string, delayMs = 0) {
   const executar = () => {
-    try {
-      if (!window.speechSynthesis) return
-      window.speechSynthesis.cancel()
-      const fala  = new SpeechSynthesisUtterance(prepararFala(texto))
-      fala.lang   = 'pt-BR'
-      fala.volume = 1
-      fala.rate   = bobEsponjaAtivo ? 1.4 : 0.88
-      fala.pitch  = bobEsponjaAtivo ? 2.0 : 1.0
-      const voz   = melhorVoz()
-      if (voz) fala.voice = voz
-      window.speechSynthesis.speak(fala)
-    } catch { /* silencia erros de autoplay policy */ }
+    if (elevenLabsAtivo) { falarElevenLabs(texto); return }
+    falarNavegador(texto)
   }
 
-  // Vozes podem não estar carregadas ainda — aguarda se necessário
-  if (window.speechSynthesis.getVoices().length === 0) {
-    window.speechSynthesis.addEventListener('voiceschanged', executar, { once: true })
-    if (delayMs > 0) setTimeout(executar, delayMs)
-  } else {
-    if (delayMs > 0) setTimeout(executar, delayMs)
-    else executar()
-  }
+  if (delayMs > 0) setTimeout(executar, delayMs)
+  else executar()
 }
 
 function bipe(vezes = 2) {
@@ -98,18 +115,22 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
   const isAdmin    = user.role === 'admin'
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [flashing,  setFlashing]  = useState(false)
-  const [bobClicks, setBobClicks] = useState(0)
-  const [bobAtivo,  setBobAtivo]  = useState(false)
+  const [easterClicks, setEasterClicks] = useState(0)
+  // 0 = normal, 1 = bob esponja, 2 = voz especial
+  const [easterModo,   setEasterModo]   = useState(0)
 
   function handleBobClick() {
-    const next = bobClicks + 1
-    setBobClicks(next)
+    const next = easterClicks + 1
+    setEasterClicks(next)
     if (next >= 5) {
-      setBobClicks(0)
-      const novoModo = !bobAtivo
-      setBobAtivo(novoModo)
-      bobEsponjaAtivo = novoModo
-      falar(novoModo ? 'Modo Bob Esponja ativado!' : 'Voltando ao normal.')
+      setEasterClicks(0)
+      const novoModo = (easterModo + 1) % 3
+      setEasterModo(novoModo)
+      bobEsponjaAtivo = novoModo === 1
+      elevenLabsAtivo = novoModo === 2
+      if (novoModo === 0) falar('Voltando ao normal.')
+      else if (novoModo === 1) falar('Modo Bob Esponja ativado!')
+      else falarElevenLabs('Modo voz especial ativado!')
     }
   }
 
@@ -249,8 +270,11 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
                 {tarefa.conchas_executadas ?? 0}
                 <span className="text-3xl text-industrial-500">/{tarefa.quantidade}</span>
               </p>
-              {bobAtivo && (
+              {easterModo === 1 && (
                 <p className="mt-1 animate-pulse text-xs text-yellow-500">🧽 Modo Bob Esponja</p>
+              )}
+              {easterModo === 2 && (
+                <p className="mt-1 animate-pulse text-xs text-green-600">🎙️ Voz Especial</p>
               )}
 
               {/* Barra de progresso */}
