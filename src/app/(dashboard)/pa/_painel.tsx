@@ -46,7 +46,7 @@ function melhorVoz(): SpeechSynthesisVoice | null {
 }
 
 let bobEsponjaAtivo  = false
-let elevenLabsAtivo  = false
+let elevenLabsAtivo  = true
 const ELEVEN_VOICE_ID = '4J31DrhygVjvFsoj7BsM'
 
 async function falarElevenLabs(texto: string) {
@@ -124,13 +124,12 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
     setEasterClicks(next)
     if (next >= 5) {
       setEasterClicks(0)
-      const novoModo = (easterModo + 1) % 3
+      const novoModo = (easterModo + 1) % 2
       setEasterModo(novoModo)
       bobEsponjaAtivo = novoModo === 1
-      elevenLabsAtivo = novoModo === 2
-      if (novoModo === 0) falar('Voltando ao normal.')
-      else if (novoModo === 1) falar('Modo Bob Esponja ativado!')
-      else falarElevenLabs('Modo voz especial ativado!')
+      elevenLabsAtivo = novoModo === 0
+      if (novoModo === 1) falar('Modo Bob Esponja ativado!')
+      else falarElevenLabs('Voltando ao normal.')
     }
   }
 
@@ -272,9 +271,6 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
               </p>
               {easterModo === 1 && (
                 <p className="mt-1 animate-pulse text-xs text-yellow-500">🧽 Modo Bob Esponja</p>
-              )}
-              {easterModo === 2 && (
-                <p className="mt-1 animate-pulse text-xs text-green-600">🎙️ Voz Especial</p>
               )}
 
               {/* Barra de progresso */}
