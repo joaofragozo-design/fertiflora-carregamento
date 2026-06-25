@@ -15,15 +15,7 @@ interface PaPainelProps {
 
 // ── Pronúncias corretas para siglas ────────────────────────
 const PRONUNCIAS: Record<string, string> = {
-  'M.O':        'M O',
-  'MAP':        'M A P',
-  'KCL':        'K C L',
-  'SAM':        'S A M',
-  'TSP':        'T S P',
-  'CYSY+S':     'C Y S Y mais S',
-  'CALTIMAG+S': 'CALTIMAG mais S',
-  'HIPHOS':     'HIFOS',
-  'BORO':       'Bóro',
+  'BORO': 'Bóro',
 }
 
 function prepararFala(texto: string): string {
