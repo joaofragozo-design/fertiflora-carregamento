@@ -78,7 +78,7 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
 
   async function enviar() {
     if (insumoFinal.length < 2) {
-      setErroInsumo('Selecione ou digite o insumo.')
+      setErroInsumo('Selecione ou digite a matéria prima.')
       return
     }
     if (quantidade === null) {
@@ -110,7 +110,7 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
       {/* ── Cabeçalho da seção Insumo ──────────────────────────── */}
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-wider text-industrial-500">
-          Insumo
+          Matéria Prima
           {insumoFinal && (
             <span className="ml-2 normal-case font-bold text-brand-700">{insumoFinal}</span>
           )}
@@ -124,7 +124,7 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
             setManualValue('')
             setManualSaved(null)
           }}
-          title="Restaurar estado padrão de todos os insumos"
+          title="Restaurar estado padrão de todas as matérias primas"
           className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-industrial-600 transition-colors hover:bg-industrial-800 hover:text-industrial-400"
         >
           <RotateCcw className="h-3 w-3" />
@@ -209,7 +209,7 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
               setErroInsumo('')
               setManualSaved(null)
             }}
-            placeholder="Digite o nome do insumo..."
+            placeholder="Digite o nome da matéria prima..."
             autoComplete="off"
             className="w-full rounded-lg border border-industrial-700 bg-industrial-900 px-3 py-2 text-sm text-industrial-100 placeholder:text-industrial-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30"
           />
@@ -262,7 +262,7 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
                   key={nome}
                   type="button"
                   onClick={() => restore(nome)}
-                  title="Restaurar insumo"
+                  title="Restaurar matéria prima"
                   className="flex items-center gap-1.5 rounded-lg border border-industrial-700 bg-industrial-900 px-3 py-1.5 text-xs font-semibold text-industrial-500 transition-all hover:border-industrial-500 hover:text-industrial-200"
                 >
                   {nome}

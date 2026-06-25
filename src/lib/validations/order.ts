@@ -4,7 +4,7 @@ export const carregamentoStatusSchema = z.enum(['PENDENTE', 'CARREGANDO', 'CONCL
 
 export const createCarregamentoSchema = z.object({
   insumo: z
-    .string({ required_error: 'Informe o insumo' })
+    .string({ required_error: 'Informe a matéria prima' })
     .min(2, 'Mínimo 2 caracteres')
     .max(150, 'Máximo 150 caracteres')
     .transform((v) => v.trim()),

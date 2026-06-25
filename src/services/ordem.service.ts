@@ -11,7 +11,12 @@ export class OrdemService {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (this.supabase as any)
       .from('carregamentos')
-      .insert({ insumo: input.insumo, quantidade: input.quantidade })
+      .insert({
+        insumo:             input.insumo,
+        quantidade:         input.quantidade,
+        status:             'SOLICITADO',
+        conchas_executadas: 0,
+      })
       .select()
       .single()
 
@@ -19,6 +24,51 @@ export class OrdemService {
     return data as Carregamento
   }
 
+  async liberar(id: string): Promise<Carregamento> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (this.supabase as any)
+      .from('carregamentos')
+      .update({ status: 'LIBERADO' })
+      .eq('id', id)
+      .eq('status', 'SOLICITADO')
+      .select()
+      .single()
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'liberar'))
+    return data as Carregamento
+  }
+
+  async executarConcha(id: string, conchasExecutadas: number, total: number): Promise<Carregamento> {
+    const novas    = conchasExecutadas + 1
+    const concluiu = novas >= total
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (this.supabase as any)
+      .from('carregamentos')
+      .update(concluiu
+        ? { conchas_executadas: novas, status: 'CONCLUIDO' }
+        : { conchas_executadas: novas }
+      )
+      .eq('id', id)
+      .eq('status', 'LIBERADO')
+      .select()
+      .single()
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'executar concha'))
+    return data as Carregamento
+  }
+
+  async cancelar(id: string): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (this.supabase as any)
+      .from('carregamentos')
+      .update({ status: 'CANCELADO' })
+      .eq('id', id)
+      .eq('status', 'SOLICITADO')
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'cancelar'))
+  }
+
+  // Legado (mantém compatibilidade)
   async iniciar(id: string): Promise<Carregamento> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (this.supabase as any)
@@ -30,17 +80,6 @@ export class OrdemService {
 
     if (error) throw new Error(this.traduzirErro(error.message, 'iniciar'))
     return data as Carregamento
-  }
-
-  async cancelar(id: string): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (this.supabase as any)
-      .from('carregamentos')
-      .update({ status: 'CANCELADO' })
-      .eq('id', id)
-      .eq('status', 'PENDENTE')
-
-    if (error) throw new Error(this.traduzirErro(error.message, 'cancelar'))
   }
 
   async concluir(id: string): Promise<Carregamento> {

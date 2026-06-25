@@ -36,7 +36,8 @@ export interface Database {
           id:          string
           insumo:      string
           quantidade:  number
-          status:      'PENDENTE' | 'CARREGANDO' | 'CONCLUIDO' | 'CANCELADO'
+          status:      'SOLICITADO' | 'LIBERADO' | 'CONCLUIDO' | 'CANCELADO' | 'PENDENTE' | 'CARREGANDO'
+          conchas_executadas: number
           created_at:  string
           started_at:  string | null
           finished_at: string | null

@@ -5,59 +5,41 @@ import { createClient } from '@/lib/supabase/client'
 import { REALTIME_CHANNEL } from '@/constants/order'
 import type { Carregamento } from '@/types'
 
-// Polling de segurança: garante atualização mesmo se o WebSocket falhar silenciosamente.
-// Reduz para 15 s para uso em tablet (conexão pode ser instável).
 const POLL_INTERVAL_MS = 15_000
 
 export function useOrdens(
   initialOrdens: Carregamento[],
   fetchAll = false,
-  onInsert?: (item: Carregamento) => void,
-  onDelete?: () => void,
+  onInsert?:  (item: Carregamento) => void,
+  onDelete?:  (insumo: string) => void,
+  onLiberar?: (item: Carregamento) => void,
 ) {
   const [ordens, setOrdens] = useState<Carregamento[]>(initialOrdens)
   const wasConnected  = useRef(false)
-  const onInsertRef   = useRef(onInsert)
-  onInsertRef.current = onInsert
-  const onDeleteRef   = useRef(onDelete)
-  onDeleteRef.current = onDelete
+  const onInsertRef   = useRef(onInsert);  onInsertRef.current  = onInsert
+  const onDeleteRef   = useRef(onDelete);  onDeleteRef.current  = onDelete
+  const onLiberarRef  = useRef(onLiberar); onLiberarRef.current = onLiberar
 
-  // Cliente Supabase estável — criado uma vez por montagem do hook
   const supabase = useRef(createClient()).current
 
-  // ── Função de rebusca ────────────────────────────────────────────
   const fetchOrdens = useCallback(async () => {
-    let query = supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let query = (supabase as any)
       .from('carregamentos')
       .select('*')
       .order('created_at', { ascending: false })
 
     if (!fetchAll) {
-      // operador_pa só precisa de ordens ativas
-      query = query
-        .neq('status', 'CONCLUIDO')
-        .neq('status', 'CANCELADO') as typeof query
+      // operador_pa: apenas itens ativos do novo fluxo
+      query = query.in('status', ['SOLICITADO', 'LIBERADO'])
     }
 
     const { data } = await query
     if (!data) return
-
-    setOrdens((prev) => {
-      const fresh    = data as Carregamento[]
-      const freshIds = new Set(fresh.map((o) => o.id))
-
-      if (fetchAll) return fresh
-
-      // Mantém CONCLUIDO já presente no estado local (não traz todos os históricos)
-      const concluidos = prev.filter(
-        (o) => o.status === 'CONCLUIDO' && !freshIds.has(o.id)
-      )
-      return [...fresh, ...concluidos]
-    })
+    setOrdens(data as Carregamento[])
   }, [supabase, fetchAll])
 
   useEffect(() => {
-    // ── Canal Realtime ───────────────────────────────────────────
     const channel = supabase
       .channel(REALTIME_CHANNEL)
       // INSERT
@@ -67,9 +49,7 @@ export function useOrdens(
         (payload) => {
           const novo = payload.new as Carregamento
           setOrdens((prev) =>
-            prev.some((o) => o.id === novo.id)
-              ? prev.map((o) => (o.id === novo.id ? novo : o))
-              : [novo, ...prev]
+            prev.some((o) => o.id === novo.id) ? prev : [novo, ...prev]
           )
           onInsertRef.current?.(novo)
         }
@@ -80,18 +60,28 @@ export function useOrdens(
         { event: 'UPDATE', schema: 'public', table: 'carregamentos' },
         (payload) => {
           const updated = payload.new as Carregamento
+
           if (updated.status === 'CANCELADO') {
-            // Dispara voz ANTES de remover do estado
-            onDeleteRef.current?.()
+            onDeleteRef.current?.(updated.insumo)
             setOrdens((prev) => prev.filter((o) => o.id !== updated.id))
-          } else {
-            setOrdens((prev) =>
-              prev.map((o) => (o.id === updated.id ? updated : o))
-            )
+            return
           }
+
+          if (updated.status === 'LIBERADO') {
+            onLiberarRef.current?.(updated)
+          }
+
+          // Para operador_pa: remove da lista quando CONCLUIDO
+          if (!fetchAll && (updated.status === 'CONCLUIDO' || updated.status === 'CANCELADO')) {
+            setOrdens((prev) => prev.filter((o) => o.id !== updated.id))
+            return
+          }
+
+          setOrdens((prev) =>
+            prev.map((o) => (o.id === updated.id ? updated : o))
+          )
         }
       )
-      // Reconexão WebSocket — rebusca para recuperar eventos perdidos
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
           if (wasConnected.current) await fetchOrdens()
@@ -99,15 +89,11 @@ export function useOrdens(
         }
       })
 
-    // ── Page Visibility API ──────────────────────────────────────
-    // Quando o tablet acorda ou o usuário volta à aba, sincroniza imediatamente.
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') fetchOrdens()
     }
     document.addEventListener('visibilitychange', onVisibilityChange)
 
-    // ── Polling de segurança ─────────────────────────────────────
-    // Garante atualização mesmo se o WebSocket cair sem disparar reconexão.
     const pollTimer = setInterval(fetchOrdens, POLL_INTERVAL_MS)
 
     return () => {
