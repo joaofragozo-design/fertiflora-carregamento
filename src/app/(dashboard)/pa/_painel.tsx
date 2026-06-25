@@ -33,18 +33,41 @@ function prepararFala(texto: string): string {
 }
 
 // ── Síntese de voz ─────────────────────────────────────────
+function melhorVoz(): SpeechSynthesisVoice | null {
+  const vozes = window.speechSynthesis.getVoices()
+  return (
+    vozes.find((v) => v.lang === 'pt-BR' && v.name.toLowerCase().includes('google')) ??
+    vozes.find((v) => v.lang === 'pt-BR' && !v.localService) ??
+    vozes.find((v) => v.lang === 'pt-BR') ??
+    vozes.find((v) => v.lang.startsWith('pt')) ??
+    null
+  )
+}
+
 function falar(texto: string, delayMs = 0) {
-  try {
-    if (!window.speechSynthesis) return
-    window.speechSynthesis.cancel()
-    const fala    = new SpeechSynthesisUtterance(prepararFala(texto))
-    fala.lang     = 'pt-BR'
-    fala.volume   = 1
-    fala.rate     = 0.85
-    fala.pitch    = 1
-    if (delayMs > 0) setTimeout(() => window.speechSynthesis.speak(fala), delayMs)
-    else window.speechSynthesis.speak(fala)
-  } catch { /* silencia erros de autoplay policy */ }
+  const executar = () => {
+    try {
+      if (!window.speechSynthesis) return
+      window.speechSynthesis.cancel()
+      const fala  = new SpeechSynthesisUtterance(prepararFala(texto))
+      fala.lang   = 'pt-BR'
+      fala.volume = 1
+      fala.rate   = 0.88
+      fala.pitch  = 1
+      const voz   = melhorVoz()
+      if (voz) fala.voice = voz
+      window.speechSynthesis.speak(fala)
+    } catch { /* silencia erros de autoplay policy */ }
+  }
+
+  // Vozes podem não estar carregadas ainda — aguarda se necessário
+  if (window.speechSynthesis.getVoices().length === 0) {
+    window.speechSynthesis.addEventListener('voiceschanged', executar, { once: true })
+    if (delayMs > 0) setTimeout(executar, delayMs)
+  } else {
+    if (delayMs > 0) setTimeout(executar, delayMs)
+    else executar()
+  }
 }
 
 function bipe(vezes = 2) {
