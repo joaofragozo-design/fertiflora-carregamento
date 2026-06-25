@@ -1,22 +1,25 @@
 import type { CarregamentoStatus } from '@/types'
 
 export const STATUS_LABELS: Record<CarregamentoStatus, string> = {
-  PENDENTE: 'Pendente',
-  CARREGANDO: 'Carregando',
+  SOLICITADO: 'Solicitado',
+  LIBERADO: 'Liberado',
+  EM_EXECUCAO: 'Em execução',
   CONCLUIDO: 'Concluído',
   CANCELADO: 'Cancelado',
 }
 
 export const STATUS_COLORS: Record<CarregamentoStatus, string> = {
-  PENDENTE: 'text-warning-600 bg-warning-500/10 border-warning-500/30',
-  CARREGANDO: 'text-info-600 bg-info-500/10 border-info-500/30',
+  SOLICITADO: 'text-yellow-600 bg-yellow-500/10 border-yellow-500/30',
+  LIBERADO: 'text-blue-600 bg-blue-500/10 border-blue-500/30',
+  EM_EXECUCAO: 'text-info-600 bg-info-500/10 border-info-500/30',
   CONCLUIDO: 'text-brand-700 bg-brand-500/10 border-brand-500/30',
   CANCELADO: 'text-red-600 bg-red-500/10 border-red-500/30',
 }
 
 export const STATUS_PULSE: Record<CarregamentoStatus, boolean> = {
-  PENDENTE: false,
-  CARREGANDO: true,
+  SOLICITADO: true,
+  LIBERADO: true,
+  EM_EXECUCAO: true,
   CONCLUIDO: false,
   CANCELADO: false,
 }

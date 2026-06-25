@@ -1,10 +1,9 @@
 export type CarregamentoStatus =
   | 'SOLICITADO'
   | 'LIBERADO'
+  | 'EM_EXECUCAO'
   | 'CONCLUIDO'
   | 'CANCELADO'
-  | 'PENDENTE'    // legado
-  | 'CARREGANDO'  // legado
 
 export interface Carregamento {
   id:                  string
