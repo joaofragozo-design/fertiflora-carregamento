@@ -1,6 +1,8 @@
 'use client'
 
-import { Wifi, WifiOff, LogOut, Menu } from 'lucide-react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { Wifi, WifiOff, LogOut, Menu, CalendarDays, FileSpreadsheet } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LogoFull } from '@/components/brand/logo'
 import { InstallButton } from '@/components/pwa/install-button'
@@ -21,8 +23,22 @@ const ROLE_LABELS: Record<string, string> = {
   logistica_02:          'Logística 02',
 }
 
+// Navegação no cabeçalho (para perfis sem barra lateral). Demais perfis usam a Sidebar.
+interface NavLink { href: string; label: string; icon: React.ElementType }
+const HEADER_NAV: Record<string, NavLink[]> = {
+  logistica: [
+    { href: '/ordens',         label: 'Ordens do Dia', icon: CalendarDays },
+    { href: '/admin/formulas', label: 'Fórmulas',      icon: FileSpreadsheet },
+  ],
+  logistica_02: [
+    { href: '/ordens', label: 'Ordens do Dia', icon: CalendarDays },
+  ],
+}
+
 export function Header({ user, connectionStatus, onSignOut, onMenuToggle }: HeaderProps) {
   const isConnected = connectionStatus === 'connected'
+  const pathname = usePathname()
+  const nav = user ? (HEADER_NAV[user.role] ?? []) : []
 
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-industrial-800 bg-industrial-950 px-4 md:px-6">
@@ -38,6 +54,31 @@ export function Header({ user, connectionStatus, onSignOut, onMenuToggle }: Head
           </button>
         )}
         <LogoFull showTagline={false} />
+
+        {/* Navegação inline (perfis de logística) */}
+        {nav.length > 0 && (
+          <nav className="ml-2 flex items-center gap-1 border-l border-industrial-800 pl-3">
+            {nav.map((item) => {
+              const Icon = item.icon
+              const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+                    active
+                      ? 'bg-brand-600/15 text-brand-400 border border-brand-600/40'
+                      : 'border border-transparent text-industrial-300 hover:bg-industrial-800 hover:text-industrial-100',
+                  )}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span className="hidden sm:inline">{item.label}</span>
+                </Link>
+              )
+            })}
+          </nav>
+        )}
       </div>
 
       <div className="flex items-center gap-2">

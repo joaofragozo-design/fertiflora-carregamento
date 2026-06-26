@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition, useMemo, useRef, useEffect } from 'react'
-import { Plus, Trash2, ChevronDown } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { OrdensDiariasService } from '@/services/ordens-diarias.service'
@@ -18,9 +18,9 @@ interface OrdensParneProps {
 }
 
 const STATUS_STYLES: Record<StatusOrdem, string> = {
-  AGUARDANDO:   'bg-industrial-700 text-industrial-300',
-  EM_ANDAMENTO: 'bg-brand-900/50 text-brand-400 border border-brand-700',
-  FINALIZADO:   'bg-brand-800/30 text-brand-300',
+  AGUARDANDO:   'bg-industrial-700 text-industrial-100',
+  EM_ANDAMENTO: 'bg-amber-500/20 text-amber-300 border border-amber-500/40',
+  FINALIZADO:   'bg-brand-600/25 text-brand-200 border border-brand-600/40',
 }
 
 const STATUS_LABEL: Record<StatusOrdem, string> = {
@@ -29,16 +29,19 @@ const STATUS_LABEL: Record<StatusOrdem, string> = {
   FINALIZADO:   'Finalizado',
 }
 
+/** Formata kg/ton sem zeros à toa: 408.0 → "408", 30.9 → "30.9". */
+function fmtKg(n: number): string {
+  return n.toFixed(1).replace(/\.0$/, '')
+}
+
 function FormulaCombobox({
   value,
   formulas,
   onChange,
-  disabled,
 }: {
   value: number | null
   formulas: { id: number; nome: string }[]
   onChange: (id: number | null) => void
-  disabled?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -65,19 +68,17 @@ function FormulaCombobox({
   }, [])
 
   return (
-    <div ref={ref} className="relative min-w-[180px]">
+    <div ref={ref} className="relative min-w-[190px]">
       <button
         type="button"
-        disabled={disabled}
         onClick={() => {
           setOpen((o) => !o)
           setTimeout(() => inputRef.current?.focus(), 50)
         }}
         className={cn(
           'w-full flex items-center justify-between gap-1 px-2 py-1 rounded text-xs',
-          'bg-industrial-800 border border-industrial-600 text-left',
+          'bg-industrial-800 border border-industrial-600 text-left text-industrial-100',
           'hover:border-brand-600 focus:outline-none focus:border-brand-500',
-          'disabled:opacity-50 disabled:cursor-not-allowed',
         )}
       >
         <span className={cn('truncate', !selected && 'text-industrial-500')}>
@@ -138,31 +139,34 @@ function InlineInput({
   onChange,
   onBlur,
   type = 'text',
-  disabled,
   className,
 }: {
   value: string | number
   onChange: (v: string) => void
   onBlur?: () => void
   type?: 'text' | 'number'
-  disabled?: boolean
   className?: string
 }) {
   return (
     <input
       type={type}
-      disabled={disabled}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       onBlur={onBlur}
       className={cn(
-        'bg-transparent border-b border-transparent hover:border-industrial-600 focus:border-brand-500',
+        'bg-transparent border-b border-industrial-700 hover:border-industrial-500 focus:border-brand-500',
         'focus:outline-none text-xs text-industrial-100 py-0.5 px-1 w-full',
-        'disabled:opacity-50 disabled:cursor-not-allowed',
         className,
       )}
     />
   )
+}
+
+/** Indicador de checkbox somente-leitura (para quem não pode marcar). */
+function StatusReadOnly({ on }: { on: boolean }) {
+  return on
+    ? <Check className="size-4 text-brand-400 mx-auto" />
+    : <span className="inline-block size-3.5 rounded-sm border border-industrial-600 mx-auto" />
 }
 
 type EditableOrdem = OrdemDiaria & { _dirty?: boolean; _saving?: boolean }
@@ -172,9 +176,9 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
   const [isPending, startTransition] = useTransition()
   const svc = useMemo(() => new OrdensDiariasService(createClient()), [])
 
-  // logistica  → edita os dados (cliente, placa, etc.), NÃO marca status
+  // logistica   → edita os dados (cliente, placa, etc.), NÃO marca status
   // logistica_02 → SÓ marca Iniciado/Finalizado
-  // admin       → faz tudo
+  // admin        → faz tudo
   const podeEditarDados  = user.role === 'admin' || user.role === 'logistica'
   const podeMarcarStatus = user.role === 'admin' || user.role === 'logistica_02'
 
@@ -275,48 +279,47 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
     await saveField(id, { envelopar: val })
   }
 
-  // Columns header
-  const thCls = 'px-2 py-2 text-[10px] uppercase tracking-wider text-industrial-400 font-medium whitespace-nowrap border-b border-industrial-700 bg-industrial-900'
+  const thCls = 'px-2 py-2 text-[10px] uppercase tracking-wider text-industrial-300 font-semibold whitespace-nowrap border-b border-industrial-700 bg-industrial-900'
   const tdCls = 'px-2 py-1.5 border-b border-industrial-800 align-middle'
+  const COLUNAS = 12 + (podeEditarDados ? 1 : 0)
 
   return (
-    <div className="flex flex-col gap-4 p-4 min-h-screen bg-industrial-950">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-4">
+      {/* Cabeçalho */}
+      <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-industrial-100">Ordens Diárias de Carregamento</h1>
-          <p className="text-xs text-industrial-400 mt-0.5">
+          <h1 className="text-lg font-semibold text-industrial-50">Ordens Diárias de Carregamento</h1>
+          <p className="text-xs text-industrial-300 mt-0.5 capitalize">
             {new Date(hoje + 'T12:00:00').toLocaleDateString('pt-BR', {
               weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
             })}
           </p>
         </div>
         <div className="text-right">
-          <p className="text-xs text-industrial-400">Total do dia</p>
-          <p className="text-2xl font-bold text-brand-400">{totalTons.toFixed(2)} <span className="text-sm font-normal text-industrial-400">ton</span></p>
+          <p className="text-xs text-industrial-300">Total do dia</p>
+          <p className="text-2xl font-bold text-brand-400">
+            {totalTons.toFixed(2)} <span className="text-sm font-normal text-industrial-300">ton</span>
+          </p>
         </div>
       </div>
 
-      {/* Table */}
+      {/* Tabela */}
       <div className="overflow-x-auto rounded-lg border border-industrial-700">
         <table className="w-full text-xs border-collapse">
           <thead>
             <tr>
               <th className={cn(thCls, 'text-center w-8')}>#</th>
-              <th className={cn(thCls, 'min-w-[140px]')}>Cliente</th>
-              <th className={cn(thCls, 'text-center w-20')}>Status</th>
+              <th className={cn(thCls, 'text-left min-w-[130px]')}>Cliente</th>
+              <th className={cn(thCls, 'text-center w-24')}>Status</th>
               <th className={cn(thCls, 'text-center w-16')}>Iniciado</th>
-              <th className={cn(thCls, 'text-center w-16')}>Finalizado</th>
-              <th className={cn(thCls, 'min-w-[100px]')}>Placa</th>
-              <th className={cn(thCls, 'text-center w-16')}>Envelopar</th>
+              <th className={cn(thCls, 'text-center w-20')}>Finalizado</th>
+              <th className={cn(thCls, 'text-left min-w-[100px]')}>Placa</th>
+              <th className={cn(thCls, 'text-center w-20')}>Envelopar</th>
               <th className={cn(thCls, 'text-right w-16')}>Quant.</th>
-              <th className={cn(thCls, 'text-center w-20')}>Embalagem</th>
+              <th className={cn(thCls, 'text-center w-24')}>Embalagem</th>
               <th className={cn(thCls, 'text-right w-16')}>Tons</th>
-              <th className={cn(thCls, 'min-w-[180px]')}>Fórmula</th>
-              {INGREDIENTES.map((ing) => (
-                <th key={ing.key} className={cn(thCls, 'text-right w-20')}>{ing.label}</th>
-              ))}
-              <th className={cn(thCls, 'text-right w-20')}>Verif.</th>
+              <th className={cn(thCls, 'text-left min-w-[200px]')}>Fórmula</th>
+              <th className={cn(thCls, 'text-left min-w-[280px]')}>Ingredientes (kg/ton)</th>
               {podeEditarDados && <th className={cn(thCls, 'w-8')} />}
             </tr>
           </thead>
@@ -327,18 +330,25 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
               const tons = calcularTons(ordem.quantidade, ordem.embalagem)
 
               const formula = ordem.formula as Formula | null | undefined
-              const somaIngredientes = formula
-                ? INGREDIENTES.reduce((s, ing) => s + Number(formula[ing.key]), 0)
+              const usados = formula
+                ? INGREDIENTES
+                    .map((ing) => ({ ing, kg: calcularIngrediente(formula, ing.key) }))
+                    .filter((x) => x.kg > 0)
+                : []
+              const verificacao = formula
+                ? +usados.reduce((s, x) => s + x.kg, 0).toFixed(1)
                 : null
-              const verificacao = somaIngredientes !== null ? +(somaIngredientes * 1000).toFixed(2) : null
+              const verifOk = verificacao !== null && Math.abs(verificacao - 1000) < 0.5
 
               return (
                 <tr
                   key={ordem.id}
                   className={cn(
-                    'hover:bg-industrial-800/40 transition-colors',
-                    ordem._saving && 'opacity-60',
-                    status === 'FINALIZADO' && 'opacity-75',
+                    'transition-colors',
+                    status === 'FINALIZADO'   ? 'bg-brand-950/30'
+                      : status === 'EM_ANDAMENTO' ? 'bg-amber-950/20'
+                      : 'hover:bg-industrial-800/40',
+                    ordem._saving && 'opacity-70',
                   )}
                 >
                   {/* Sequência */}
@@ -346,147 +356,183 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
 
                   {/* Cliente */}
                   <td className={tdCls}>
-                    <InlineInput
-                      value={ordem.cliente}
-                      disabled={!editarDados}
-                      onChange={(v) => updateLocal(ordem.id, { cliente: v })}
-                      onBlur={() => handleBlurText(ordem.id, 'cliente', ordem.cliente)}
-                    />
+                    {editarDados ? (
+                      <InlineInput
+                        value={ordem.cliente}
+                        onChange={(v) => updateLocal(ordem.id, { cliente: v })}
+                        onBlur={() => handleBlurText(ordem.id, 'cliente', ordem.cliente)}
+                      />
+                    ) : (
+                      <span className="text-industrial-100">
+                        {ordem.cliente || <span className="text-industrial-600">—</span>}
+                      </span>
+                    )}
                   </td>
 
-                  {/* Status badge */}
+                  {/* Status */}
                   <td className={cn(tdCls, 'text-center')}>
-                    <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium', STATUS_STYLES[status])}>
+                    <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-semibold', STATUS_STYLES[status])}>
                       {STATUS_LABEL[status]}
                     </span>
                   </td>
 
                   {/* Iniciado */}
                   <td className={cn(tdCls, 'text-center')}>
-                    <input
-                      type="checkbox"
-                      checked={ordem.iniciado}
-                      disabled={!podeMarcarStatus || ordem.finalizado}
-                      onChange={() => handleToggleIniciado(ordem)}
-                      className="size-4 accent-brand-500 cursor-pointer disabled:cursor-not-allowed"
-                    />
+                    {podeMarcarStatus && !ordem.finalizado ? (
+                      <input
+                        type="checkbox"
+                        checked={ordem.iniciado}
+                        onChange={() => handleToggleIniciado(ordem)}
+                        className="size-4 accent-brand-500 cursor-pointer"
+                      />
+                    ) : (
+                      <StatusReadOnly on={ordem.iniciado} />
+                    )}
                   </td>
 
                   {/* Finalizado */}
                   <td className={cn(tdCls, 'text-center')}>
-                    <input
-                      type="checkbox"
-                      checked={ordem.finalizado}
-                      disabled={!podeMarcarStatus}
-                      onChange={() => handleToggleFinalizado(ordem)}
-                      className="size-4 accent-brand-500 cursor-pointer disabled:cursor-not-allowed"
-                    />
+                    {podeMarcarStatus ? (
+                      <input
+                        type="checkbox"
+                        checked={ordem.finalizado}
+                        onChange={() => handleToggleFinalizado(ordem)}
+                        className="size-4 accent-brand-500 cursor-pointer"
+                      />
+                    ) : (
+                      <StatusReadOnly on={ordem.finalizado} />
+                    )}
                   </td>
 
                   {/* Placa */}
                   <td className={tdCls}>
-                    <InlineInput
-                      value={ordem.placa}
-                      disabled={!editarDados}
-                      onChange={(v) => updateLocal(ordem.id, { placa: v.toUpperCase() })}
-                      onBlur={() => handleBlurText(ordem.id, 'placa', ordem.placa)}
-                      className="uppercase tracking-widest font-mono"
-                    />
+                    {editarDados ? (
+                      <InlineInput
+                        value={ordem.placa}
+                        onChange={(v) => updateLocal(ordem.id, { placa: v.toUpperCase() })}
+                        onBlur={() => handleBlurText(ordem.id, 'placa', ordem.placa)}
+                        className="uppercase tracking-widest font-mono"
+                      />
+                    ) : (
+                      <span className="text-industrial-100 uppercase tracking-widest font-mono">
+                        {ordem.placa || <span className="text-industrial-600 tracking-normal">—</span>}
+                      </span>
+                    )}
                   </td>
 
                   {/* Envelopar */}
                   <td className={cn(tdCls, 'text-center')}>
-                    <button
-                      type="button"
-                      disabled={!editarDados}
-                      onClick={() => handleEnvelopar(ordem.id, !ordem.envelopar)}
-                      className={cn(
-                        'px-2 py-0.5 rounded text-[10px] font-medium border transition-colors',
-                        'disabled:opacity-50 disabled:cursor-not-allowed',
-                        ordem.envelopar
-                          ? 'bg-brand-800/50 border-brand-600 text-brand-300'
-                          : 'bg-industrial-800 border-industrial-600 text-industrial-400',
-                      )}
-                    >
-                      {ordem.envelopar ? 'SIM' : 'NÃO'}
-                    </button>
+                    {editarDados ? (
+                      <button
+                        type="button"
+                        onClick={() => handleEnvelopar(ordem.id, !ordem.envelopar)}
+                        className={cn(
+                          'px-2 py-0.5 rounded text-[10px] font-bold border transition-colors',
+                          ordem.envelopar
+                            ? 'bg-brand-700/40 border-brand-600 text-brand-200'
+                            : 'bg-industrial-800 border-industrial-600 text-industrial-300',
+                        )}
+                      >
+                        {ordem.envelopar ? 'SIM' : 'NÃO'}
+                      </button>
+                    ) : (
+                      <span className={cn('text-[10px] font-bold', ordem.envelopar ? 'text-brand-300' : 'text-industrial-400')}>
+                        {ordem.envelopar ? 'SIM' : 'NÃO'}
+                      </span>
+                    )}
                   </td>
 
                   {/* Quantidade */}
                   <td className={cn(tdCls, 'text-right')}>
-                    <InlineInput
-                      type="number"
-                      value={ordem.quantidade}
-                      disabled={!editarDados}
-                      onChange={(v) => updateLocal(ordem.id, { quantidade: Number(v) || 0 })}
-                      onBlur={() => {
-                        if (ordem._dirty) saveField(ordem.id, { quantidade: ordem.quantidade })
-                      }}
-                      className="text-right"
-                    />
+                    {editarDados ? (
+                      <InlineInput
+                        type="number"
+                        value={ordem.quantidade}
+                        onChange={(v) => updateLocal(ordem.id, { quantidade: Number(v) || 0 })}
+                        onBlur={() => { if (ordem._dirty) saveField(ordem.id, { quantidade: ordem.quantidade }) }}
+                        className="text-right"
+                      />
+                    ) : (
+                      <span className="text-industrial-100 font-mono">{ordem.quantidade}</span>
+                    )}
                   </td>
 
                   {/* Embalagem */}
                   <td className={cn(tdCls, 'text-center')}>
-                    <select
-                      value={ordem.embalagem}
-                      disabled={!editarDados}
-                      onChange={(e) => handleEmbalagem(ordem.id, e.target.value as Embalagem)}
-                      className={cn(
-                        'bg-industrial-800 border border-industrial-600 rounded px-1 py-0.5',
-                        'text-xs text-industrial-100 focus:outline-none focus:border-brand-500',
-                        'disabled:opacity-50 disabled:cursor-not-allowed',
-                      )}
-                    >
-                      <option value="SACOS">SACOS</option>
-                      <option value="BAGS">BAGS</option>
-                    </select>
+                    {editarDados ? (
+                      <select
+                        value={ordem.embalagem}
+                        onChange={(e) => handleEmbalagem(ordem.id, e.target.value as Embalagem)}
+                        className="bg-industrial-800 border border-industrial-600 rounded px-1 py-0.5 text-xs text-industrial-100 focus:outline-none focus:border-brand-500"
+                      >
+                        <option value="SACOS">SACOS</option>
+                        <option value="BAGS">BAGS</option>
+                      </select>
+                    ) : (
+                      <span className="text-industrial-100">{ordem.embalagem}</span>
+                    )}
                   </td>
 
                   {/* Tons */}
-                  <td className={cn(tdCls, 'text-right font-mono text-brand-400 font-medium')}>
+                  <td className={cn(tdCls, 'text-right font-mono text-brand-400 font-semibold')}>
                     {tons.toFixed(2)}
                   </td>
 
                   {/* Fórmula */}
                   <td className={tdCls}>
-                    <FormulaCombobox
-                      value={ordem.formula_id}
-                      formulas={initialFormulas}
-                      onChange={(id) => handleFormula(ordem.id, id)}
-                      disabled={!editarDados}
-                    />
+                    {editarDados ? (
+                      <FormulaCombobox
+                        value={ordem.formula_id}
+                        formulas={initialFormulas}
+                        onChange={(id) => handleFormula(ordem.id, id)}
+                      />
+                    ) : (
+                      <span className="text-industrial-100">
+                        {formula?.nome ?? <span className="text-industrial-600">—</span>}
+                      </span>
+                    )}
                   </td>
 
-                  {/* Ingredientes kg/ton */}
-                  {INGREDIENTES.map((ing) => {
-                    const kg = formula ? calcularIngrediente(formula, ing.key) : null
-                    return (
-                      <td key={ing.key} className={cn(tdCls, 'text-right font-mono text-industrial-300')}>
-                        {kg !== null ? (kg > 0 ? kg.toFixed(1) : <span className="text-industrial-600">0</span>) : '—'}
-                      </td>
-                    )
-                  })}
-
-                  {/* Verificação */}
-                  <td className={cn(
-                    tdCls, 'text-right font-mono font-bold',
-                    verificacao === null ? 'text-industrial-600' :
-                    Math.abs(verificacao - 1000) < 0.5 ? 'text-brand-400' : 'text-red-400',
-                  )}>
-                    {verificacao !== null ? verificacao.toFixed(1) : '—'}
+                  {/* Ingredientes — só os usados (valor > 0) */}
+                  <td className={tdCls}>
+                    {formula ? (
+                      <div className="flex flex-wrap items-center gap-1">
+                        {usados.map(({ ing, kg }) => (
+                          <span
+                            key={ing.key}
+                            className="inline-flex items-center gap-1 rounded bg-industrial-800 border border-industrial-700 px-1.5 py-0.5"
+                          >
+                            <span className="text-[10px] text-industrial-400">{ing.label}</span>
+                            <span className="text-[10px] font-mono font-semibold text-industrial-100">{fmtKg(kg)}</span>
+                          </span>
+                        ))}
+                        <span
+                          className={cn(
+                            'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold border',
+                            verifOk
+                              ? 'bg-brand-900/40 border-brand-700 text-brand-300'
+                              : 'bg-red-950/50 border-red-800 text-red-300',
+                          )}
+                          title="Soma total (deve fechar 1000)"
+                        >
+                          Σ {verificacao?.toFixed(0)}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-industrial-600">Selecione uma fórmula</span>
+                    )}
                   </td>
 
-                  {/* Delete */}
+                  {/* Excluir */}
                   {podeEditarDados && (
                     <td className={cn(tdCls, 'text-center')}>
                       <button
                         type="button"
                         onClick={() => handleDelete(ordem.id)}
-                        className="text-industrial-600 hover:text-red-400 transition-colors p-0.5 rounded"
+                        className="text-industrial-500 hover:text-red-400 transition-colors p-0.5 rounded"
                         title="Remover ordem"
                       >
-                        <Trash2 className="size-3" />
+                        <Trash2 className="size-3.5" />
                       </button>
                     </td>
                   )}
@@ -496,34 +542,32 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
 
             {ordens.length === 0 && (
               <tr>
-                <td
-                  colSpan={16 + INGREDIENTES.length}
-                  className="text-center py-12 text-industrial-500"
-                >
-                  Nenhuma ordem para hoje. Clique em &quot;Adicionar linha&quot; para começar.
+                <td colSpan={COLUNAS} className="text-center py-12 text-industrial-400">
+                  {podeEditarDados
+                    ? 'Nenhuma ordem para hoje. Clique em “Adicionar linha” para começar.'
+                    : 'Nenhuma ordem para hoje ainda.'}
                 </td>
               </tr>
             )}
           </tbody>
 
-          {/* Footer: total */}
           {ordens.length > 0 && (
             <tfoot>
               <tr className="bg-industrial-900">
-                <td colSpan={9} className="px-2 py-2 text-xs text-industrial-400 text-right font-medium">
-                  Total:
+                <td colSpan={9} className="px-2 py-2 text-xs text-industrial-300 text-right font-semibold">
+                  Total do dia:
                 </td>
                 <td className="px-2 py-2 text-right font-mono font-bold text-brand-400">
                   {totalTons.toFixed(2)}
                 </td>
-                <td colSpan={13 + (podeEditarDados ? 1 : 0)} />
+                <td colSpan={COLUNAS - 10} />
               </tr>
             </tfoot>
           )}
         </table>
       </div>
 
-      {/* Add row button */}
+      {/* Adicionar linha */}
       {podeEditarDados && (
         <button
           type="button"
