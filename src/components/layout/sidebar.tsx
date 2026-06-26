@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, ClipboardList, Truck, X } from 'lucide-react'
+import { LayoutDashboard, ClipboardList, Truck, X, CalendarDays, FileSpreadsheet } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { AppUser } from '@/types'
 
@@ -21,6 +21,12 @@ const NAV_ITEMS: NavItem[] = [
     roles: ['admin'],
   },
   {
+    href:  '/ordens',
+    label: 'Ordens do Dia',
+    icon:  CalendarDays,
+    roles: ['admin', 'logistica', 'logistica_02'],
+  },
+  {
     href:  '/carregamento',
     label: 'Central de Solicitações',
     icon:  ClipboardList,
@@ -31,6 +37,12 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Centro Operacional',
     icon:  Truck,
     roles: ['operador_pa', 'admin'],
+  },
+  {
+    href:  '/admin/formulas',
+    label: 'Fórmulas',
+    icon:  FileSpreadsheet,
+    roles: ['admin', 'logistica'],
   },
 ]
 

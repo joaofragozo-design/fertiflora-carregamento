@@ -24,6 +24,14 @@ export default async function DashboardLayout({
   if (profile.role === 'operador_carregamento' && pathname.startsWith(ROUTES.PA)) {
     redirect(ROUTES.CARREGAMENTO)
   }
+  // logística: só /ordens e /admin
+  if (profile.role === 'logistica' && !pathname.startsWith(ROUTES.ORDENS) && !pathname.startsWith('/admin')) {
+    redirect(ROUTES.ORDENS)
+  }
+  // logística 02: só /ordens
+  if (profile.role === 'logistica_02' && !pathname.startsWith(ROUTES.ORDENS)) {
+    redirect(ROUTES.ORDENS)
+  }
 
   return (
     <DashboardShell user={profile}>
