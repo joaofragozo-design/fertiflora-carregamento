@@ -147,7 +147,7 @@ export function ImportarFormulasClient() {
       <div className="rounded-lg bg-industrial-900 border border-industrial-700 p-4">
         <p className="text-xs text-industrial-300 font-medium mb-2">Formato esperado (cabeçalho opcional):</p>
         <code className="text-[10px] text-brand-400 break-all">
-          nome; mo; map; calcario_concha; sulfato_amonia; carbonato_ca_mg; ureia; cloreto_potassio; enxofre_pastilhado; oxmag_s; tsp; caltimag; hiphos_25
+          nome; mo; map; calcario_concha; sulfato_amonia; carbonato_ca_mg; ureia; cloreto_potassio; boro; enxofre_pastilhado; fte_br_12; oxmag_s; tsp; caltimag; hiphos_25
         </code>
         <p className="text-[10px] text-industrial-500 mt-2">
           Valores decimais entre 0 e 1 (proporção). Separador: vírgula ou ponto e vírgula.

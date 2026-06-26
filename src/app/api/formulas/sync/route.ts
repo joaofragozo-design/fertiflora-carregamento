@@ -136,10 +136,41 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // RECONCILIAÇÃO: a planilha é a fonte de verdade. Remove do banco as fórmulas
+  // cujo nome não existe mais na planilha (lixo de seed antigo, fórmula apagada).
+  // Guarda de segurança: só reconcilia com um volume plausível de linhas, pra
+  // nunca esvaziar a tabela caso a leitura da planilha venha vazia/parcial.
+  let removidas = 0;
+  const nomesNaPlanilha = new Set(linhas.map((l) => l.nome));
+
+  if (nomesNaPlanilha.size >= 50) {
+    const { data: existentes } = await supabaseAdmin
+      .from("formulas")
+      .select("id, nome");
+
+    const orfas = ((existentes ?? []) as { id: number; nome: string }[])
+      .filter((f) => !nomesNaPlanilha.has(f.nome))
+      .map((f) => f.id);
+
+    if (orfas.length > 0) {
+      const { error: delErr } = await supabaseAdmin
+        .from("formulas")
+        .delete()
+        .in("id", orfas);
+
+      if (delErr) {
+        console.error("[formulas/sync] reconciliação", delErr);
+      } else {
+        removidas = orfas.length;
+      }
+    }
+  }
+
   return NextResponse.json({
     ok: true,
     importadas: validas.length,
     rejeitadas: rejeitadas.length,
+    removidas,
     detalhes_rejeitadas: rejeitadas,
     duplicadas: Array.from(nomesDuplicados),
   });
