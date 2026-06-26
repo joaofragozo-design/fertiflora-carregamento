@@ -1,10 +1,13 @@
 'use client'
 
 import { useState, useTransition, useMemo, useRef, useEffect } from 'react'
-import { Plus, Trash2, ChevronDown, Check } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, Trash2, ChevronDown, Check, Printer } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { OrdensDiariasService } from '@/services/ordens-diarias.service'
+import { useOrdensDiarias, type EditableOrdem } from '@/hooks/use-ordens-diarias'
+import { ROUTES } from '@/constants/routes'
 import type { AppUser } from '@/types'
 import type { OrdemDiaria, Formula, Embalagem, StatusOrdem } from '@/types/formula'
 import { INGREDIENTES, calcularIngrediente, calcularTons, getStatus } from '@/types/formula'
@@ -17,10 +20,18 @@ interface OrdensParneProps {
   hoje:             string
 }
 
+// Badge de status (tema claro: fundo claro + texto escuro).
 const STATUS_STYLES: Record<StatusOrdem, string> = {
-  AGUARDANDO:   'bg-industrial-700 text-industrial-100',
-  EM_ANDAMENTO: 'bg-amber-500/20 text-amber-300 border border-amber-500/40',
-  FINALIZADO:   'bg-brand-600/25 text-brand-200 border border-brand-600/40',
+  AGUARDANDO:   'bg-industrial-800 text-industrial-100',
+  EM_ANDAMENTO: 'bg-amber-100 text-amber-800 border border-amber-400',
+  FINALIZADO:   'bg-brand-100 text-brand-800 border border-brand-500',
+}
+
+// Fundo da LINHA inteira por status — bem visível, com texto escuro legível.
+const ROW_STYLES: Record<StatusOrdem, string> = {
+  AGUARDANDO:   'hover:bg-industrial-800/60',
+  EM_ANDAMENTO: 'bg-amber-200',
+  FINALIZADO:   'bg-brand-200',
 }
 
 const STATUS_LABEL: Record<StatusOrdem, string> = {
@@ -77,25 +88,25 @@ function FormulaCombobox({
         }}
         className={cn(
           'w-full flex items-center justify-between gap-1 px-2 py-1 rounded text-xs',
-          'bg-industrial-800 border border-industrial-600 text-left text-industrial-100',
+          'bg-industrial-900 border border-industrial-600 text-left text-industrial-100',
           'hover:border-brand-600 focus:outline-none focus:border-brand-500',
         )}
       >
-        <span className={cn('truncate', !selected && 'text-industrial-500')}>
+        <span className={cn('truncate font-medium', !selected && 'text-industrial-500 font-normal')}>
           {selected?.nome ?? 'Selecionar fórmula…'}
         </span>
         <ChevronDown className="size-3 shrink-0 text-industrial-400" />
       </button>
 
       {open && (
-        <div className="absolute z-50 top-full mt-1 left-0 w-72 bg-industrial-900 border border-industrial-600 rounded shadow-lg">
+        <div className="absolute z-50 top-full mt-1 left-0 w-72 bg-industrial-900 border border-industrial-600 rounded shadow-industrial">
           <div className="p-1.5 border-b border-industrial-700">
             <input
               ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar fórmula..."
-              className="w-full bg-industrial-800 text-xs text-industrial-100 placeholder-industrial-500
+              className="w-full bg-industrial-950 text-xs text-industrial-100 placeholder-industrial-500
                          px-2 py-1 rounded border border-industrial-600 focus:outline-none focus:border-brand-500"
             />
           </div>
@@ -117,7 +128,7 @@ function FormulaCombobox({
                   className={cn(
                     'w-full text-left text-xs px-3 py-1.5 truncate',
                     'hover:bg-industrial-800',
-                    f.id === value ? 'text-brand-400 font-medium' : 'text-industrial-100',
+                    f.id === value ? 'text-brand-700 font-semibold' : 'text-industrial-100',
                   )}
                 >
                   {f.nome}
@@ -154,7 +165,7 @@ function InlineInput({
       onChange={(e) => onChange(e.target.value)}
       onBlur={onBlur}
       className={cn(
-        'bg-transparent border-b border-industrial-700 hover:border-industrial-500 focus:border-brand-500',
+        'bg-transparent border-b border-industrial-600 hover:border-industrial-400 focus:border-brand-500',
         'focus:outline-none text-xs text-industrial-100 py-0.5 px-1 w-full',
         className,
       )}
@@ -165,14 +176,12 @@ function InlineInput({
 /** Indicador de checkbox somente-leitura (para quem não pode marcar). */
 function StatusReadOnly({ on }: { on: boolean }) {
   return on
-    ? <Check className="size-4 text-brand-400 mx-auto" />
-    : <span className="inline-block size-3.5 rounded-sm border border-industrial-600 mx-auto" />
+    ? <Check className="size-4 text-brand-700 mx-auto" strokeWidth={3} />
+    : <span className="inline-block size-3.5 rounded-sm border-2 border-industrial-500 mx-auto" />
 }
 
-type EditableOrdem = OrdemDiaria & { _dirty?: boolean; _saving?: boolean }
-
 export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: OrdensParneProps) {
-  const [ordens, setOrdens] = useState<EditableOrdem[]>(initialOrdens)
+  const { ordens, setOrdens } = useOrdensDiarias(initialOrdens, hoje)
   const [isPending, startTransition] = useTransition()
   const svc = useMemo(() => new OrdensDiariasService(createClient()), [])
 
@@ -224,7 +233,9 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
           iniciado:   false,
           finalizado: false,
         })
-        setOrdens((prev) => [...prev, nova])
+        setOrdens((prev) =>
+          prev.some((o) => o.id === nova.id) ? prev : [...prev, nova],
+        )
       } catch (err) {
         toast.error(err instanceof Error ? err.message : 'Erro ao adicionar ordem.')
       }
@@ -279,32 +290,41 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
     await saveField(id, { envelopar: val })
   }
 
-  const thCls = 'px-2 py-2 text-[10px] uppercase tracking-wider text-industrial-300 font-semibold whitespace-nowrap border-b border-industrial-700 bg-industrial-900'
-  const tdCls = 'px-2 py-1.5 border-b border-industrial-800 align-middle'
+  const thCls = 'px-2 py-1.5 text-[10px] uppercase tracking-wider text-industrial-400 font-semibold whitespace-nowrap border-b border-industrial-700 bg-industrial-900'
+  const tdCls = 'px-2 py-1 border-b border-industrial-800 align-middle'
   const COLUNAS = 12 + (podeEditarDados ? 1 : 0)
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       {/* Cabeçalho */}
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-industrial-50">Ordens Diárias de Carregamento</h1>
-          <p className="text-xs text-industrial-300 mt-0.5 capitalize">
+          <h1 className="text-lg font-semibold text-industrial-100">Ordens Diárias de Carregamento</h1>
+          <p className="text-xs text-industrial-400 mt-0.5 capitalize">
             {new Date(hoje + 'T12:00:00').toLocaleDateString('pt-BR', {
               weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
             })}
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-xs text-industrial-300">Total do dia</p>
-          <p className="text-2xl font-bold text-brand-400">
-            {totalTons.toFixed(2)} <span className="text-sm font-normal text-industrial-300">ton</span>
-          </p>
+        <div className="flex items-center gap-3">
+          <Link
+            href={ROUTES.ORDENS_RELATORIO}
+            className="flex items-center gap-1.5 rounded-lg border border-industrial-700 px-3 py-2 text-xs font-medium text-industrial-200 hover:border-brand-500 hover:text-brand-700 transition-colors"
+          >
+            <Printer className="size-4" />
+            Relatório do dia
+          </Link>
+          <div className="text-right">
+            <p className="text-xs text-industrial-400">Total do dia</p>
+            <p className="text-2xl font-bold text-brand-600">
+              {totalTons.toFixed(2)} <span className="text-sm font-normal text-industrial-400">ton</span>
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Tabela */}
-      <div className="overflow-x-auto rounded-lg border border-industrial-700">
+      {/* Tabela (sem borda externa, aproveitando o espaço) */}
+      <div className="overflow-x-auto">
         <table className="w-full text-xs border-collapse">
           <thead>
             <tr>
@@ -313,12 +333,12 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
               <th className={cn(thCls, 'text-center w-24')}>Status</th>
               <th className={cn(thCls, 'text-center w-16')}>Iniciado</th>
               <th className={cn(thCls, 'text-center w-20')}>Finalizado</th>
-              <th className={cn(thCls, 'text-left min-w-[100px]')}>Placa</th>
+              <th className={cn(thCls, 'text-left w-20')}>Placa</th>
               <th className={cn(thCls, 'text-center w-20')}>Envelopar</th>
-              <th className={cn(thCls, 'text-right w-16')}>Quant.</th>
+              <th className={cn(thCls, 'text-right w-24')}>Quant.</th>
               <th className={cn(thCls, 'text-center w-24')}>Embalagem</th>
               <th className={cn(thCls, 'text-right w-16')}>Tons</th>
-              <th className={cn(thCls, 'text-left min-w-[200px]')}>Fórmula</th>
+              <th className={cn(thCls, 'text-left min-w-[210px]')}>Fórmula</th>
               <th className={cn(thCls, 'text-left min-w-[280px]')}>Ingredientes (kg/ton)</th>
               {podeEditarDados && <th className={cn(thCls, 'w-8')} />}
             </tr>
@@ -343,16 +363,10 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
               return (
                 <tr
                   key={ordem.id}
-                  className={cn(
-                    'transition-colors',
-                    status === 'FINALIZADO'   ? 'bg-brand-950/30'
-                      : status === 'EM_ANDAMENTO' ? 'bg-amber-950/20'
-                      : 'hover:bg-industrial-800/40',
-                    ordem._saving && 'opacity-70',
-                  )}
+                  className={cn('transition-colors', ROW_STYLES[status], ordem._saving && 'opacity-80')}
                 >
                   {/* Sequência */}
-                  <td className={cn(tdCls, 'text-center text-industrial-400 font-mono')}>{ordem.sequencia}</td>
+                  <td className={cn(tdCls, 'text-center text-industrial-500 font-mono')}>{ordem.sequencia}</td>
 
                   {/* Cliente */}
                   <td className={tdCls}>
@@ -363,15 +377,15 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
                         onBlur={() => handleBlurText(ordem.id, 'cliente', ordem.cliente)}
                       />
                     ) : (
-                      <span className="text-industrial-100">
-                        {ordem.cliente || <span className="text-industrial-600">—</span>}
+                      <span className="text-industrial-100 font-medium">
+                        {ordem.cliente || <span className="text-industrial-500 font-normal">—</span>}
                       </span>
                     )}
                   </td>
 
                   {/* Status */}
                   <td className={cn(tdCls, 'text-center')}>
-                    <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-semibold', STATUS_STYLES[status])}>
+                    <span className={cn('px-2 py-0.5 rounded text-[10px] font-bold', STATUS_STYLES[status])}>
                       {STATUS_LABEL[status]}
                     </span>
                   </td>
@@ -383,7 +397,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
                         type="checkbox"
                         checked={ordem.iniciado}
                         onChange={() => handleToggleIniciado(ordem)}
-                        className="size-4 accent-brand-500 cursor-pointer"
+                        className="size-5 accent-brand-600 cursor-pointer"
                       />
                     ) : (
                       <StatusReadOnly on={ordem.iniciado} />
@@ -397,7 +411,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
                         type="checkbox"
                         checked={ordem.finalizado}
                         onChange={() => handleToggleFinalizado(ordem)}
-                        className="size-4 accent-brand-500 cursor-pointer"
+                        className="size-5 accent-brand-600 cursor-pointer"
                       />
                     ) : (
                       <StatusReadOnly on={ordem.finalizado} />
@@ -411,11 +425,11 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
                         value={ordem.placa}
                         onChange={(v) => updateLocal(ordem.id, { placa: v.toUpperCase() })}
                         onBlur={() => handleBlurText(ordem.id, 'placa', ordem.placa)}
-                        className="uppercase tracking-widest font-mono"
+                        className="uppercase font-mono"
                       />
                     ) : (
-                      <span className="text-industrial-100 uppercase tracking-widest font-mono">
-                        {ordem.placa || <span className="text-industrial-600 tracking-normal">—</span>}
+                      <span className="text-industrial-100 uppercase font-mono font-medium">
+                        {ordem.placa || <span className="text-industrial-500 font-normal normal-case">—</span>}
                       </span>
                     )}
                   </td>
@@ -429,14 +443,14 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
                         className={cn(
                           'px-2 py-0.5 rounded text-[10px] font-bold border transition-colors',
                           ordem.envelopar
-                            ? 'bg-brand-700/40 border-brand-600 text-brand-200'
-                            : 'bg-industrial-800 border-industrial-600 text-industrial-300',
+                            ? 'bg-brand-100 border-brand-500 text-brand-800'
+                            : 'bg-industrial-900 border-industrial-600 text-industrial-500',
                         )}
                       >
                         {ordem.envelopar ? 'SIM' : 'NÃO'}
                       </button>
                     ) : (
-                      <span className={cn('text-[10px] font-bold', ordem.envelopar ? 'text-brand-300' : 'text-industrial-400')}>
+                      <span className={cn('text-[11px] font-bold', ordem.envelopar ? 'text-brand-700' : 'text-industrial-500')}>
                         {ordem.envelopar ? 'SIM' : 'NÃO'}
                       </span>
                     )}
@@ -453,7 +467,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
                         className="text-right"
                       />
                     ) : (
-                      <span className="text-industrial-100 font-mono">{ordem.quantidade}</span>
+                      <span className="text-industrial-100 font-mono font-medium">{ordem.quantidade}</span>
                     )}
                   </td>
 
@@ -463,22 +477,22 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
                       <select
                         value={ordem.embalagem}
                         onChange={(e) => handleEmbalagem(ordem.id, e.target.value as Embalagem)}
-                        className="bg-industrial-800 border border-industrial-600 rounded px-1 py-0.5 text-xs text-industrial-100 focus:outline-none focus:border-brand-500"
+                        className="bg-industrial-900 border border-industrial-600 rounded px-1 py-0.5 text-xs text-industrial-100 focus:outline-none focus:border-brand-500"
                       >
                         <option value="SACOS">SACOS</option>
                         <option value="BAGS">BAGS</option>
                       </select>
                     ) : (
-                      <span className="text-industrial-100">{ordem.embalagem}</span>
+                      <span className="text-industrial-100 font-medium">{ordem.embalagem}</span>
                     )}
                   </td>
 
                   {/* Tons */}
-                  <td className={cn(tdCls, 'text-right font-mono text-brand-400 font-semibold')}>
+                  <td className={cn(tdCls, 'text-right font-mono text-brand-700 font-bold')}>
                     {tons.toFixed(2)}
                   </td>
 
-                  {/* Fórmula */}
+                  {/* Fórmula — destacada para quem só visualiza (logística_02) */}
                   <td className={tdCls}>
                     {editarDados ? (
                       <FormulaCombobox
@@ -487,8 +501,8 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
                         onChange={(id) => handleFormula(ordem.id, id)}
                       />
                     ) : (
-                      <span className="text-industrial-100">
-                        {formula?.nome ?? <span className="text-industrial-600">—</span>}
+                      <span className="text-[13px] font-bold text-industrial-50">
+                        {formula?.nome ?? <span className="text-industrial-500 text-xs font-normal">—</span>}
                       </span>
                     )}
                   </td>
@@ -500,18 +514,18 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
                         {usados.map(({ ing, kg }) => (
                           <span
                             key={ing.key}
-                            className="inline-flex items-center gap-1 rounded bg-industrial-800 border border-industrial-700 px-1.5 py-0.5"
+                            className="inline-flex items-center gap-1 rounded bg-industrial-900 border border-industrial-700 px-1.5 py-0.5"
                           >
                             <span className="text-[10px] text-industrial-400">{ing.label}</span>
-                            <span className="text-[10px] font-mono font-semibold text-industrial-100">{fmtKg(kg)}</span>
+                            <span className="text-[10px] font-mono font-bold text-industrial-100">{fmtKg(kg)}</span>
                           </span>
                         ))}
                         <span
                           className={cn(
                             'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold border',
                             verifOk
-                              ? 'bg-brand-900/40 border-brand-700 text-brand-300'
-                              : 'bg-red-950/50 border-red-800 text-red-300',
+                              ? 'bg-brand-100 border-brand-500 text-brand-800'
+                              : 'bg-red-100 border-red-400 text-red-700',
                           )}
                           title="Soma total (deve fechar 1000)"
                         >
@@ -519,7 +533,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
                         </span>
                       </div>
                     ) : (
-                      <span className="text-industrial-600">Selecione uma fórmula</span>
+                      <span className="text-industrial-500">Selecione uma fórmula</span>
                     )}
                   </td>
 
@@ -529,7 +543,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
                       <button
                         type="button"
                         onClick={() => handleDelete(ordem.id)}
-                        className="text-industrial-500 hover:text-red-400 transition-colors p-0.5 rounded"
+                        className="text-industrial-500 hover:text-red-600 transition-colors p-0.5 rounded"
                         title="Remover ordem"
                       >
                         <Trash2 className="size-3.5" />
@@ -557,7 +571,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
                 <td colSpan={9} className="px-2 py-2 text-xs text-industrial-300 text-right font-semibold">
                   Total do dia:
                 </td>
-                <td className="px-2 py-2 text-right font-mono font-bold text-brand-400">
+                <td className="px-2 py-2 text-right font-mono font-bold text-brand-700">
                   {totalTons.toFixed(2)}
                 </td>
                 <td colSpan={COLUNAS - 10} />

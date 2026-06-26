@@ -1,10 +1,11 @@
 export const ROUTES = {
-  LOGIN:           '/login',
-  HOME:            '/',
-  CARREGAMENTO:    '/carregamento',
-  PA:              '/pa',
-  ORDENS:          '/ordens',
-  ADMIN_FORMULAS:  '/admin/formulas',
+  LOGIN:             '/login',
+  HOME:              '/',
+  CARREGAMENTO:      '/carregamento',
+  PA:                '/pa',
+  ORDENS:            '/ordens',
+  ORDENS_RELATORIO:  '/ordens/relatorio',
+  ADMIN_FORMULAS:    '/admin/formulas',
 } as const
 
 export const ROLE_DEFAULT_ROUTES = {
