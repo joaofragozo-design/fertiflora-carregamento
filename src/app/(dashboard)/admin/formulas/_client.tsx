@@ -18,7 +18,9 @@ const CSV_COLUMNS = [
   'carbonato_ca_mg',
   'ureia',
   'cloreto_potassio',
+  'boro',
   'enxofre_pastilhado',
+  'fte_br_12',
   'oxmag_s',
   'tsp',
   'caltimag',
@@ -70,14 +72,14 @@ function parseCSV(text: string): { rows: ParsedRow[]; errors: string[] } {
       if (valid) rows.push(parsed)
     } else {
       // No header: assume fixed column order
-      if (parts.length < 13) { errors.push(`Linha ${i + 1}: menos de 13 colunas`); continue }
+      if (parts.length < CSV_COLUMNS.length) { errors.push(`Linha ${i + 1}: menos de ${CSV_COLUMNS.length} colunas`); continue }
 
       const nome = parts[0]
       if (!nome) { errors.push(`Linha ${i + 1}: nome vazio`); continue }
 
       const parsed = { nome, ativo: true } as ParsedRow
       let valid = true
-      for (let j = 1; j < 13; j++) {
+      for (let j = 1; j < CSV_COLUMNS.length; j++) {
         const val = parseFloat((parts[j] ?? '0').replace(',', '.'))
         const col = CSV_COLUMNS[j]
         if (isNaN(val) || val < 0 || val > 1) {

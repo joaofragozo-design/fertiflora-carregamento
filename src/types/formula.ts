@@ -8,7 +8,9 @@ export interface Formula {
   carbonato_ca_mg:    number
   ureia:              number
   cloreto_potassio:   number
+  boro:               number
   enxofre_pastilhado: number
+  fte_br_12:          number
   oxmag_s:            number
   tsp:                number
   caltimag:           number
@@ -51,7 +53,9 @@ export const INGREDIENTES = [
   { key: 'carbonato_ca_mg',    label: 'Carb. Ca+Mg'   },
   { key: 'ureia',              label: 'Ureia'         },
   { key: 'cloreto_potassio',   label: 'Cl. Potássio'  },
+  { key: 'boro',               label: 'Boro 10'       },
   { key: 'enxofre_pastilhado', label: 'Enx. Past.'    },
+  { key: 'fte_br_12',          label: 'FTE BR 12'     },
   { key: 'oxmag_s',            label: 'OXMAG+S'       },
   { key: 'tsp',                label: 'TSP'           },
   { key: 'caltimag',           label: 'CALTIMAG'      },
