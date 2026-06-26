@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
+  // A API se protege sozinha: exige sessão válida do Supabase.
+  // (Antes dependia só do middleware — que agora não cobre mais /api.)
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
+  }
+
   const { text, voiceId } = await req.json()
 
   const apiKey = process.env.ELEVENLABS_API_KEY
