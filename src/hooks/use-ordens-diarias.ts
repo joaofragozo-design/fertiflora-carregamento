@@ -54,9 +54,10 @@ export function useOrdensDiarias(initialOrdens: OrdemDiaria[], data: string) {
       .channel(CHANNEL)
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'ordens_diarias', filter: `data=eq.${data}` },
+        { event: 'INSERT', schema: 'public', table: 'ordens_diarias' },
         (payload) => {
           const novo = payload.new as OrdemDiaria
+          if (novo.data !== data) return
           setOrdens((prev) =>
             prev.some((o) => o.id === novo.id)
               ? prev
@@ -67,9 +68,10 @@ export function useOrdensDiarias(initialOrdens: OrdemDiaria[], data: string) {
       )
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'ordens_diarias', filter: `data=eq.${data}` },
+        { event: 'UPDATE', schema: 'public', table: 'ordens_diarias' },
         (payload) => {
           const updated = payload.new as OrdemDiaria
+          if (updated.data !== data) return
           setOrdens((prev) =>
             prev.map((o) => {
               if (o.id !== updated.id) return o

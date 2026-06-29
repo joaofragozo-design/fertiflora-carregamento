@@ -2,14 +2,14 @@
 
 import { useMemo } from 'react'
 import Link from 'next/link'
-import { Check, Clock, Play, FlagTriangleRight, Printer } from 'lucide-react'
+import { Check, Clock, Play, FlagTriangleRight, Printer, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { OrdensDiariasService } from '@/services/ordens-diarias.service'
 import { useOrdensDiarias, type EditableOrdem } from '@/hooks/use-ordens-diarias'
 import { ROUTES } from '@/constants/routes'
 import type { AppUser } from '@/types'
-import type { OrdemDiaria, Formula, StatusOrdem } from '@/types/formula'
+import type { OrdemDiaria, Formula } from '@/types/formula'
 import { INGREDIENTES, calcularIngrediente, calcularTons, getStatus } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
@@ -18,9 +18,6 @@ interface TvBoardProps {
   user: AppUser
   hoje: string
 }
-
-// Ordem de exibição: o que falta carregar primeiro, finalizados por último.
-const PRIORIDADE: Record<StatusOrdem, number> = { EM_ANDAMENTO: 0, AGUARDANDO: 1, FINALIZADO: 2 }
 
 function fmtKg(n: number): string {
   return n.toFixed(1).replace(/\.0$/, '')
@@ -34,13 +31,21 @@ export function TvBoard({ initialOrdens, user, hoje }: TvBoardProps) {
 
   const totalTons = useMemo(() => ordens.reduce((s, o) => s + (o.tons ?? 0), 0), [ordens])
 
-  const ordenados = useMemo(
+  // Ativos (em andamento primeiro, depois aguardando) ficam no foco.
+  // Finalizados vão para uma seção separada e discreta.
+  const ativos = useMemo(
     () =>
-      [...ordens].sort((a, b) => {
-        const pa = PRIORIDADE[getStatus(a)]
-        const pb = PRIORIDADE[getStatus(b)]
-        return pa !== pb ? pa - pb : a.sequencia - b.sequencia
-      }),
+      ordens
+        .filter((o) => !o.finalizado)
+        .sort((a, b) => {
+          const pa = a.iniciado ? 0 : 1
+          const pb = b.iniciado ? 0 : 1
+          return pa !== pb ? pa - pb : a.sequencia - b.sequencia
+        }),
+    [ordens],
+  )
+  const finalizados = useMemo(
+    () => ordens.filter((o) => o.finalizado).sort((a, b) => a.sequencia - b.sequencia),
     [ordens],
   )
 
@@ -67,7 +72,7 @@ export function TvBoard({ initialOrdens, user, hoje }: TvBoardProps) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {/* Cabeçalho ao vivo */}
       <div className="flex items-center justify-between gap-3 border-b border-industrial-700 pb-3">
         <div className="flex items-center gap-3 min-w-0">
@@ -94,14 +99,14 @@ export function TvBoard({ initialOrdens, user, hoje }: TvBoardProps) {
         </div>
       </div>
 
-      {ordenados.length === 0 && (
+      {ordens.length === 0 && (
         <div className="text-center py-24 text-xl text-industrial-400">Nenhum pedido para hoje ainda.</div>
       )}
 
-      {/* Cards grandes */}
+      {/* ATIVOS — foco do Richardson */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        {ordenados.map((o) => {
-          const status = getStatus(o)
+        {ativos.map((o) => {
+          const emAndamento = o.iniciado
           const formula = o.formula as Formula | null | undefined
           const usados = formula
             ? INGREDIENTES.map((ing) => ({ ing, kg: calcularIngrediente(formula, ing.key) })).filter((x) => x.kg > 0)
@@ -114,79 +119,74 @@ export function TvBoard({ initialOrdens, user, hoje }: TvBoardProps) {
               className={cn(
                 'rounded-2xl border border-l-8 p-5 transition-colors',
                 o._saving && 'opacity-80',
-                status === 'FINALIZADO'
-                  ? 'bg-brand-200 border-brand-600'
-                  : status === 'EM_ANDAMENTO'
-                    ? 'bg-amber-200 border-amber-500'
-                    : 'bg-industrial-900 border-industrial-300',
+                emAndamento ? 'bg-amber-200 border-amber-500' : 'bg-industrial-900 border-industrial-300',
               )}
             >
               {/* Cliente + status */}
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-baseline gap-2 min-w-0">
                   <span className="font-mono text-base text-industrial-500">{o.sequencia}</span>
-                  <span className="text-2xl font-bold text-industrial-50 truncate">{o.cliente || 'Sem cliente'}</span>
+                  <span className="text-xl font-bold text-industrial-50 truncate">{o.cliente || 'Sem cliente'}</span>
                 </div>
                 <span
                   className={cn(
-                    'flex items-center gap-2 text-lg font-bold whitespace-nowrap',
-                    status === 'FINALIZADO'
-                      ? 'text-brand-900'
-                      : status === 'EM_ANDAMENTO'
-                        ? 'text-amber-900'
-                        : 'text-industrial-500',
+                    'flex items-center gap-1.5 text-base font-bold whitespace-nowrap',
+                    emAndamento ? 'text-amber-900' : 'text-industrial-500',
                   )}
                 >
-                  {status === 'FINALIZADO' && <Check className="size-5" strokeWidth={3} />}
-                  {status === 'EM_ANDAMENTO' && <Clock className="size-5" />}
-                  {status === 'FINALIZADO' ? 'Finalizado' : status === 'EM_ANDAMENTO' ? 'Em andamento' : 'Aguardando'}
+                  {emAndamento ? <Clock className="size-5" /> : null}
+                  {emAndamento ? 'Em andamento' : 'Aguardando'}
                 </span>
               </div>
 
-              {/* Fórmula (destaque) + toneladas */}
-              <div className="flex items-end justify-between gap-3 mt-3">
-                <div className="text-3xl font-extrabold text-industrial-50 leading-tight break-words min-w-0">
-                  {formula?.nome ?? <span className="text-xl font-normal text-industrial-500">Sem fórmula</span>}
+              {/* Quantidade + envelopar (MAIÚSCULO, destaque) + toneladas */}
+              <div className="flex items-center justify-between gap-3 flex-wrap mt-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-2xl font-extrabold text-industrial-50 uppercase tracking-wide">
+                    {o.quantidade} {o.embalagem}
+                  </span>
+                  {o.envelopar && (
+                    <span className="rounded-md bg-brand-600 text-white text-xs font-bold uppercase tracking-wide px-2 py-1">
+                      Envelopar
+                    </span>
+                  )}
                 </div>
-                <div className="text-right whitespace-nowrap">
-                  <div className="text-2xl font-bold text-brand-700">
-                    {tons.toFixed(2)} <span className="text-sm font-normal text-industrial-500">ton</span>
-                  </div>
-                  <div className="text-sm text-industrial-600">
-                    {o.quantidade} · {o.embalagem.toLowerCase()}
-                    {o.envelopar ? ' · envelopar' : ''}
-                  </div>
-                </div>
+                <span className="text-xl font-bold text-brand-700">
+                  {tons.toFixed(2)} <span className="text-sm font-normal text-industrial-500">ton</span>
+                </span>
               </div>
 
-              {/* Ingredientes em kg/ton */}
+              {/* Fórmula — secundária (rótulo) */}
+              <div className="mt-3 text-sm text-industrial-500">
+                Fórmula:{' '}
+                <span className="font-semibold text-industrial-200">
+                  {formula?.nome ?? 'sem fórmula'}
+                </span>
+              </div>
+
+              {/* Ingredientes — PROTAGONISTAS (números grandes) */}
               {usados.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-3">
+                <div className="flex flex-wrap gap-x-7 gap-y-3 mt-2">
                   {usados.map(({ ing, kg }) => (
-                    <span
-                      key={ing.key}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-industrial-900 border border-industrial-700 px-2.5 py-1"
-                    >
-                      <span className="text-sm text-industrial-500">{ing.label}</span>
-                      <span className="text-sm font-mono font-bold text-industrial-100">{fmtKg(kg)}</span>
-                    </span>
+                    <div key={ing.key} className="flex flex-col">
+                      <span className="text-[11px] uppercase tracking-wide text-industrial-500">{ing.label}</span>
+                      <span className="text-3xl font-extrabold font-mono text-industrial-50 leading-none">{fmtKg(kg)}</span>
+                    </div>
                   ))}
                 </div>
               )}
 
               {/* Botões grandes */}
               {podeMarcar && (
-                <div className="flex gap-3 mt-4">
+                <div className="flex gap-3 mt-5">
                   <button
                     type="button"
                     onClick={() => toggleIniciado(o)}
-                    disabled={o.finalizado}
                     className={cn(
-                      'flex-1 flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-lg font-bold transition-colors disabled:cursor-not-allowed',
+                      'flex-1 flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-lg font-bold transition-colors',
                       o.iniciado
                         ? 'bg-industrial-900 border-2 border-brand-600 text-brand-700'
                         : 'bg-amber-500 text-white hover:bg-amber-600',
-                      o.finalizado && 'opacity-70',
                     )}
                   >
                     {o.iniciado ? <Check className="size-5" strokeWidth={3} /> : <Play className="size-5" />}
@@ -195,15 +195,9 @@ export function TvBoard({ initialOrdens, user, hoje }: TvBoardProps) {
                   <button
                     type="button"
                     onClick={() => toggleFinalizado(o)}
-                    className={cn(
-                      'flex-1 flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-lg font-bold transition-colors',
-                      o.finalizado
-                        ? 'bg-industrial-900 border-2 border-brand-600 text-brand-700'
-                        : 'bg-brand-600 text-white hover:bg-brand-700',
-                    )}
+                    className="flex-1 flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-lg font-bold bg-brand-600 text-white hover:bg-brand-700 transition-colors"
                   >
-                    {o.finalizado ? <Check className="size-5" strokeWidth={3} /> : <FlagTriangleRight className="size-5" />}
-                    {o.finalizado ? 'Finalizado' : 'Finalizar'}
+                    <FlagTriangleRight className="size-5" /> Finalizar
                   </button>
                 </div>
               )}
@@ -211,6 +205,51 @@ export function TvBoard({ initialOrdens, user, hoje }: TvBoardProps) {
           )
         })}
       </div>
+
+      {/* FINALIZADOS — seção separada, compacta e discreta */}
+      {finalizados.length > 0 && (
+        <div className="mt-2">
+          <div className="flex items-center gap-2 text-sm font-semibold text-industrial-400 uppercase tracking-wide border-t border-industrial-700 pt-3 mb-3">
+            <Check className="size-4 text-brand-600" strokeWidth={3} />
+            Finalizados · {finalizados.length}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+            {finalizados.map((o) => {
+              const formula = o.formula as Formula | null | undefined
+              const tons = calcularTons(o.quantidade, o.embalagem)
+              return (
+                <div
+                  key={o.id}
+                  className={cn(
+                    'flex items-center justify-between gap-3 rounded-xl border border-brand-300 bg-brand-100 px-3 py-2',
+                    o._saving && 'opacity-70',
+                  )}
+                >
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <Check className="size-4 text-brand-700 shrink-0" strokeWidth={3} />
+                      <span className="font-bold text-industrial-100 truncate">{o.cliente || 'Sem cliente'}</span>
+                    </div>
+                    <div className="text-xs text-industrial-600 truncate mt-0.5">
+                      {formula?.nome ?? 'sem fórmula'} · {tons.toFixed(2)} ton · {o.quantidade} {o.embalagem}
+                    </div>
+                  </div>
+                  {podeMarcar && (
+                    <button
+                      type="button"
+                      onClick={() => toggleFinalizado(o)}
+                      className="flex items-center gap-1 text-xs font-medium text-industrial-500 hover:text-brand-700 transition-colors shrink-0"
+                      title="Reabrir (desfazer finalização)"
+                    >
+                      <RotateCcw className="size-3.5" /> Reabrir
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
