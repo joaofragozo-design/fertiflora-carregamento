@@ -15,12 +15,17 @@ function toDateString(d: Date): string {
   return d.toISOString().slice(0, 10)
 }
 
-export default async function OrdensPage() {
+export default async function OrdensPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ data?: string }>
+}) {
   const { sessionUser, profile } = await getAuthContext()
 
   if (!sessionUser || !profile) redirect(ROUTES.LOGIN)
 
-  const hoje = toDateString(new Date())
+  const sp = await searchParams
+  const hoje = sp?.data && /^\d{4}-\d{2}-\d{2}$/.test(sp.data) ? sp.data : toDateString(new Date())
   const supabase = await createClient()
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,7 +47,7 @@ export default async function OrdensPage() {
   // Richardson (logistica_02) → painel de TV (cards grandes, só marca status).
   // Fransua (logistica) e admin → tabela editável (lança os pedidos).
   if (profile.role === 'logistica_02') {
-    return <TvBoard initialOrdens={ordensList} user={profile} hoje={hoje} />
+    return <TvBoard key={hoje} initialOrdens={ordensList} user={profile} hoje={hoje} />
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -54,6 +59,7 @@ export default async function OrdensPage() {
 
   return (
     <OrdensParnel
+      key={hoje}
       initialOrdens={ordensList}
       initialFormulas={(formulas ?? []) as { id: number; nome: string }[]}
       user={profile}
