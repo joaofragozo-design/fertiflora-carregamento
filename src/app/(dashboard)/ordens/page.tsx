@@ -4,6 +4,7 @@ import { getAuthContext } from '@/lib/supabase/get-user'
 import { createClient } from '@/lib/supabase/server'
 import { ROUTES } from '@/constants/routes'
 import { OrdensParnel } from './_painel'
+import { TvBoard } from './_tv-board'
 import type { OrdemDiaria } from '@/types/formula'
 
 export const metadata: Metadata = {
@@ -36,6 +37,14 @@ export default async function OrdensPage() {
     .eq('data', hoje)
     .order('sequencia', { ascending: true })
 
+  const ordensList = (ordens ?? []) as OrdemDiaria[]
+
+  // Richardson (logistica_02) → painel de TV (cards grandes, só marca status).
+  // Fransua (logistica) e admin → tabela editável (lança os pedidos).
+  if (profile.role === 'logistica_02') {
+    return <TvBoard initialOrdens={ordensList} user={profile} hoje={hoje} />
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: formulas } = await (supabase as any)
     .from('formulas')
@@ -45,7 +54,7 @@ export default async function OrdensPage() {
 
   return (
     <OrdensParnel
-      initialOrdens={(ordens ?? []) as OrdemDiaria[]}
+      initialOrdens={ordensList}
       initialFormulas={(formulas ?? []) as { id: number; nome: string }[]}
       user={profile}
       hoje={hoje}
