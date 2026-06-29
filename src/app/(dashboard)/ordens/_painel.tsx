@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition, useMemo, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { Plus, Trash2, ChevronDown, Check, Printer } from 'lucide-react'
 import { toast } from 'sonner'
@@ -56,36 +57,56 @@ function FormulaCombobox({
 }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const ref = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState<{ left: number; top: number; width: number } | null>(null)
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const popRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const selected = formulas.find((f) => f.id === value)
 
   const filtered = useMemo(() => {
-    if (!query) return formulas.slice(0, 30)
+    if (!query) return formulas.slice(0, 50)
     const q = query.toLowerCase()
-    return formulas.filter((f) => f.nome.toLowerCase().includes(q)).slice(0, 30)
+    return formulas.filter((f) => f.nome.toLowerCase().includes(q)).slice(0, 50)
   }, [formulas, query])
 
+  function fechar() {
+    setOpen(false)
+    setQuery('')
+  }
+
+  function abrir() {
+    const r = btnRef.current?.getBoundingClientRect()
+    if (r) setPos({ left: r.left, top: r.bottom + 4, width: Math.max(r.width, 340) })
+    setOpen(true)
+    setTimeout(() => inputRef.current?.focus(), 40)
+  }
+
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false)
-        setQuery('')
-      }
+    if (!open) return
+    const onDocClick = (e: MouseEvent) => {
+      const t = e.target as Node
+      if (btnRef.current?.contains(t) || popRef.current?.contains(t)) return
+      fechar()
     }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
+    // Fecha ao rolar/redimensionar para não desalinhar o popup fixo do botão.
+    const onReposition = () => fechar()
+    document.addEventListener('mousedown', onDocClick)
+    window.addEventListener('scroll', onReposition, true)
+    window.addEventListener('resize', onReposition)
+    return () => {
+      document.removeEventListener('mousedown', onDocClick)
+      window.removeEventListener('scroll', onReposition, true)
+      window.removeEventListener('resize', onReposition)
+    }
+  }, [open])
 
   return (
-    <div ref={ref} className="relative min-w-[190px]">
+    <div className="relative min-w-[190px]">
       <button
+        ref={btnRef}
         type="button"
-        onClick={() => {
-          setOpen((o) => !o)
-          setTimeout(() => inputRef.current?.focus(), 50)
-        }}
+        onClick={() => (open ? fechar() : abrir())}
         className={cn(
           'w-full flex items-center justify-between gap-1 px-2 py-1 rounded text-xs',
           'bg-industrial-900 border border-industrial-600 text-left text-industrial-100',
@@ -98,24 +119,36 @@ function FormulaCombobox({
         <ChevronDown className="size-3 shrink-0 text-industrial-400" />
       </button>
 
-      {open && (
-        <div className="absolute z-50 top-full mt-1 left-0 w-72 bg-industrial-900 border border-industrial-600 rounded shadow-industrial">
-          <div className="p-1.5 border-b border-industrial-700">
+      {/* Popup em portal: posição fixa, ocupa o espaço disponível até o rodapé
+          da tela. Evita o recorte vertical causado pelo overflow-x-auto da tabela. */}
+      {open && pos && createPortal(
+        <div
+          ref={popRef}
+          style={{
+            position: 'fixed',
+            left: pos.left,
+            top: pos.top,
+            width: pos.width,
+            maxHeight: `calc(100vh - ${pos.top}px - 12px)`,
+          }}
+          className="z-[100] flex flex-col bg-industrial-900 border border-industrial-600 rounded shadow-industrial overflow-hidden"
+        >
+          <div className="p-1.5 border-b border-industrial-700 shrink-0">
             <input
               ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar fórmula..."
               className="w-full bg-industrial-950 text-xs text-industrial-100 placeholder-industrial-500
-                         px-2 py-1 rounded border border-industrial-600 focus:outline-none focus:border-brand-500"
+                         px-2 py-1.5 rounded border border-industrial-600 focus:outline-none focus:border-brand-500"
             />
           </div>
-          <ul className="max-h-52 overflow-y-auto py-1">
+          <ul className="overflow-y-auto py-1">
             <li>
               <button
                 type="button"
-                onClick={() => { onChange(null); setOpen(false); setQuery('') }}
-                className="w-full text-left text-xs px-3 py-1.5 text-industrial-400 hover:bg-industrial-800"
+                onClick={() => { onChange(null); fechar() }}
+                className="w-full text-left text-xs px-3 py-2 text-industrial-400 hover:bg-industrial-800"
               >
                 — Nenhuma —
               </button>
@@ -124,10 +157,9 @@ function FormulaCombobox({
               <li key={f.id}>
                 <button
                   type="button"
-                  onClick={() => { onChange(f.id); setOpen(false); setQuery('') }}
+                  onClick={() => { onChange(f.id); fechar() }}
                   className={cn(
-                    'w-full text-left text-xs px-3 py-1.5 truncate',
-                    'hover:bg-industrial-800',
+                    'w-full text-left text-xs px-3 py-2 truncate hover:bg-industrial-800',
                     f.id === value ? 'text-brand-700 font-semibold' : 'text-industrial-100',
                   )}
                 >
@@ -139,7 +171,8 @@ function FormulaCombobox({
               <li className="text-xs text-industrial-500 px-3 py-2">Nenhuma fórmula encontrada.</li>
             )}
           </ul>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )
