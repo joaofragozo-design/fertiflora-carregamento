@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Wifi, WifiOff, LogOut, Menu, CalendarDays, FileSpreadsheet } from 'lucide-react'
+import { Wifi, WifiOff, LogOut, Menu, CalendarDays, CalendarRange, FileSpreadsheet } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LogoFull } from '@/components/brand/logo'
 import { InstallButton } from '@/components/pwa/install-button'
@@ -28,10 +28,12 @@ interface NavLink { href: string; label: string; icon: React.ElementType }
 const HEADER_NAV: Record<string, NavLink[]> = {
   logistica: [
     { href: '/ordens',         label: 'Ordens do Dia', icon: CalendarDays },
+    { href: '/programacao',    label: 'Programação',   icon: CalendarRange },
     { href: '/admin/formulas', label: 'Fórmulas',      icon: FileSpreadsheet },
   ],
   logistica_02: [
-    { href: '/ordens', label: 'Ordens do Dia', icon: CalendarDays },
+    { href: '/ordens',      label: 'Ordens do Dia', icon: CalendarDays },
+    { href: '/programacao', label: 'Programação',   icon: CalendarRange },
   ],
 }
 

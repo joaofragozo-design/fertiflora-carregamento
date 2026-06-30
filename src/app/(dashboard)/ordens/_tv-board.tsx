@@ -10,7 +10,7 @@ import { useOrdensDiarias, type EditableOrdem } from '@/hooks/use-ordens-diarias
 import { ROUTES } from '@/constants/routes'
 import type { AppUser } from '@/types'
 import type { OrdemDiaria, Formula } from '@/types/formula'
-import { INGREDIENTES, calcularIngrediente, calcularTons, getStatus } from '@/types/formula'
+import { INGREDIENTES, EMBALAGEM_LABEL, calcularIngrediente, calcularTons, getStatus } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
 interface TvBoardProps {
@@ -37,11 +37,7 @@ export function TvBoard({ initialOrdens, user, hoje }: TvBoardProps) {
     () =>
       ordens
         .filter((o) => !o.finalizado)
-        .sort((a, b) => {
-          const pa = a.iniciado ? 0 : 1
-          const pb = b.iniciado ? 0 : 1
-          return pa !== pb ? pa - pb : a.sequencia - b.sequencia
-        }),
+        .sort((a, b) => a.sequencia - b.sequencia), // ordem de prioridade definida pelo Fransua
     [ordens],
   )
   const finalizados = useMemo(
@@ -142,8 +138,8 @@ export function TvBoard({ initialOrdens, user, hoje }: TvBoardProps) {
               {/* Quantidade + envelopar (MAIÚSCULO, destaque) + toneladas */}
               <div className="flex items-center justify-between gap-3 flex-wrap mt-3">
                 <div className="flex items-center gap-2.5">
-                  <span className="text-2xl font-extrabold text-industrial-50 uppercase tracking-wide">
-                    {o.quantidade} {o.embalagem}
+                  <span className="text-2xl font-extrabold text-industrial-50 tracking-wide">
+                    {o.quantidade} × {EMBALAGEM_LABEL[o.embalagem]}
                   </span>
                   {o.envelopar && (
                     <span className="rounded-md bg-brand-600 text-white text-xs font-bold uppercase tracking-wide px-2 py-1">
@@ -166,11 +162,11 @@ export function TvBoard({ initialOrdens, user, hoje }: TvBoardProps) {
 
               {/* Ingredientes — PROTAGONISTAS (números grandes) */}
               {usados.length > 0 && (
-                <div className="flex flex-wrap gap-x-7 gap-y-3 mt-2">
+                <div className="flex flex-wrap gap-x-9 gap-y-4 mt-3">
                   {usados.map(({ ing, kg }) => (
                     <div key={ing.key} className="flex flex-col">
-                      <span className="text-[11px] uppercase tracking-wide text-industrial-500">{ing.label}</span>
-                      <span className="text-3xl font-extrabold font-mono text-industrial-50 leading-none">{fmtKg(kg)}</span>
+                      <span className="text-sm font-bold uppercase tracking-wide text-industrial-300">{ing.label}</span>
+                      <span className="text-5xl font-black font-mono text-industrial-50 leading-none">{fmtKg(kg)}</span>
                     </div>
                   ))}
                 </div>
@@ -231,7 +227,7 @@ export function TvBoard({ initialOrdens, user, hoje }: TvBoardProps) {
                       <span className="font-bold text-industrial-100 truncate">{o.cliente || 'Sem cliente'}</span>
                     </div>
                     <div className="text-xs text-industrial-600 truncate mt-0.5">
-                      {formula?.nome ?? 'sem fórmula'} · {tons.toFixed(2)} ton · {o.quantidade} {o.embalagem}
+                      {formula?.nome ?? 'sem fórmula'} · {tons.toFixed(2)} ton · {o.quantidade} {EMBALAGEM_LABEL[o.embalagem]}
                     </div>
                   </div>
                   {podeMarcar && (

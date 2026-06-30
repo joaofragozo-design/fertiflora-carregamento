@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Printer, ArrowLeft } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import type { OrdemDiaria, Formula, StatusOrdem } from '@/types/formula'
-import { INGREDIENTES, calcularIngrediente, getStatus } from '@/types/formula'
+import { INGREDIENTES, EMBALAGEM_LABEL, calcularIngrediente, getStatus } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
 interface RelatorioDiarioProps {
@@ -135,7 +135,7 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
                   <td className={cn(td, 'font-mono uppercase')}>{o.placa || '—'}</td>
                   <td className={cn(td, 'text-center font-bold')}>{o.envelopar ? 'SIM' : 'NÃO'}</td>
                   <td className={cn(td, 'text-right font-mono')}>{o.quantidade}</td>
-                  <td className={cn(td, 'text-center')}>{o.embalagem}</td>
+                  <td className={cn(td, 'text-center')}>{EMBALAGEM_LABEL[o.embalagem]}</td>
                   <td className={cn(td, 'text-right font-mono font-bold text-brand-700')}>{(o.tons ?? 0).toFixed(2)}</td>
                   <td className={cn(td, 'font-bold')}>{f?.nome ?? '—'}</td>
                   <td className={td}>

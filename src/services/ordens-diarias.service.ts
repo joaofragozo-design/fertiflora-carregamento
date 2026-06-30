@@ -60,6 +60,13 @@ export class OrdensDiariasService {
     return this.atualizar(id, { iniciado: true, finalizado: true })
   }
 
+  /** Reordena as ordens do dia: `ids` na nova ordem de prioridade (1..N). */
+  async reordenar(data: string, ids: string[]): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (this.supabase as any).rpc('reordenar_ordens', { p_data: data, p_ids: ids })
+    if (error) throw new Error(this.traduzirErro(error.message, 'reordenar'))
+  }
+
   async deletar(id: string): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (this.supabase as any)

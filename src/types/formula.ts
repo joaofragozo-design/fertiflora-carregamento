@@ -20,7 +20,7 @@ export interface Formula {
   updated_at:         string
 }
 
-export type Embalagem = 'SACOS' | 'BAGS'
+export type Embalagem = 'SACOS' | 'BAG_750' | 'BAG_1000'
 
 export type StatusOrdem = 'AGUARDANDO' | 'EM_ANDAMENTO' | 'FINALIZADO'
 
@@ -68,8 +68,24 @@ export function calcularIngrediente(formula: Formula, ingrediente: IngredienteKe
   return +(formula[ingrediente] * 1000).toFixed(2)
 }
 
+// Toneladas por unidade de cada embalagem.
+export const PESO_TON: Record<Embalagem, number> = {
+  SACOS:    0.05, //   50 kg
+  BAG_750:  0.75, //  750 kg
+  BAG_1000: 1.0,  // 1000 kg
+}
+
+// Rótulos exibidos na interface.
+export const EMBALAGEM_LABEL: Record<Embalagem, string> = {
+  SACOS:    'SACOS',
+  BAG_750:  'BAG DE 750kg',
+  BAG_1000: 'BAG DE 1000kg',
+}
+
+export const EMBALAGEM_OPCOES: Embalagem[] = ['SACOS', 'BAG_750', 'BAG_1000']
+
 export function calcularTons(quantidade: number, embalagem: Embalagem): number {
-  return embalagem === 'SACOS' ? quantidade * 0.05 : quantidade * 0.75
+  return quantidade * (PESO_TON[embalagem] ?? 0)
 }
 
 export function getStatus(ordem: Pick<OrdemDiaria, 'iniciado' | 'finalizado'>): StatusOrdem {

@@ -4,7 +4,7 @@ import { useState, useTransition, useMemo, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Trash2, ChevronDown, ChevronLeft, ChevronRight, Check, Printer } from 'lucide-react'
+import { Plus, Trash2, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Check, Printer, GripVertical } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { OrdensDiariasService } from '@/services/ordens-diarias.service'
@@ -12,7 +12,7 @@ import { useOrdensDiarias, type EditableOrdem } from '@/hooks/use-ordens-diarias
 import { ROUTES } from '@/constants/routes'
 import type { AppUser } from '@/types'
 import type { OrdemDiaria, Formula, Embalagem, StatusOrdem } from '@/types/formula'
-import { INGREDIENTES, calcularIngrediente, calcularTons, getStatus } from '@/types/formula'
+import { INGREDIENTES, EMBALAGEM_LABEL, EMBALAGEM_OPCOES, calcularIngrediente, calcularTons, getStatus } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
 interface OrdensParneProps {
@@ -242,6 +242,8 @@ function Kpi({ label, value, unit, tone }: { label: string; value: string | numb
 export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: OrdensParneProps) {
   const { ordens, setOrdens } = useOrdensDiarias(initialOrdens, hoje)
   const [isPending, startTransition] = useTransition()
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [overId, setOverId] = useState<string | null>(null)
   const svc = useMemo(() => new OrdensDiariasService(createClient()), [])
   const router = useRouter()
 
@@ -249,6 +251,9 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
   const podeMarcarStatus = user.role === 'admin' || user.role === 'logistica_02'
 
   const totalTons = useMemo(() => ordens.reduce((acc, o) => acc + (o.tons ?? 0), 0), [ordens])
+
+  // Exibe na ordem de prioridade definida pelo Fransua (sequencia).
+  const linhas = useMemo(() => [...ordens].sort((a, b) => a.sequencia - b.sequencia), [ordens])
 
   const counts = useMemo(() => {
     let aguardando = 0, andamento = 0, finalizado = 0
@@ -355,6 +360,47 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
     await saveField(id, { envelopar: val })
   }
 
+  // Aplica uma nova ordem completa (sequencia = posição). Otimista + persiste.
+  // Marca _saving nas linhas afetadas para o realtime ignorar o "flood" do
+  // próprio reordenamento (evita as linhas piscarem fora de lugar).
+  async function aplicarNovaOrdem(novo: EditableOrdem[]) {
+    const anterior = ordens
+    const pos = new Map(novo.map((o, i) => [o.id, i + 1]))
+    setOrdens((prev) => prev.map((o) => (pos.has(o.id) ? { ...o, sequencia: pos.get(o.id)!, _saving: true } : o)))
+    try {
+      await svc.reordenar(hoje, novo.map((o) => o.id))
+      setOrdens((prev) => prev.map((o) => (pos.has(o.id) ? { ...o, _saving: false } : o)))
+    } catch (err) {
+      setOrdens(anterior)
+      toast.error(err instanceof Error ? err.message : 'Erro ao reordenar.')
+    }
+  }
+
+  // Setas: troca com o vizinho.
+  function handleMover(ordem: EditableOrdem, dir: -1 | 1) {
+    const sorted = [...ordens].sort((a, b) => a.sequencia - b.sequencia)
+    const idx = sorted.findIndex((o) => o.id === ordem.id)
+    const alvo = idx + dir
+    if (alvo < 0 || alvo >= sorted.length) return
+    const novo = [...sorted]
+    ;[novo[idx], novo[alvo]] = [novo[alvo], novo[idx]]
+    aplicarNovaOrdem(novo)
+  }
+
+  // Arrastar: move a ordem arrastada para a posição da ordem-alvo.
+  function handleDrop(targetId: string) {
+    const sorted = [...ordens].sort((a, b) => a.sequencia - b.sequencia)
+    const from = sorted.findIndex((o) => o.id === dragId)
+    const to = sorted.findIndex((o) => o.id === targetId)
+    setDragId(null)
+    setOverId(null)
+    if (from < 0 || to < 0 || from === to) return
+    const novo = [...sorted]
+    const [movida] = novo.splice(from, 1)
+    novo.splice(to, 0, movida)
+    aplicarNovaOrdem(novo)
+  }
+
   const thCls = 'px-2 py-2 text-[10px] uppercase tracking-wider text-industrial-400 font-semibold whitespace-nowrap border-b border-industrial-700 bg-industrial-900'
   const tdCls = 'px-2 py-1 border-b border-industrial-800 align-middle'
   const COLUNAS = 12 + (podeEditarDados ? 1 : 0)
@@ -430,7 +476,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
           <table className="w-full text-xs border-collapse">
             <thead>
               <tr>
-                <th className={cn(thCls, 'text-center w-8')}>#</th>
+                <th className={cn(thCls, 'text-center', podeEditarDados ? 'w-16' : 'w-8')}>#</th>
                 <th className={cn(thCls, 'text-left min-w-[130px]')}>Cliente</th>
                 <th className={cn(thCls, 'text-center w-24')}>Status</th>
                 <th className={cn(thCls, 'text-center w-16')}>Iniciado</th>
@@ -438,7 +484,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
                 <th className={cn(thCls, 'text-left w-20')}>Placa</th>
                 <th className={cn(thCls, 'text-center w-20')}>Envelopar</th>
                 <th className={cn(thCls, 'text-right w-24')}>Quant.</th>
-                <th className={cn(thCls, 'text-center w-24')}>Embalagem</th>
+                <th className={cn(thCls, 'text-center w-32')}>Embalagem</th>
                 <th className={cn(thCls, 'text-right w-16')}>Tons</th>
                 <th className={cn(thCls, 'text-left min-w-[210px]')}>Fórmula</th>
                 <th className={cn(thCls, 'text-left min-w-[280px]')}>Ingredientes (kg/ton)</th>
@@ -446,7 +492,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
               </tr>
             </thead>
             <tbody>
-              {ordens.map((ordem) => {
+              {linhas.map((ordem, idx) => {
                 const status = getStatus(ordem)
                 const editarDados = podeEditarDados && !ordem.finalizado
                 const tons = calcularTons(ordem.quantidade, ordem.embalagem)
@@ -461,9 +507,59 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
                 return (
                   <tr
                     key={ordem.id}
-                    className={cn('transition-colors', ROW_STYLES[status], ordem._saving && 'opacity-80')}
+                    onDragOver={podeEditarDados ? (e) => { e.preventDefault(); if (overId !== ordem.id) setOverId(ordem.id) } : undefined}
+                    onDrop={podeEditarDados ? () => handleDrop(ordem.id) : undefined}
+                    onDragEnd={podeEditarDados ? () => { setDragId(null); setOverId(null) } : undefined}
+                    className={cn(
+                      'transition-colors',
+                      ROW_STYLES[status],
+                      ordem._saving && 'opacity-80',
+                      dragId === ordem.id && 'opacity-40',
+                      overId === ordem.id && dragId && dragId !== ordem.id && 'border-t-2 border-brand-500',
+                    )}
                   >
-                    <td className={cn(tdCls, 'text-center text-industrial-500 font-mono')}>{ordem.sequencia}</td>
+                    <td className={cn(tdCls, 'text-center')}>
+                      <div className="flex items-center justify-center gap-1">
+                        {podeEditarDados && (
+                          <span
+                            draggable
+                            onDragStart={(e) => {
+                              setDragId(ordem.id)
+                              e.dataTransfer.effectAllowed = 'move'
+                              e.dataTransfer.setData('text/plain', ordem.id)
+                            }}
+                            className="cursor-grab active:cursor-grabbing text-industrial-400 hover:text-brand-700"
+                            title="Arraste para reordenar a prioridade"
+                            aria-label="Arraste para reordenar"
+                          >
+                            <GripVertical className="size-4" />
+                          </span>
+                        )}
+                        {podeEditarDados && (
+                          <div className="flex flex-col -my-1">
+                            <button
+                              type="button"
+                              onClick={() => handleMover(ordem, -1)}
+                              disabled={idx === 0}
+                              aria-label="Aumentar prioridade"
+                              className="text-industrial-400 hover:text-brand-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              <ChevronUp className="size-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMover(ordem, 1)}
+                              disabled={idx === linhas.length - 1}
+                              aria-label="Diminuir prioridade"
+                              className="text-industrial-400 hover:text-brand-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              <ChevronDown className="size-3.5" />
+                            </button>
+                          </div>
+                        )}
+                        <span className="text-industrial-500 font-mono">{ordem.sequencia}</span>
+                      </div>
+                    </td>
 
                     <td className={tdCls}>
                       {editarDados ? (
@@ -568,11 +664,12 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
                           onChange={(e) => handleEmbalagem(ordem.id, e.target.value as Embalagem)}
                           className="bg-industrial-900 border border-industrial-600 rounded px-1 py-0.5 text-xs text-industrial-100 focus:outline-none focus:border-brand-500"
                         >
-                          <option value="SACOS">SACOS</option>
-                          <option value="BAGS">BAGS</option>
+                          {EMBALAGEM_OPCOES.map((opt) => (
+                            <option key={opt} value={opt}>{EMBALAGEM_LABEL[opt]}</option>
+                          ))}
                         </select>
                       ) : (
-                        <span className="text-industrial-100 font-medium">{ordem.embalagem}</span>
+                        <span className="text-industrial-100 font-medium">{EMBALAGEM_LABEL[ordem.embalagem]}</span>
                       )}
                     </td>
 
