@@ -9,8 +9,8 @@ import { createClient } from '@/lib/supabase/client'
 import { ProgramacaoService } from '@/services/programacao.service'
 import { ROUTES } from '@/constants/routes'
 import type { Programacao } from '@/types/programacao'
-import type { Embalagem } from '@/types/formula'
-import { EMBALAGEM_LABEL, EMBALAGEM_OPCOES, calcularTons } from '@/types/formula'
+import type { Embalagem, Formula } from '@/types/formula'
+import { INGREDIENTES, EMBALAGEM_LABEL, EMBALAGEM_OPCOES, calcularIngrediente, calcularTons } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
 interface ProgramacaoSemanaProps {
@@ -144,6 +144,22 @@ export function ProgramacaoSemana({ initialItens, formulas, semanaInicio, hoje, 
   const itensDoDia = (data: string) => itens.filter((it) => it.data === data)
   const totalDia = (data: string) => itensDoDia(data).reduce((s, it) => s + (it.tons ?? 0), 0)
 
+  // Insumos (matéria-prima) consumidos pela programação do dia: Σ tons × kg/ton.
+  function insumosDoDia(data: string): { label: string; kg: number }[] {
+    const acc: Record<string, { label: string; kg: number }> = {}
+    for (const it of itensDoDia(data)) {
+      const f = it.formula as Formula | undefined
+      if (!f) continue
+      for (const ing of INGREDIENTES) {
+        const kgPorTon = calcularIngrediente(f, ing.key)
+        if (kgPorTon > 0) {
+          acc[ing.key] = { label: ing.label, kg: (acc[ing.key]?.kg ?? 0) + (it.tons ?? 0) * kgPorTon }
+        }
+      }
+    }
+    return Object.values(acc).sort((a, b) => b.kg - a.kg)
+  }
+
   function irParaSemana(inicio: string) {
     router.push(`${ROUTES.PROGRAMACAO}?semana=${inicio}`)
   }
@@ -242,6 +258,7 @@ export function ProgramacaoSemana({ initialItens, formulas, semanaInicio, hoje, 
         {dias.map(({ nome, data }) => {
           const ehAmanha = data === amanha
           const ehHoje = data === hoje
+          const insumos = insumosDoDia(data)
           return (
             <div
               key={data}
@@ -295,6 +312,22 @@ export function ProgramacaoSemana({ initialItens, formulas, semanaInicio, hoje, 
                   </button>
                 )}
               </div>
+
+              {insumos.length > 0 && (
+                <div className="rounded-lg bg-industrial-950 border border-industrial-700 p-2 mt-auto">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-industrial-400 mb-1.5">Insumos do dia</p>
+                  <div className="flex flex-col gap-1">
+                    {insumos.map((m) => (
+                      <div key={m.label} className="flex items-center justify-between gap-2 text-xs">
+                        <span className="text-industrial-400 truncate">{m.label}</span>
+                        <span className="font-mono font-bold text-industrial-100 shrink-0">
+                          {m.kg.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )
         })}

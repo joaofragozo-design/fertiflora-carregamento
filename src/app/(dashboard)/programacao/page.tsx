@@ -53,7 +53,11 @@ export default async function ProgramacaoPage({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: itens } = await (supabase as any)
     .from('programacao_carregamento')
-    .select('*, formula:formulas (id, nome)')
+    .select(`*, formula:formulas (
+      id, nome, mo, map, calcario_concha, sulfato_amonia, carbonato_ca_mg,
+      ureia, cloreto_potassio, boro, enxofre_pastilhado, fte_br_12, oxmag_s, tsp, caltimag, hiphos_25,
+      ativo, created_at, updated_at
+    )`)
     .gte('data', semanaInicio)
     .lte('data', semanaFim)
     .order('data', { ascending: true })

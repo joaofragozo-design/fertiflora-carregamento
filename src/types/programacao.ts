@@ -1,11 +1,11 @@
-import type { Embalagem } from './formula'
+import type { Embalagem, Formula } from './formula'
 
 export interface Programacao {
   id:         string
   data:       string
   cliente:    string
   formula_id: number | null
-  formula?:   { id: number; nome: string }
+  formula?:   Formula
   quantidade: number
   embalagem:  Embalagem
   tons:       number

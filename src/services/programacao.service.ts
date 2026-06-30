@@ -3,7 +3,11 @@ import type { createClient } from '@/lib/supabase/client'
 
 type DB = ReturnType<typeof createClient>
 
-const SELECT = `*, formula:formulas (id, nome)`
+const SELECT = `*, formula:formulas (
+  id, nome, mo, map, calcario_concha, sulfato_amonia, carbonato_ca_mg,
+  ureia, cloreto_potassio, boro, enxofre_pastilhado, fte_br_12, oxmag_s, tsp, caltimag, hiphos_25,
+  ativo, created_at, updated_at
+)`
 
 export class ProgramacaoService {
   constructor(private supabase: DB) {}

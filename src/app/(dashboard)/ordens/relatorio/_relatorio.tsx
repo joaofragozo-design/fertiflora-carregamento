@@ -116,7 +116,7 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
               <th className={cn(th, 'text-right w-16')}>Quant.</th>
               <th className={cn(th, 'text-center w-20')}>Embalagem</th>
               <th className={cn(th, 'text-right w-16')}>Tons</th>
-              <th className={cn(th, 'text-center w-28')}>Tempo · Ritmo</th>
+              <th className={cn(th, 'text-center w-40')}>Tempo · Ritmo</th>
               <th className={cn(th, 'min-w-[190px]')}>Fórmula</th>
               <th className={cn(th, 'min-w-[260px]')}>Ingredientes (kg/ton)</th>
             </tr>
@@ -141,10 +141,13 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
                   <td className={cn(td, 'text-right font-mono')}>{o.quantidade}</td>
                   <td className={cn(td, 'text-center')}>{EMBALAGEM_LABEL[o.embalagem]}</td>
                   <td className={cn(td, 'text-right font-mono font-bold text-brand-700')}>{(o.tons ?? 0).toFixed(2)}</td>
-                  <td className={cn(td, 'text-center font-mono')}>
-                    {durMs > 0
-                      ? <span>{formatDuracao(durMs)} <span className="text-industrial-500">· {tonPorHora(o.tons ?? 0, durMs).toFixed(2)} t/h</span></span>
-                      : <span className="text-industrial-500">—</span>}
+                  <td className={cn(td, 'text-center font-mono whitespace-nowrap')}>
+                    {durMs > 0 ? (
+                      <span className="inline-flex items-center justify-center gap-2">
+                        <span className="font-semibold text-industrial-100">{formatDuracao(durMs)}</span>
+                        <span className="font-bold text-brand-700">{tonPorHora(o.tons ?? 0, durMs).toFixed(2)} t/h</span>
+                      </span>
+                    ) : <span className="text-industrial-500">—</span>}
                   </td>
                   <td className={cn(td, 'font-bold')}>{f?.nome ?? '—'}</td>
                   <td className={td}>
