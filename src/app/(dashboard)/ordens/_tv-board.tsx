@@ -1,8 +1,8 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Check, Clock, Play, FlagTriangleRight, Printer, RotateCcw } from 'lucide-react'
+import { Check, Clock, Play, FlagTriangleRight, Printer, RotateCcw, CalendarRange } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { OrdensDiariasService } from '@/services/ordens-diarias.service'
@@ -10,11 +10,13 @@ import { useOrdensDiarias, type EditableOrdem } from '@/hooks/use-ordens-diarias
 import { ROUTES } from '@/constants/routes'
 import type { AppUser } from '@/types'
 import type { OrdemDiaria, Formula } from '@/types/formula'
-import { INGREDIENTES, EMBALAGEM_LABEL, calcularIngrediente, calcularTons, getStatus } from '@/types/formula'
+import type { Programacao } from '@/types/programacao'
+import { INGREDIENTES, EMBALAGEM_LABEL, calcularIngrediente, calcularTons, getStatus, formatDuracao, tonPorHora } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
 interface TvBoardProps {
   initialOrdens: OrdemDiaria[]
+  programacao: Programacao[]
   user: AppUser
   hoje: string
 }
@@ -23,7 +25,26 @@ function fmtKg(n: number): string {
   return n.toFixed(1).replace(/\.0$/, '')
 }
 
-export function TvBoard({ initialOrdens, user, hoje }: TvBoardProps) {
+/** Cronômetro ao vivo desde o início do carregamento. */
+function Cronometro({ inicio }: { inicio: string }) {
+  const [now, setNow] = useState<number>(() => new Date(inicio).getTime())
+  useEffect(() => {
+    setNow(Date.now())
+    const t = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [])
+  const s = Math.max(0, Math.floor((now - new Date(inicio).getTime()) / 1000))
+  const hh = String(Math.floor(s / 3600)).padStart(2, '0')
+  const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0')
+  const ss = String(s % 60).padStart(2, '0')
+  return <span className="font-mono tabular-nums">{hh}:{mm}:{ss}</span>
+}
+
+function labelDia(data: string): string {
+  return new Date(data + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })
+}
+
+export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps) {
   const { ordens, setOrdens } = useOrdensDiarias(initialOrdens, hoje)
   const svc = useMemo(() => new OrdensDiariasService(createClient()), [])
 
@@ -44,6 +65,19 @@ export function TvBoard({ initialOrdens, user, hoje }: TvBoardProps) {
     () => ordens.filter((o) => o.finalizado).sort((a, b) => a.sequencia - b.sequencia),
     [ordens],
   )
+
+  // Programação agrupada por dia (prévia dos próximos dias).
+  const diasProg = useMemo(() => {
+    const map = new Map<string, Programacao[]>()
+    for (const p of programacao) {
+      const arr = map.get(p.data) ?? []
+      arr.push(p)
+      map.set(p.data, arr)
+    }
+    return Array.from(map.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([data, itens]) => ({ data, itens }))
+  }, [programacao])
 
   async function salvar(id: string, patch: Partial<OrdemDiaria>) {
     setOrdens((prev) => prev.map((o) => (o.id === id ? { ...o, ...patch, _saving: true, _dirty: false } : o)))
@@ -120,53 +154,59 @@ export function TvBoard({ initialOrdens, user, hoje }: TvBoardProps) {
             >
               {/* Cliente + status */}
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-baseline gap-2 min-w-0">
-                  <span className="font-mono text-base text-industrial-500">{o.sequencia}</span>
-                  <span className="text-xl font-bold text-industrial-50 truncate">{o.cliente || 'Sem cliente'}</span>
+                <div className="flex items-baseline gap-3 min-w-0">
+                  <span className="font-mono text-xl text-industrial-500">{o.sequencia}</span>
+                  <span className="text-4xl font-bold text-industrial-50 truncate">{o.cliente || 'Sem cliente'}</span>
+                  {o.placa && (
+                    <span className="text-4xl font-mono font-bold text-industrial-400 uppercase shrink-0">{o.placa}</span>
+                  )}
                 </div>
                 <span
                   className={cn(
-                    'flex items-center gap-1.5 text-base font-bold whitespace-nowrap',
+                    'flex items-center gap-2 text-2xl font-bold whitespace-nowrap',
                     emAndamento ? 'text-amber-900' : 'text-industrial-500',
                   )}
                 >
-                  {emAndamento ? <Clock className="size-5" /> : null}
+                  {emAndamento ? <Clock className="size-8" /> : null}
                   {emAndamento ? 'Em andamento' : 'Aguardando'}
+                  {emAndamento && o.iniciado_em && (
+                    <span className="ml-2 text-3xl font-extrabold text-amber-900"><Cronometro inicio={o.iniciado_em} /></span>
+                  )}
                 </span>
               </div>
 
               {/* Quantidade + envelopar (MAIÚSCULO, destaque) + toneladas */}
-              <div className="flex items-center justify-between gap-3 flex-wrap mt-3">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-2xl font-extrabold text-industrial-50 tracking-wide">
+              <div className="flex items-center justify-between gap-3 flex-wrap mt-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-4xl font-extrabold text-industrial-50 tracking-wide">
                     {o.quantidade} × {EMBALAGEM_LABEL[o.embalagem]}
                   </span>
                   {o.envelopar && (
-                    <span className="rounded-md bg-brand-600 text-white text-xs font-bold uppercase tracking-wide px-2 py-1">
+                    <span className="rounded-md bg-brand-600 text-white text-lg font-bold uppercase tracking-wide px-3 py-1.5">
                       Envelopar
                     </span>
                   )}
                 </div>
-                <span className="text-xl font-bold text-brand-700">
-                  {tons.toFixed(2)} <span className="text-sm font-normal text-industrial-500">ton</span>
+                <span className="text-4xl font-bold text-brand-700">
+                  {tons.toFixed(2)} <span className="text-xl font-normal text-industrial-500">ton</span>
                 </span>
               </div>
 
               {/* Fórmula — secundária (rótulo) */}
-              <div className="mt-3 text-sm text-industrial-500">
+              <div className="mt-4 text-2xl text-industrial-500">
                 Fórmula:{' '}
-                <span className="font-semibold text-industrial-200">
+                <span className="font-bold text-industrial-100">
                   {formula?.nome ?? 'sem fórmula'}
                 </span>
               </div>
 
-              {/* Ingredientes — PROTAGONISTAS (números grandes) */}
+              {/* Ingredientes — PROTAGONISTAS (números bem grandes) */}
               {usados.length > 0 && (
-                <div className="flex flex-wrap gap-x-9 gap-y-4 mt-3">
+                <div className="flex flex-wrap gap-x-12 gap-y-6 mt-5">
                   {usados.map(({ ing, kg }) => (
                     <div key={ing.key} className="flex flex-col">
-                      <span className="text-sm font-bold uppercase tracking-wide text-industrial-300">{ing.label}</span>
-                      <span className="text-5xl font-black font-mono text-industrial-50 leading-none">{fmtKg(kg)}</span>
+                      <span className="text-xl font-bold uppercase tracking-wide text-industrial-300">{ing.label}</span>
+                      <span className="text-7xl font-black font-mono text-industrial-50 leading-none">{fmtKg(kg)}</span>
                     </div>
                   ))}
                 </div>
@@ -174,26 +214,26 @@ export function TvBoard({ initialOrdens, user, hoje }: TvBoardProps) {
 
               {/* Botões grandes */}
               {podeMarcar && (
-                <div className="flex gap-3 mt-5">
+                <div className="flex gap-4 mt-7">
                   <button
                     type="button"
                     onClick={() => toggleIniciado(o)}
                     className={cn(
-                      'flex-1 flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-lg font-bold transition-colors',
+                      'flex-1 flex items-center justify-center gap-3 rounded-xl px-5 py-6 text-3xl font-bold transition-colors',
                       o.iniciado
                         ? 'bg-industrial-900 border-2 border-brand-600 text-brand-700'
                         : 'bg-amber-500 text-white hover:bg-amber-600',
                     )}
                   >
-                    {o.iniciado ? <Check className="size-5" strokeWidth={3} /> : <Play className="size-5" />}
+                    {o.iniciado ? <Check className="size-8" strokeWidth={3} /> : <Play className="size-8" />}
                     {o.iniciado ? 'Iniciado' : 'Iniciar'}
                   </button>
                   <button
                     type="button"
                     onClick={() => toggleFinalizado(o)}
-                    className="flex-1 flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-lg font-bold bg-brand-600 text-white hover:bg-brand-700 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-3 rounded-xl px-5 py-6 text-3xl font-bold bg-brand-600 text-white hover:bg-brand-700 transition-colors"
                   >
-                    <FlagTriangleRight className="size-5" /> Finalizar
+                    <FlagTriangleRight className="size-8" /> Finalizar
                   </button>
                 </div>
               )}
@@ -213,6 +253,9 @@ export function TvBoard({ initialOrdens, user, hoje }: TvBoardProps) {
             {finalizados.map((o) => {
               const formula = o.formula as Formula | null | undefined
               const tons = calcularTons(o.quantidade, o.embalagem)
+              const durMs = o.iniciado_em && o.finalizado_em
+                ? new Date(o.finalizado_em).getTime() - new Date(o.iniciado_em).getTime()
+                : 0
               return (
                 <div
                   key={o.id}
@@ -225,10 +268,16 @@ export function TvBoard({ initialOrdens, user, hoje }: TvBoardProps) {
                     <div className="flex items-center gap-1.5">
                       <Check className="size-4 text-brand-700 shrink-0" strokeWidth={3} />
                       <span className="font-bold text-industrial-100 truncate">{o.cliente || 'Sem cliente'}</span>
+                      {o.placa && <span className="text-xs font-mono text-industrial-500 uppercase shrink-0">{o.placa}</span>}
                     </div>
                     <div className="text-xs text-industrial-600 truncate mt-0.5">
                       {formula?.nome ?? 'sem fórmula'} · {tons.toFixed(2)} ton · {o.quantidade} {EMBALAGEM_LABEL[o.embalagem]}
                     </div>
+                    {durMs > 0 && (
+                      <div className="text-xs text-brand-700 font-medium mt-0.5">
+                        <Clock className="inline size-3 mb-0.5" /> {formatDuracao(durMs)} · {tonPorHora(tons, durMs).toFixed(2)} ton/h
+                      </div>
+                    )}
                   </div>
                   {podeMarcar && (
                     <button
@@ -243,6 +292,32 @@ export function TvBoard({ initialOrdens, user, hoje }: TvBoardProps) {
                 </div>
               )
             })}
+          </div>
+        </div>
+      )}
+
+      {/* PROGRAMAÇÃO — prévia dos próximos dias (embutida, somente leitura) */}
+      {diasProg.length > 0 && (
+        <div className="mt-2">
+          <div className="flex items-center gap-2 text-sm font-semibold text-industrial-400 uppercase tracking-wide border-t border-industrial-700 pt-3 mb-3">
+            <CalendarRange className="size-4 text-brand-600" />
+            Programação dos próximos dias
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+            {diasProg.map(({ data, itens }) => (
+              <div key={data} className="rounded-xl border border-industrial-800 p-3">
+                <p className="text-sm font-bold text-industrial-200 capitalize mb-2">{labelDia(data)}</p>
+                <div className="flex flex-col gap-1.5">
+                  {itens.map((it) => (
+                    <div key={it.id} className="text-sm leading-snug">
+                      <span className="font-semibold text-industrial-100">{it.cliente || '—'}</span>
+                      {it.formula?.nome && <span className="text-brand-700"> · {it.formula.nome}</span>}
+                      <span className="text-industrial-500"> · {it.quantidade} {EMBALAGEM_LABEL[it.embalagem]} · {(it.tons ?? 0).toFixed(2)} ton</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

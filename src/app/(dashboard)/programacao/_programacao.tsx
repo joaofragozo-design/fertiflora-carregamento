@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Trash2, Pencil, X, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, Trash2, Pencil, X, ChevronLeft, ChevronRight, ChevronDown, Printer } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { ProgramacaoService } from '@/services/programacao.service'
@@ -219,9 +220,20 @@ export function ProgramacaoSemana({ initialItens, formulas, semanaInicio, hoje, 
             <p className="text-xs text-industrial-400 mt-1.5">Prévia (somente leitura) — quem programa é a Logística.</p>
           )}
         </div>
-        <div className="text-right">
-          <p className="text-xs text-industrial-400">Total da semana</p>
-          <p className="text-2xl font-bold text-brand-600">{totalSemana.toFixed(2)} <span className="text-sm font-normal text-industrial-400">ton</span></p>
+        <div className="flex items-center gap-3">
+          {!readOnly && (
+            <Link
+              href={ROUTES.ORDENS_RELATORIO}
+              className="flex items-center gap-1.5 rounded-lg border border-industrial-700 px-3 py-2 text-xs font-medium text-industrial-200 hover:border-brand-500 hover:text-brand-700 transition-colors"
+            >
+              <Printer className="size-4" />
+              Relatório do dia
+            </Link>
+          )}
+          <div className="text-right">
+            <p className="text-xs text-industrial-400">Total da semana</p>
+            <p className="text-2xl font-bold text-brand-600">{totalSemana.toFixed(2)} <span className="text-sm font-normal text-industrial-400">ton</span></p>
+          </div>
         </div>
       </div>
 

@@ -12,7 +12,7 @@ import { useOrdensDiarias, type EditableOrdem } from '@/hooks/use-ordens-diarias
 import { ROUTES } from '@/constants/routes'
 import type { AppUser } from '@/types'
 import type { OrdemDiaria, Formula, Embalagem, StatusOrdem } from '@/types/formula'
-import { INGREDIENTES, EMBALAGEM_LABEL, EMBALAGEM_OPCOES, calcularIngrediente, calcularTons, getStatus } from '@/types/formula'
+import { INGREDIENTES, EMBALAGEM_LABEL, EMBALAGEM_OPCOES, calcularIngrediente, calcularTons, getStatus, formatDuracao } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
 interface OrdensParneProps {
@@ -579,6 +579,11 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
                       <span className={cn('px-2 py-0.5 rounded text-[10px] font-bold', STATUS_STYLES[status])}>
                         {STATUS_LABEL[status]}
                       </span>
+                      {ordem.finalizado && ordem.iniciado_em && ordem.finalizado_em && (
+                        <div className="text-[10px] text-industrial-500 mt-0.5" title="Tempo de carregamento">
+                          ⏱ {formatDuracao(new Date(ordem.finalizado_em).getTime() - new Date(ordem.iniciado_em).getTime())}
+                        </div>
+                      )}
                     </td>
 
                     <td className={cn(tdCls, 'text-center')}>

@@ -6,6 +6,7 @@ import { ROUTES } from '@/constants/routes'
 import { OrdensParnel } from './_painel'
 import { TvBoard } from './_tv-board'
 import type { OrdemDiaria } from '@/types/formula'
+import type { Programacao } from '@/types/programacao'
 
 export const metadata: Metadata = {
   title: 'Ordens Diárias de Carregamento',
@@ -13,6 +14,12 @@ export const metadata: Metadata = {
 
 function toDateString(d: Date): string {
   return d.toISOString().slice(0, 10)
+}
+function addDias(iso: string, n: number): string {
+  const [y, m, d] = iso.split('-').map(Number)
+  const dt = new Date(y, m - 1, d)
+  dt.setDate(dt.getDate() + n)
+  return toDateString(new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), 12))
 }
 
 export default async function OrdensPage({
@@ -47,7 +54,25 @@ export default async function OrdensPage({
   // Richardson (logistica_02) → painel de TV (cards grandes, só marca status).
   // Fransua (logistica) e admin → tabela editável (lança os pedidos).
   if (profile.role === 'logistica_02') {
-    return <TvBoard key={hoje} initialOrdens={ordensList} user={profile} hoje={hoje} />
+    // Programação dos próximos dias (amanhã até +7) para a prévia embutida na TV.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: prog } = await (supabase as any)
+      .from('programacao_carregamento')
+      .select('*, formula:formulas (id, nome)')
+      .gte('data', addDias(hoje, 1))
+      .lte('data', addDias(hoje, 7))
+      .order('data', { ascending: true })
+      .order('created_at', { ascending: true })
+
+    return (
+      <TvBoard
+        key={hoje}
+        initialOrdens={ordensList}
+        programacao={(prog ?? []) as Programacao[]}
+        user={profile}
+        hoje={hoje}
+      />
+    )
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -36,13 +36,33 @@ export interface OrdemDiaria {
   tons:        number
   formula_id:  number | null
   formula?:    Formula
-  iniciado:    boolean
-  finalizado:  boolean
-  created_at:  string
-  updated_at:  string
+  iniciado:      boolean
+  finalizado:    boolean
+  iniciado_em:   string | null
+  finalizado_em: string | null
+  created_at:    string
+  updated_at:    string
 }
 
-export type OrdemDiariaInsert = Omit<OrdemDiaria, 'id' | 'tons' | 'formula' | 'created_at' | 'updated_at'>
+/** Formata uma duração em ms como "1h 23m" ou "12m" ou "45s". */
+export function formatDuracao(ms: number): string {
+  if (ms <= 0) return '—'
+  const totalMin = Math.floor(ms / 60000)
+  const h = Math.floor(totalMin / 60)
+  const m = totalMin % 60
+  if (h > 0) return `${h}h ${m}m`
+  if (m > 0) return `${m}m`
+  return `${Math.floor(ms / 1000)}s`
+}
+
+/** Ritmo de carregamento em toneladas por hora. */
+export function tonPorHora(tons: number, ms: number): number {
+  const horas = ms / 3_600_000
+  if (horas <= 0) return 0
+  return +(tons / horas).toFixed(2)
+}
+
+export type OrdemDiariaInsert = Omit<OrdemDiaria, 'id' | 'tons' | 'formula' | 'iniciado_em' | 'finalizado_em' | 'created_at' | 'updated_at'>
 export type OrdemDiariaUpdate = Partial<OrdemDiariaInsert>
 
 export const INGREDIENTES = [

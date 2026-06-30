@@ -32,8 +32,7 @@ const HEADER_NAV: Record<string, NavLink[]> = {
     { href: '/admin/formulas', label: 'Fórmulas',      icon: FileSpreadsheet },
   ],
   logistica_02: [
-    { href: '/ordens',      label: 'Ordens do Dia', icon: CalendarDays },
-    { href: '/programacao', label: 'Programação',   icon: CalendarRange },
+    { href: '/ordens', label: 'Ordens do Dia', icon: CalendarDays },
   ],
 }
 

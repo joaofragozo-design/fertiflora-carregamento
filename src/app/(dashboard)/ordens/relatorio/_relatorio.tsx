@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Printer, ArrowLeft } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import type { OrdemDiaria, Formula, StatusOrdem } from '@/types/formula'
-import { INGREDIENTES, EMBALAGEM_LABEL, calcularIngrediente, getStatus } from '@/types/formula'
+import { INGREDIENTES, EMBALAGEM_LABEL, calcularIngrediente, getStatus, formatDuracao, tonPorHora } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
 interface RelatorioDiarioProps {
@@ -116,6 +116,7 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
               <th className={cn(th, 'text-right w-16')}>Quant.</th>
               <th className={cn(th, 'text-center w-20')}>Embalagem</th>
               <th className={cn(th, 'text-right w-16')}>Tons</th>
+              <th className={cn(th, 'text-center w-28')}>Tempo · Ritmo</th>
               <th className={cn(th, 'min-w-[190px]')}>Fórmula</th>
               <th className={cn(th, 'min-w-[260px]')}>Ingredientes (kg/ton)</th>
             </tr>
@@ -127,6 +128,9 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
               const usados = f
                 ? INGREDIENTES.map((ing) => ({ ing, kg: calcularIngrediente(f, ing.key) })).filter((x) => x.kg > 0)
                 : []
+              const durMs = o.iniciado_em && o.finalizado_em
+                ? new Date(o.finalizado_em).getTime() - new Date(o.iniciado_em).getTime()
+                : 0
               return (
                 <tr key={o.id} className={cn(ROW_STYLES[status], 'print:text-black')}>
                   <td className={cn(td, 'text-center font-mono text-industrial-500')}>{o.sequencia}</td>
@@ -137,6 +141,11 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
                   <td className={cn(td, 'text-right font-mono')}>{o.quantidade}</td>
                   <td className={cn(td, 'text-center')}>{EMBALAGEM_LABEL[o.embalagem]}</td>
                   <td className={cn(td, 'text-right font-mono font-bold text-brand-700')}>{(o.tons ?? 0).toFixed(2)}</td>
+                  <td className={cn(td, 'text-center font-mono')}>
+                    {durMs > 0
+                      ? <span>{formatDuracao(durMs)} <span className="text-industrial-500">· {tonPorHora(o.tons ?? 0, durMs).toFixed(2)} t/h</span></span>
+                      : <span className="text-industrial-500">—</span>}
+                  </td>
                   <td className={cn(td, 'font-bold')}>{f?.nome ?? '—'}</td>
                   <td className={td}>
                     {f ? (
@@ -154,7 +163,7 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
               )
             })}
             {ordens.length === 0 && (
-              <tr><td colSpan={10} className="text-center py-8 text-industrial-400">Nenhuma ordem neste dia.</td></tr>
+              <tr><td colSpan={11} className="text-center py-8 text-industrial-400">Nenhuma ordem neste dia.</td></tr>
             )}
           </tbody>
           {ordens.length > 0 && (
@@ -162,7 +171,7 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
               <tr>
                 <td colSpan={7} className="px-2 py-2 text-right text-xs font-semibold text-industrial-300">Total do dia:</td>
                 <td className="px-2 py-2 text-right font-mono font-bold text-brand-700">{totalTons.toFixed(2)}</td>
-                <td colSpan={2} />
+                <td colSpan={3} />
               </tr>
             </tfoot>
           )}

@@ -82,6 +82,10 @@ export class OrdensDiariasService {
       return 'Sem permissão para esta operação.'
     if (msg.includes('unique') || msg.includes('duplicate'))
       return 'Já existe uma ordem nessa posição.'
+    if (msg.includes('check constraint'))
+      return 'Valor inválido. Rode as migrations pendentes no banco (embalagens/reordenação).'
+    if (msg.includes('Could not find the function') || msg.includes('reordenar_ordens'))
+      return 'Função de reordenação não encontrada — rode a migration 015 no Supabase.'
     console.error(`[OrdensDiariasService.${acao}]`, msg)
     return `Erro ao ${acao} ordem. Tente novamente.`
   }
