@@ -8,9 +8,9 @@ import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { ProgramacaoService } from '@/services/programacao.service'
 import { ROUTES } from '@/constants/routes'
-import type { Programacao } from '@/types/programacao'
+import type { Programacao, ProgramacaoItem } from '@/types/programacao'
 import type { Embalagem, Formula } from '@/types/formula'
-import { INGREDIENTES, EMBALAGEM_LABEL, EMBALAGEM_OPCOES, calcularIngrediente, calcularTons } from '@/types/formula'
+import { MATERIAS_PRIMA, EMBALAGEM_LABEL, EMBALAGEM_OPCOES, calcularMateriaPrima, calcularTons } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
 interface ProgramacaoSemanaProps {
@@ -35,6 +35,11 @@ function addDiasIso(iso: string, n: number): string {
 function ddmm(iso: string): string {
   const [, m, d] = iso.split('-')
   return `${d}/${m}`
+}
+
+/** Soma as toneladas de todos os itens de um agendamento. */
+function tonsDoAgendamento(ag: Programacao): number {
+  return (ag.itens ?? []).reduce((s, it) => s + (it.tons ?? 0), 0)
 }
 
 function FormulaPicker({
@@ -112,23 +117,35 @@ function FormulaPicker({
   )
 }
 
-interface FormState {
-  id: string | null
-  data: string
-  cliente: string
-  formula_id: number | null
-  quantidade: number
-  embalagem: Embalagem
+// ─── Formulário de ITEM (fórmula/quantidade/embalagem) ─────────────────────
+// Cria um agendamento novo (com cliente/observação) OU adiciona/edita um item
+// de um agendamento já existente.
+interface ItemFormState {
+  agendamentoId: string | null // null = criar novo agendamento
+  itemId:        string | null // null = novo item
+  data:          string
+  cliente:       string
+  observacao:    string
+  formula_id:    number | null
+  quantidade:    number
+  embalagem:     Embalagem
+}
+
+const ITEM_FORM_VAZIO: Omit<ItemFormState, 'data' | 'agendamentoId'> = {
+  itemId: null, cliente: '', observacao: '', formula_id: null, quantidade: 0, embalagem: 'SACOS',
+}
+
+// ─── Formulário do AGENDAMENTO (cliente/observação) ────────────────────────
+interface AgendamentoFormState {
+  id:         string
+  cliente:    string
   observacao: string
 }
 
-const FORM_VAZIO: Omit<FormState, 'data'> = {
-  id: null, cliente: '', formula_id: null, quantidade: 0, embalagem: 'SACOS', observacao: '',
-}
-
 export function ProgramacaoSemana({ initialItens, formulas, semanaInicio, hoje, readOnly }: ProgramacaoSemanaProps) {
-  const [itens, setItens] = useState<Programacao[]>(initialItens)
-  const [form, setForm] = useState<FormState | null>(null)
+  const [agendamentos, setAgendamentos] = useState<Programacao[]>(initialItens)
+  const [itemForm, setItemForm] = useState<ItemFormState | null>(null)
+  const [agForm, setAgForm] = useState<AgendamentoFormState | null>(null)
   const [salvando, setSalvando] = useState(false)
   const svc = useMemo(() => new ProgramacaoService(createClient()), [])
   const router = useRouter()
@@ -140,20 +157,21 @@ export function ProgramacaoSemana({ initialItens, formulas, semanaInicio, hoje, 
     [semanaInicio],
   )
 
-  const totalSemana = useMemo(() => itens.reduce((s, it) => s + (it.tons ?? 0), 0), [itens])
-  const itensDoDia = (data: string) => itens.filter((it) => it.data === data)
-  const totalDia = (data: string) => itensDoDia(data).reduce((s, it) => s + (it.tons ?? 0), 0)
+  const totalSemana = useMemo(() => agendamentos.reduce((s, ag) => s + tonsDoAgendamento(ag), 0), [agendamentos])
+  const agendamentosDoDia = (data: string) => agendamentos.filter((ag) => ag.data === data)
+  const totalDia = (data: string) => agendamentosDoDia(data).reduce((s, ag) => s + tonsDoAgendamento(ag), 0)
 
-  // Insumos (matéria-prima) consumidos pela programação do dia: Σ tons × kg/ton.
+  // Matéria-prima consumida pela programação do dia: Σ tons do item × kg/ton.
   function insumosDoDia(data: string): { label: string; kg: number }[] {
     const acc: Record<string, { label: string; kg: number }> = {}
-    for (const it of itensDoDia(data)) {
-      const f = it.formula as Formula | undefined
-      if (!f) continue
-      for (const ing of INGREDIENTES) {
-        const kgPorTon = calcularIngrediente(f, ing.key)
-        if (kgPorTon > 0) {
-          acc[ing.key] = { label: ing.label, kg: (acc[ing.key]?.kg ?? 0) + (it.tons ?? 0) * kgPorTon }
+    for (const ag of agendamentosDoDia(data)) {
+      for (const item of ag.itens ?? []) {
+        const f = item.formula as Formula | undefined
+        if (!f) continue
+        const tons = item.tons ?? calcularTons(item.quantidade, item.embalagem)
+        for (const mp of MATERIAS_PRIMA) {
+          const kgPorTon = calcularMateriaPrima(f, mp.key)
+          if (kgPorTon > 0) acc[mp.key] = { label: mp.label, kg: (acc[mp.key]?.kg ?? 0) + tons * kgPorTon }
         }
       }
     }
@@ -164,36 +182,52 @@ export function ProgramacaoSemana({ initialItens, formulas, semanaInicio, hoje, 
     router.push(`${ROUTES.PROGRAMACAO}?semana=${inicio}`)
   }
 
-  function abrirNovo(data: string) {
-    setForm({ ...FORM_VAZIO, data })
+  function abrirNovoAgendamento(data: string) {
+    setItemForm({ ...ITEM_FORM_VAZIO, data, agendamentoId: null })
   }
-  function abrirEdicao(it: Programacao) {
-    setForm({
-      id: it.id, data: it.data, cliente: it.cliente, formula_id: it.formula_id,
-      quantidade: it.quantidade, embalagem: it.embalagem, observacao: it.observacao,
+  function abrirNovoItem(ag: Programacao) {
+    setItemForm({ ...ITEM_FORM_VAZIO, data: ag.data, agendamentoId: ag.id })
+  }
+  function abrirEdicaoItem(ag: Programacao, item: ProgramacaoItem) {
+    setItemForm({
+      agendamentoId: ag.id, itemId: item.id, data: ag.data,
+      cliente: ag.cliente, observacao: ag.observacao,
+      formula_id: item.formula_id, quantidade: item.quantidade, embalagem: item.embalagem,
     })
   }
+  function abrirEdicaoAgendamento(ag: Programacao) {
+    setAgForm({ id: ag.id, cliente: ag.cliente, observacao: ag.observacao })
+  }
 
-  async function salvar() {
-    if (!form) return
+  async function salvarItem() {
+    if (!itemForm) return
     setSalvando(true)
-    const payload = {
-      data: form.data,
-      cliente: form.cliente.trim(),
-      formula_id: form.formula_id,
-      quantidade: form.quantidade,
-      embalagem: form.embalagem,
-      observacao: form.observacao.trim(),
-    }
     try {
-      if (form.id) {
-        const upd = await svc.atualizar(form.id, payload)
-        setItens((prev) => prev.map((it) => (it.id === upd.id ? upd : it)))
+      if (itemForm.agendamentoId && itemForm.itemId) {
+        // Editar item existente
+        const upd = await svc.atualizarItem(itemForm.itemId, itemForm.agendamentoId, {
+          formula_id: itemForm.formula_id, quantidade: itemForm.quantidade, embalagem: itemForm.embalagem,
+        })
+        setAgendamentos((prev) => prev.map((a) => (a.id === upd.id ? upd : a)))
+      } else if (itemForm.agendamentoId) {
+        // Adicionar item a um agendamento existente
+        const upd = await svc.adicionarItem(itemForm.agendamentoId, {
+          formula_id: itemForm.formula_id, quantidade: itemForm.quantidade, embalagem: itemForm.embalagem,
+        })
+        setAgendamentos((prev) => prev.map((a) => (a.id === upd.id ? upd : a)))
       } else {
-        const novo = await svc.criar(payload)
-        setItens((prev) => [...prev, novo])
+        // Criar agendamento novo com o primeiro item
+        const novo = await svc.criar({
+          data: itemForm.data,
+          cliente: itemForm.cliente.trim(),
+          observacao: itemForm.observacao.trim(),
+          formula_id: itemForm.formula_id,
+          quantidade: itemForm.quantidade,
+          embalagem: itemForm.embalagem,
+        })
+        setAgendamentos((prev) => [...prev, novo])
       }
-      setForm(null)
+      setItemForm(null)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao salvar.')
     } finally {
@@ -201,17 +235,41 @@ export function ProgramacaoSemana({ initialItens, formulas, semanaInicio, hoje, 
     }
   }
 
-  async function excluir(it: Programacao) {
-    if (!window.confirm('Remover este item da programação?')) return
+  async function salvarAgendamento() {
+    if (!agForm) return
+    setSalvando(true)
     try {
-      await svc.deletar(it.id)
-      setItens((prev) => prev.filter((x) => x.id !== it.id))
+      const upd = await svc.atualizar(agForm.id, { cliente: agForm.cliente.trim(), observacao: agForm.observacao.trim() })
+      setAgendamentos((prev) => prev.map((a) => (a.id === upd.id ? upd : a)))
+      setAgForm(null)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao salvar.')
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  async function removerItem(ag: Programacao, item: ProgramacaoItem) {
+    try {
+      const upd = await svc.removerItem(item.id, ag.id)
+      setAgendamentos((prev) => prev.map((a) => (a.id === upd.id ? upd : a)))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao remover item.')
+    }
+  }
+
+  async function excluirAgendamento(ag: Programacao) {
+    if (!window.confirm('Remover este agendamento (e todos os itens)?')) return
+    try {
+      await svc.deletar(ag.id)
+      setAgendamentos((prev) => prev.filter((a) => a.id !== ag.id))
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao remover.')
     }
   }
 
-  const tonsForm = form ? calcularTons(form.quantidade, form.embalagem) : 0
+  const tonsItemForm = itemForm ? calcularTons(itemForm.quantidade, itemForm.embalagem) : 0
+  const editandoNovoAgendamento = itemForm && !itemForm.agendamentoId
 
   return (
     <div className="flex flex-col gap-4">
@@ -278,37 +336,67 @@ export function ProgramacaoSemana({ initialItens, formulas, semanaInicio, hoje, 
               </div>
 
               <div className="flex flex-col gap-2">
-                {itensDoDia(data).map((it) => (
-                  <div key={it.id} className="rounded-lg border border-industrial-700 bg-industrial-900 p-2">
+                {agendamentosDoDia(data).map((ag) => (
+                  <div key={ag.id} className="rounded-lg border border-industrial-700 bg-industrial-900 p-2">
                     <div className="flex items-start justify-between gap-2">
                       <span className="font-semibold text-industrial-100 text-sm leading-tight">
-                        {it.cliente || <span className="text-industrial-500 font-normal">Sem cliente</span>}
+                        {ag.cliente || <span className="text-industrial-500 font-normal">Sem cliente</span>}
                       </span>
                       {!readOnly && (
                         <div className="flex gap-1 shrink-0">
-                          <button type="button" onClick={() => abrirEdicao(it)} title="Editar"
+                          <button type="button" onClick={() => abrirEdicaoAgendamento(ag)} title="Editar cliente/observação"
                             className="text-industrial-400 hover:text-brand-700"><Pencil className="size-3.5" /></button>
-                          <button type="button" onClick={() => excluir(it)} title="Remover"
+                          <button type="button" onClick={() => excluirAgendamento(ag)} title="Remover agendamento"
                             className="text-industrial-400 hover:text-red-600"><Trash2 className="size-3.5" /></button>
                         </div>
                       )}
                     </div>
-                    {it.formula?.nome && <p className="text-xs font-medium text-brand-700 mt-0.5">{it.formula.nome}</p>}
-                    <p className="text-xs text-industrial-500 mt-0.5">
-                      {it.quantidade} {EMBALAGEM_LABEL[it.embalagem]} · <span className="font-bold text-industrial-300">{(it.tons ?? 0).toFixed(2)} ton</span>
-                    </p>
-                    {it.observacao && <p className="text-xs text-industrial-400 italic mt-0.5">{it.observacao}</p>}
+
+                    <div className="flex flex-col gap-1 mt-1">
+                      {(ag.itens ?? []).map((item) => (
+                        <div key={item.id} className="flex items-start justify-between gap-2 border-t border-industrial-800 first:border-t-0 pt-1 first:pt-0">
+                          <div className="min-w-0">
+                            {item.formula?.nome && <p className="text-xs font-medium text-brand-700 truncate">{item.formula.nome}</p>}
+                            <p className="text-xs text-industrial-500">
+                              {item.quantidade} {EMBALAGEM_LABEL[item.embalagem]} · <span className="font-bold text-industrial-300">{(item.tons ?? 0).toFixed(2)} ton</span>
+                            </p>
+                          </div>
+                          {!readOnly && (
+                            <div className="flex gap-1 shrink-0">
+                              <button type="button" onClick={() => abrirEdicaoItem(ag, item)} title="Editar item"
+                                className="text-industrial-500 hover:text-brand-700"><Pencil className="size-3" /></button>
+                              <button
+                                type="button" onClick={() => removerItem(ag, item)} title="Remover item"
+                                disabled={(ag.itens ?? []).length <= 1}
+                                className="text-industrial-500 hover:text-red-600 disabled:opacity-20 disabled:cursor-not-allowed"
+                              >
+                                <Trash2 className="size-3" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {ag.observacao && <p className="text-xs text-industrial-400 italic mt-1">{ag.observacao}</p>}
+
+                    {!readOnly && (
+                      <button type="button" onClick={() => abrirNovoItem(ag)}
+                        className="flex items-center gap-1 text-[11px] font-medium text-industrial-500 hover:text-brand-700 transition-colors mt-1.5">
+                        <Plus className="size-3" /> Adicionar item (outra fórmula/embalagem)
+                      </button>
+                    )}
                   </div>
                 ))}
 
-                {itensDoDia(data).length === 0 && (
+                {agendamentosDoDia(data).length === 0 && (
                   <p className="text-xs text-industrial-500 text-center py-2">—</p>
                 )}
 
                 {!readOnly && (
-                  <button type="button" onClick={() => abrirNovo(data)}
+                  <button type="button" onClick={() => abrirNovoAgendamento(data)}
                     className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-industrial-600 py-1.5 text-xs font-medium text-industrial-400 hover:border-brand-500 hover:text-brand-700 transition-colors">
-                    <Plus className="size-3.5" /> Adicionar
+                    <Plus className="size-3.5" /> Adicionar cliente
                   </button>
                 )}
               </div>
@@ -333,51 +421,83 @@ export function ProgramacaoSemana({ initialItens, formulas, semanaInicio, hoje, 
         })}
       </div>
 
-      {/* Modal de cadastro/edição */}
-      {form && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setForm(null)}>
+      {/* Modal de cliente/observação (nível agendamento) */}
+      {agForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setAgForm(null)}>
+          <div className="w-full max-w-md rounded-xl bg-industrial-900 border border-industrial-700 p-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold text-industrial-100">Editar cliente</h2>
+              <button type="button" onClick={() => setAgForm(null)} className="text-industrial-400 hover:text-industrial-100"><X className="size-5" /></button>
+            </div>
+            <label className="text-xs font-medium text-industrial-400">Cliente
+              <input value={agForm.cliente} onChange={(e) => setAgForm({ ...agForm, cliente: e.target.value })}
+                className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 focus:outline-none focus:border-brand-500" />
+            </label>
+            <label className="text-xs font-medium text-industrial-400">Observação / nº do pedido
+              <input value={agForm.observacao} onChange={(e) => setAgForm({ ...agForm, observacao: e.target.value })}
+                placeholder="ex.: PEDIDO 26092"
+                className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
+            </label>
+            <div className="flex justify-end gap-2 pt-1">
+              <button type="button" onClick={() => setAgForm(null)}
+                className="rounded-lg border border-industrial-600 px-4 py-2 text-sm font-medium text-industrial-300 hover:bg-industrial-800">Cancelar</button>
+              <button type="button" onClick={salvarAgendamento} disabled={salvando}
+                className="rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-medium disabled:opacity-50">
+                {salvando ? 'Salvando…' : 'Salvar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de item (fórmula/quantidade/embalagem) — cria agendamento ou adiciona/edita item */}
+      {itemForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setItemForm(null)}>
           <div className="w-full max-w-md rounded-xl bg-industrial-900 border border-industrial-700 p-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-industrial-100">
-                {form.id ? 'Editar item' : 'Novo item'} · {ddmm(form.data)}
+                {itemForm.itemId ? 'Editar item' : editandoNovoAgendamento ? 'Novo cliente' : 'Novo item'} · {ddmm(itemForm.data)}
               </h2>
-              <button type="button" onClick={() => setForm(null)} className="text-industrial-400 hover:text-industrial-100"><X className="size-5" /></button>
+              <button type="button" onClick={() => setItemForm(null)} className="text-industrial-400 hover:text-industrial-100"><X className="size-5" /></button>
             </div>
 
-            <label className="text-xs font-medium text-industrial-400">Cliente
-              <input value={form.cliente} onChange={(e) => setForm({ ...form, cliente: e.target.value })}
-                className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 focus:outline-none focus:border-brand-500" />
-            </label>
+            {editandoNovoAgendamento && (
+              <>
+                <label className="text-xs font-medium text-industrial-400">Cliente
+                  <input value={itemForm.cliente} onChange={(e) => setItemForm({ ...itemForm, cliente: e.target.value })}
+                    className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 focus:outline-none focus:border-brand-500" />
+                </label>
+                <label className="text-xs font-medium text-industrial-400">Observação / nº do pedido
+                  <input value={itemForm.observacao} onChange={(e) => setItemForm({ ...itemForm, observacao: e.target.value })}
+                    placeholder="ex.: PEDIDO 26092"
+                    className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
+                </label>
+              </>
+            )}
 
             <div className="text-xs font-medium text-industrial-400">Fórmula
-              <div className="mt-1"><FormulaPicker value={form.formula_id} formulas={formulas} onChange={(id) => setForm({ ...form, formula_id: id })} /></div>
+              <div className="mt-1"><FormulaPicker value={itemForm.formula_id} formulas={formulas} onChange={(id) => setItemForm({ ...itemForm, formula_id: id })} /></div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <label className="text-xs font-medium text-industrial-400">Quantidade
-                <input type="number" value={form.quantidade} onChange={(e) => setForm({ ...form, quantidade: Number(e.target.value) || 0 })}
+                <input type="number" value={itemForm.quantidade} onChange={(e) => setItemForm({ ...itemForm, quantidade: Number(e.target.value) || 0 })}
                   className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 focus:outline-none focus:border-brand-500" />
               </label>
               <label className="text-xs font-medium text-industrial-400">Embalagem
-                <select value={form.embalagem} onChange={(e) => setForm({ ...form, embalagem: e.target.value as Embalagem })}
+                <select value={itemForm.embalagem} onChange={(e) => setItemForm({ ...itemForm, embalagem: e.target.value as Embalagem })}
                   className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 focus:outline-none focus:border-brand-500">
                   {EMBALAGEM_OPCOES.map((opt) => <option key={opt} value={opt}>{EMBALAGEM_LABEL[opt]}</option>)}
                 </select>
               </label>
             </div>
 
-            <label className="text-xs font-medium text-industrial-400">Observação / nº do pedido
-              <input value={form.observacao} onChange={(e) => setForm({ ...form, observacao: e.target.value })}
-                placeholder="ex.: PEDIDO 26092"
-                className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
-            </label>
-
             <div className="flex items-center justify-between pt-1">
-              <span className="text-sm text-industrial-400">Total: <span className="font-bold text-brand-700">{tonsForm.toFixed(2)} ton</span></span>
+              <span className="text-sm text-industrial-400">Total: <span className="font-bold text-brand-700">{tonsItemForm.toFixed(2)} ton</span></span>
               <div className="flex gap-2">
-                <button type="button" onClick={() => setForm(null)}
+                <button type="button" onClick={() => setItemForm(null)}
                   className="rounded-lg border border-industrial-600 px-4 py-2 text-sm font-medium text-industrial-300 hover:bg-industrial-800">Cancelar</button>
-                <button type="button" onClick={salvar} disabled={salvando}
+                <button type="button" onClick={salvarItem} disabled={salvando}
                   className="rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-medium disabled:opacity-50">
                   {salvando ? 'Salvando…' : 'Salvar'}
                 </button>

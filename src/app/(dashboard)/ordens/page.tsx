@@ -67,11 +67,12 @@ export default async function OrdensPage({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: prog } = await (supabase as any)
       .from('programacao_carregamento')
-      .select('*, formula:formulas (id, nome)')
+      .select('*, itens:programacao_itens (*, formula:formulas (id, nome))')
       .gte('data', addDias(hoje, 1))
       .lte('data', addDias(hoje, 7))
       .order('data', { ascending: true })
       .order('created_at', { ascending: true })
+      .order('created_at', { foreignTable: 'programacao_itens', ascending: true })
 
     return (
       <TvBoard

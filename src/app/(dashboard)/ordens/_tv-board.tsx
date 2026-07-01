@@ -351,17 +351,23 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
             Programação dos próximos dias
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-            {diasProg.map(({ data, itens }) => (
+            {diasProg.map(({ data, itens: agendamentos }) => (
               <div key={data} className="rounded-xl border border-industrial-800 p-3">
                 <p className="text-sm font-bold text-industrial-200 capitalize mb-2">{labelDia(data)}</p>
                 <div className="flex flex-col gap-1.5">
-                  {itens.map((it) => (
-                    <div key={it.id} className="text-sm leading-snug">
-                      <span className="font-semibold text-industrial-100">{it.cliente || '—'}</span>
-                      {it.formula?.nome && <span className="text-brand-700"> · {it.formula.nome}</span>}
-                      <span className="text-industrial-500"> · {it.quantidade} {EMBALAGEM_LABEL[it.embalagem]} · {(it.tons ?? 0).toFixed(2)} ton</span>
-                    </div>
-                  ))}
+                  {agendamentos.map((ag) => {
+                    const totalAg = (ag.itens ?? []).reduce((s, it) => s + (it.tons ?? 0), 0)
+                    const resumo = (ag.itens ?? [])
+                      .map((it) => `${it.formula?.nome ?? 'sem fórmula'} (${it.quantidade} ${EMBALAGEM_LABEL[it.embalagem]})`)
+                      .join(' + ')
+                    return (
+                      <div key={ag.id} className="text-sm leading-snug">
+                        <span className="font-semibold text-industrial-100">{ag.cliente || '—'}</span>
+                        {resumo && <span className="text-brand-700"> · {resumo}</span>}
+                        <span className="text-industrial-500"> · {totalAg.toFixed(2)} ton</span>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             ))}
