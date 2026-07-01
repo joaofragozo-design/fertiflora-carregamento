@@ -93,7 +93,7 @@ export const MATERIAS_PRIMA = [
   { key: 'boro',               label: 'Boro 10'       },
   { key: 'enxofre_pastilhado', label: 'Enx. Past.'    },
   { key: 'fte_br_12',          label: 'FTE BR 12'     },
-  { key: 'oxmag_s',            label: 'OXMAG+S'       },
+  { key: 'oxmag_s',            label: 'CALTIMAG+S'    },
   { key: 'tsp',                label: 'TSP'           },
   { key: 'caltimag',           label: 'CALTIMAG'      },
   { key: 'hiphos_25',          label: 'HIPHOS 25'     },
