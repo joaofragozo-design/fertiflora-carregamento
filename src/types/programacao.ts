@@ -18,15 +18,17 @@ export type ProgramacaoItemInsert = Omit<ProgramacaoItem, 'id' | 'tons' | 'formu
 export type ProgramacaoItemUpdate = Partial<ProgramacaoItemInsert>
 
 export interface Programacao {
-  id:         string
-  data:       string
-  cliente:    string
-  itens:      ProgramacaoItem[]
-  observacao: string
-  enviado_em: string | null
-  created_at: string
-  updated_at: string
+  id:            string
+  data:          string
+  cliente:       string
+  itens:         ProgramacaoItem[]
+  observacao:    string
+  enviado_em:    string | null
+  confirmado_em: string | null
+  confirmado_por: string | null
+  created_at:    string
+  updated_at:    string
 }
 
-export type ProgramacaoInsert = Omit<Programacao, 'id' | 'itens' | 'enviado_em' | 'created_at' | 'updated_at'>
+export type ProgramacaoInsert = Omit<Programacao, 'id' | 'itens' | 'enviado_em' | 'confirmado_em' | 'confirmado_por' | 'created_at' | 'updated_at'>
 export type ProgramacaoUpdate = Partial<ProgramacaoInsert>

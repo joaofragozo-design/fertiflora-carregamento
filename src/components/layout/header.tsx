@@ -29,6 +29,7 @@ interface NavLink { href: string; label: string; icon: React.ElementType }
 const HEADER_NAV: Record<string, NavLink[]> = {
   logistica: [
     { href: '/ordens',         label: 'Ordens do Dia', icon: CalendarDays },
+    { href: '/ordens?vista=tv', label: 'Painel TV',    icon: Tv },
     { href: '/programacao',    label: 'Programação',   icon: CalendarRange },
     { href: '/admin/formulas', label: 'Fórmulas',      icon: FileSpreadsheet },
   ],

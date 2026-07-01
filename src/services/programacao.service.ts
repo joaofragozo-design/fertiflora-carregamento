@@ -131,6 +131,18 @@ export class ProgramacaoService {
     return this.getById(programacaoId)
   }
 
+  /** Faturamento confirma que o caminhão chegou — notifica a Logística via realtime. */
+  async confirmarChegada(id: string, usuario: string): Promise<Programacao> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (this.supabase as any)
+      .from('programacao_carregamento')
+      .update({ confirmado_em: new Date().toISOString(), confirmado_por: usuario })
+      .eq('id', id)
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'confirmar chegada'))
+    return this.getById(id)
+  }
+
   /** Marca o agendamento como enviado para as Ordens do Dia (selo, não bloqueia reenvio). */
   async marcarEnviado(id: string): Promise<Programacao> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

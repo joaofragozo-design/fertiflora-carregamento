@@ -56,11 +56,11 @@ export default async function OrdensPage({
   const ordensList = (ordens ?? []) as OrdemDiaria[]
 
   // Richardson (logistica_02) → sempre painel de TV.
-  // Faturamento/admin → painel de TV sob demanda (?vista=tv), só leitura.
-  // Fransua (logistica) e admin → tabela editável (lança os pedidos).
+  // Faturamento/logistica/admin → painel de TV sob demanda (?vista=tv), só leitura.
+  // Fransua (logistica) e admin → tabela editável por padrão (lança os pedidos).
   const querTv =
     profile.role === 'logistica_02' ||
-    ((profile.role === 'faturamento' || profile.role === 'admin') && sp?.vista === 'tv')
+    (['faturamento', 'logistica', 'admin'].includes(profile.role) && sp?.vista === 'tv')
 
   if (querTv) {
     // Programação dos próximos dias (amanhã até +7) para a prévia embutida na TV.

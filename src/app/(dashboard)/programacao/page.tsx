@@ -38,7 +38,8 @@ export default async function ProgramacaoPage({
   if (!sessionUser || !profile) redirect(ROUTES.LOGIN)
 
   const podeVer =
-    profile.role === 'admin' || profile.role === 'logistica' || profile.role === 'logistica_02'
+    profile.role === 'admin' || profile.role === 'logistica' ||
+    profile.role === 'logistica_02' || profile.role === 'faturamento'
   if (!podeVer) redirect(ROLE_DEFAULT_ROUTES[profile.role] ?? ROUTES.HOME)
 
   const sp = await searchParams
@@ -83,8 +84,11 @@ export default async function ProgramacaoPage({
       initialItens={(itens ?? []) as Programacao[]}
       formulas={(formulas ?? []) as { id: number; nome: string }[]}
       semanaInicio={semanaInicio}
+      semanaFim={semanaFim}
       hoje={iso(new Date())}
-      readOnly={profile.role === 'logistica_02'}
+      podeEditar={profile.role === 'admin' || profile.role === 'logistica'}
+      podeConfirmar={profile.role === 'admin' || profile.role === 'faturamento'}
+      usuario={profile.username}
     />
   )
 }

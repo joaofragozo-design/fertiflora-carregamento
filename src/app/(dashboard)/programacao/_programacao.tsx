@@ -3,11 +3,12 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Trash2, Pencil, X, ChevronLeft, ChevronRight, ChevronDown, Printer, Send, CheckCircle2 } from 'lucide-react'
+import { Plus, Trash2, Pencil, X, ChevronLeft, ChevronRight, ChevronDown, Printer, Send, CheckCircle2, Truck } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { ProgramacaoService } from '@/services/programacao.service'
 import { OrdensDiariasService } from '@/services/ordens-diarias.service'
+import { useProgramacaoSemana } from '@/hooks/use-programacao-semana'
 import { ROUTES } from '@/constants/routes'
 import type { Programacao, ProgramacaoItem } from '@/types/programacao'
 import type { Embalagem, Formula } from '@/types/formula'
@@ -18,8 +19,11 @@ interface ProgramacaoSemanaProps {
   initialItens:  Programacao[]
   formulas:      { id: number; nome: string }[]
   semanaInicio:  string // segunda-feira (YYYY-MM-DD)
+  semanaFim:     string // sexta-feira (YYYY-MM-DD)
   hoje:          string
-  readOnly:      boolean
+  podeEditar:    boolean // admin/logistica — programa a semana
+  podeConfirmar: boolean // admin/faturamento — só confirma chegada do caminhão
+  usuario:       string
 }
 
 const DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta']
@@ -143,12 +147,15 @@ interface AgendamentoFormState {
   observacao: string
 }
 
-export function ProgramacaoSemana({ initialItens, formulas, semanaInicio, hoje, readOnly }: ProgramacaoSemanaProps) {
-  const [agendamentos, setAgendamentos] = useState<Programacao[]>(initialItens)
+export function ProgramacaoSemana({
+  initialItens, formulas, semanaInicio, semanaFim, hoje, podeEditar, podeConfirmar, usuario,
+}: ProgramacaoSemanaProps) {
+  const { agendamentos, setAgendamentos } = useProgramacaoSemana(initialItens, semanaInicio, semanaFim)
   const [itemForm, setItemForm] = useState<ItemFormState | null>(null)
   const [agForm, setAgForm] = useState<AgendamentoFormState | null>(null)
   const [salvando, setSalvando] = useState(false)
   const [enviandoId, setEnviandoId] = useState<string | null>(null)
+  const [confirmandoId, setConfirmandoId] = useState<string | null>(null)
   const svc = useMemo(() => new ProgramacaoService(createClient()), [])
   const ordensSvc = useMemo(() => new OrdensDiariasService(createClient()), [])
   const router = useRouter()
@@ -286,6 +293,21 @@ export function ProgramacaoSemana({ initialItens, formulas, semanaInicio, hoje, 
     }
   }
 
+  // Faturamento confirma que o caminhão chegou — a Logística é notificada
+  // (som + balão) via realtime, ouvindo a mudança de confirmado_em.
+  async function confirmarChegada(ag: Programacao) {
+    setConfirmandoId(ag.id)
+    try {
+      const upd = await svc.confirmarChegada(ag.id, usuario)
+      setAgendamentos((prev) => prev.map((a) => (a.id === upd.id ? upd : a)))
+      toast.success(`Chegada de ${ag.cliente || 'cliente'} confirmada.`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao confirmar chegada.')
+    } finally {
+      setConfirmandoId(null)
+    }
+  }
+
   async function excluirAgendamento(ag: Programacao) {
     if (!window.confirm('Remover este agendamento (e todos os itens)?')) return
     try {
@@ -318,12 +340,12 @@ export function ProgramacaoSemana({ initialItens, formulas, semanaInicio, hoje, 
               <ChevronRight className="size-4" />
             </button>
           </div>
-          {readOnly && (
+          {!podeEditar && !podeConfirmar && (
             <p className="text-xs text-industrial-400 mt-1.5">Prévia (somente leitura) — quem programa é a Logística.</p>
           )}
         </div>
         <div className="flex items-center gap-3">
-          {!readOnly && (
+          {podeEditar && (
             <Link
               href={ROUTES.ORDENS_RELATORIO}
               className="flex items-center gap-1.5 rounded-lg border border-industrial-700 px-3 py-2 text-xs font-medium text-industrial-200 hover:border-brand-500 hover:text-brand-700 transition-colors"
@@ -367,10 +389,18 @@ export function ProgramacaoSemana({ initialItens, formulas, semanaInicio, hoje, 
                 {agendamentosDoDia(data).map((ag) => (
                   <div key={ag.id} className="rounded-lg border border-industrial-700 bg-industrial-900 p-2">
                     <div className="flex items-start justify-between gap-2">
-                      <span className="font-semibold text-industrial-100 text-sm leading-tight">
+                      <span className="font-semibold text-industrial-100 text-sm leading-tight flex items-center gap-1.5">
                         {ag.cliente || <span className="text-industrial-500 font-normal">Sem cliente</span>}
+                        {ag.confirmado_em && (
+                          <span
+                            className="inline-flex shrink-0"
+                            title={`Caminhão chegou às ${new Date(ag.confirmado_em).toLocaleTimeString('pt-BR')}${ag.confirmado_por ? ` · confirmado por ${ag.confirmado_por}` : ''}`}
+                          >
+                            <Truck className="size-3.5 text-brand-600" />
+                          </span>
+                        )}
                       </span>
-                      {!readOnly && (
+                      {podeEditar && (
                         <div className="flex gap-1 shrink-0">
                           <button type="button" onClick={() => abrirEdicaoAgendamento(ag)} title="Editar cliente/observação"
                             className="text-industrial-400 hover:text-brand-700"><Pencil className="size-3.5" /></button>
@@ -389,7 +419,7 @@ export function ProgramacaoSemana({ initialItens, formulas, semanaInicio, hoje, 
                               {item.quantidade} {EMBALAGEM_LABEL[item.embalagem]} · <span className="font-bold text-industrial-300">{(item.tons ?? 0).toFixed(2)} ton</span>
                             </p>
                           </div>
-                          {!readOnly && (
+                          {podeEditar && (
                             <div className="flex gap-1 shrink-0">
                               <button type="button" onClick={() => abrirEdicaoItem(ag, item)} title="Editar item"
                                 className="text-industrial-500 hover:text-brand-700"><Pencil className="size-3" /></button>
@@ -408,7 +438,7 @@ export function ProgramacaoSemana({ initialItens, formulas, semanaInicio, hoje, 
 
                     {ag.observacao && <p className="text-xs text-industrial-400 italic mt-1">{ag.observacao}</p>}
 
-                    {!readOnly && (
+                    {podeEditar && (
                       <div className="flex items-center justify-between gap-2 mt-1.5">
                         <button type="button" onClick={() => abrirNovoItem(ag)}
                           className="flex items-center gap-1 text-[11px] font-medium text-industrial-500 hover:text-brand-700 transition-colors">
@@ -429,6 +459,26 @@ export function ProgramacaoSemana({ initialItens, formulas, semanaInicio, hoje, 
                         </button>
                       </div>
                     )}
+
+                    {podeConfirmar && (
+                      <div className="mt-1.5">
+                        {ag.confirmado_em ? (
+                          <span className="flex items-center gap-1 text-[11px] font-semibold text-brand-700">
+                            <CheckCircle2 className="size-3" /> Chegou às {new Date(ag.confirmado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => confirmarChegada(ag)}
+                            disabled={confirmandoId === ag.id}
+                            className="flex items-center gap-1 text-[11px] font-semibold text-brand-700 hover:text-brand-800 transition-colors disabled:opacity-50"
+                          >
+                            <Truck className="size-3" />
+                            {confirmandoId === ag.id ? 'Confirmando…' : 'Confirmar chegada do caminhão'}
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
 
@@ -436,7 +486,7 @@ export function ProgramacaoSemana({ initialItens, formulas, semanaInicio, hoje, 
                   <p className="text-xs text-industrial-500 text-center py-2">—</p>
                 )}
 
-                {!readOnly && (
+                {podeEditar && (
                   <button type="button" onClick={() => abrirNovoAgendamento(data)}
                     className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-industrial-600 py-1.5 text-xs font-medium text-industrial-400 hover:border-brand-500 hover:text-brand-700 transition-colors">
                     <Plus className="size-3.5" /> Adicionar cliente

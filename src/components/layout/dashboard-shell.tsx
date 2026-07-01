@@ -5,6 +5,7 @@ import { Header } from './header'
 import { Sidebar } from './sidebar'
 import { useAuth } from '@/hooks/use-auth'
 import { useRealtimeContext } from '@/providers/realtime-provider'
+import { ConfirmacaoChegadaListener } from '@/components/notifications/confirmacao-chegada-listener'
 import type { AppUser } from '@/types'
 
 interface DashboardShellProps {
@@ -44,6 +45,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
           </div>
         </main>
       </div>
+      {user.role === 'logistica' && <ConfirmacaoChegadaListener />}
     </div>
   )
 }
