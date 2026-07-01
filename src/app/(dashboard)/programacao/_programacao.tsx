@@ -3,10 +3,11 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Trash2, Pencil, X, ChevronLeft, ChevronRight, ChevronDown, Printer } from 'lucide-react'
+import { Plus, Trash2, Pencil, X, ChevronLeft, ChevronRight, ChevronDown, Printer, Send, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { ProgramacaoService } from '@/services/programacao.service'
+import { OrdensDiariasService } from '@/services/ordens-diarias.service'
 import { ROUTES } from '@/constants/routes'
 import type { Programacao, ProgramacaoItem } from '@/types/programacao'
 import type { Embalagem, Formula } from '@/types/formula'
@@ -147,7 +148,9 @@ export function ProgramacaoSemana({ initialItens, formulas, semanaInicio, hoje, 
   const [itemForm, setItemForm] = useState<ItemFormState | null>(null)
   const [agForm, setAgForm] = useState<AgendamentoFormState | null>(null)
   const [salvando, setSalvando] = useState(false)
+  const [enviandoId, setEnviandoId] = useState<string | null>(null)
   const svc = useMemo(() => new ProgramacaoService(createClient()), [])
+  const ordensSvc = useMemo(() => new OrdensDiariasService(createClient()), [])
   const router = useRouter()
 
   const amanha = addDiasIso(hoje, 1)
@@ -255,6 +258,31 @@ export function ProgramacaoSemana({ initialItens, formulas, semanaInicio, hoje, 
       setAgendamentos((prev) => prev.map((a) => (a.id === upd.id ? upd : a)))
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao remover item.')
+    }
+  }
+
+  // Envia o agendamento (cliente + todos os itens) direto para as Ordens do
+  // Dia daquela data — o Fransua não precisa redigitar nada. Placa e
+  // envelopar ficam em branco/não, pois não existem na Programação.
+  async function enviarParaOrdens(ag: Programacao) {
+    const itens = ag.itens ?? []
+    if (itens.length === 0) {
+      toast.error('Adicione ao menos um item antes de enviar.')
+      return
+    }
+    setEnviandoId(ag.id)
+    try {
+      await ordensSvc.criarComItens(
+        { data: ag.data, cliente: ag.cliente, placa: '', envelopar: false, iniciado: false, finalizado: false },
+        itens.map((it) => ({ formula_id: it.formula_id, quantidade: it.quantidade, embalagem: it.embalagem })),
+      )
+      const upd = await svc.marcarEnviado(ag.id)
+      setAgendamentos((prev) => prev.map((a) => (a.id === upd.id ? upd : a)))
+      toast.success(`${ag.cliente || 'Cliente'} enviado para Ordens do Dia.`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao enviar para Ordens do Dia.')
+    } finally {
+      setEnviandoId(null)
     }
   }
 
@@ -381,10 +409,25 @@ export function ProgramacaoSemana({ initialItens, formulas, semanaInicio, hoje, 
                     {ag.observacao && <p className="text-xs text-industrial-400 italic mt-1">{ag.observacao}</p>}
 
                     {!readOnly && (
-                      <button type="button" onClick={() => abrirNovoItem(ag)}
-                        className="flex items-center gap-1 text-[11px] font-medium text-industrial-500 hover:text-brand-700 transition-colors mt-1.5">
-                        <Plus className="size-3" /> Adicionar item (outra fórmula/embalagem)
-                      </button>
+                      <div className="flex items-center justify-between gap-2 mt-1.5">
+                        <button type="button" onClick={() => abrirNovoItem(ag)}
+                          className="flex items-center gap-1 text-[11px] font-medium text-industrial-500 hover:text-brand-700 transition-colors">
+                          <Plus className="size-3" /> Adicionar item
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => enviarParaOrdens(ag)}
+                          disabled={enviandoId === ag.id}
+                          title={ag.enviado_em ? `Enviado em ${new Date(ag.enviado_em).toLocaleString('pt-BR')} — clique para reenviar` : 'Enviar para Ordens do Dia'}
+                          className={cn(
+                            'flex items-center gap-1 text-[11px] font-semibold transition-colors disabled:opacity-50',
+                            ag.enviado_em ? 'text-brand-700' : 'text-industrial-500 hover:text-brand-700',
+                          )}
+                        >
+                          {ag.enviado_em ? <CheckCircle2 className="size-3" /> : <Send className="size-3" />}
+                          {enviandoId === ag.id ? 'Enviando…' : ag.enviado_em ? 'Enviado' : 'Enviar p/ Ordens'}
+                        </button>
+                      </div>
                     )}
                   </div>
                 ))}

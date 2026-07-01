@@ -81,6 +81,39 @@ export class OrdensDiariasService {
     return this.getById(ordem.id)
   }
 
+  /**
+   * Cria um caminhão/carga já com VÁRIOS itens de uma vez (usado ao enviar
+   * um agendamento da Programação direto para as Ordens do Dia).
+   */
+  async criarComItens(
+    base: { data: string; cliente: string; placa: string; envelopar: boolean; iniciado: boolean; finalizado: boolean },
+    itens: Omit<OrdemItemInsert, 'ordem_id'>[],
+  ): Promise<OrdemDiaria> {
+    if (itens.length === 0) throw new Error('É preciso pelo menos um item para criar a carga.')
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: ordem, error } = await (this.supabase as any)
+      .from('ordens_diarias')
+      .insert(base)
+      .select('*')
+      .single()
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'criar'))
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: itensErr } = await (this.supabase as any)
+      .from('ordem_itens')
+      .insert(itens.map((it) => ({ ordem_id: ordem.id, ...it })))
+
+    if (itensErr) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (this.supabase as any).from('ordens_diarias').delete().eq('id', ordem.id)
+      throw new Error(this.traduzirErro(itensErr.message, 'criar itens'))
+    }
+
+    return this.getById(ordem.id)
+  }
+
   async getById(id: string): Promise<OrdemDiaria> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (this.supabase as any)

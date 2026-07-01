@@ -131,6 +131,18 @@ export class ProgramacaoService {
     return this.getById(programacaoId)
   }
 
+  /** Marca o agendamento como enviado para as Ordens do Dia (selo, não bloqueia reenvio). */
+  async marcarEnviado(id: string): Promise<Programacao> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (this.supabase as any)
+      .from('programacao_carregamento')
+      .update({ enviado_em: new Date().toISOString() })
+      .eq('id', id)
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'marcar como enviado'))
+    return this.getById(id)
+  }
+
   async deletar(id: string): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (this.supabase as any)
