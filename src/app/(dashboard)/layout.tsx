@@ -41,6 +41,14 @@ export default async function DashboardLayout({
   ) {
     redirect(ROUTES.ORDENS)
   }
+  // faturamento: acompanha /ordens e /programacao (somente leitura)
+  if (
+    profile.role === 'faturamento' &&
+    !pathname.startsWith(ROUTES.ORDENS) &&
+    !pathname.startsWith(ROUTES.PROGRAMACAO)
+  ) {
+    redirect(ROUTES.ORDENS)
+  }
 
   return (
     <DashboardShell user={profile}>

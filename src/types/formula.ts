@@ -24,18 +24,34 @@ export type Embalagem = 'SACOS' | 'BAG_750' | 'BAG_1000'
 
 export type StatusOrdem = 'AGUARDANDO' | 'EM_ANDAMENTO' | 'FINALIZADO'
 
+// Um item dentro de uma carga/caminhão: uma fórmula + quantidade + embalagem.
+// Um caminhão (OrdemDiaria) pode levar vários itens (ex.: sacos de uma fórmula
+// + bag de outra).
+export interface OrdemItem {
+  id:         string
+  ordem_id:   string
+  formula_id: number | null
+  formula?:   Formula
+  quantidade: number
+  embalagem:  Embalagem
+  tons:       number
+  created_at: string
+  updated_at: string
+}
+
+export type OrdemItemInsert = Omit<OrdemItem, 'id' | 'tons' | 'formula' | 'created_at' | 'updated_at'>
+export type OrdemItemUpdate = Partial<OrdemItemInsert>
+
+// A carga/caminhão. O envelopar, status e cronômetro são do caminhão inteiro;
+// os itens (fórmula/quantidade/embalagem) ficam em `itens`.
 export interface OrdemDiaria {
-  id:          string
-  data:        string
-  sequencia:   number
-  cliente:     string
-  placa:       string
-  envelopar:   boolean
-  quantidade:  number
-  embalagem:   Embalagem
-  tons:        number
-  formula_id:  number | null
-  formula?:    Formula
+  id:            string
+  data:          string
+  sequencia:     number
+  cliente:       string
+  placa:         string
+  envelopar:     boolean
+  itens:         OrdemItem[]
   iniciado:      boolean
   finalizado:    boolean
   iniciado_em:   string | null
@@ -62,17 +78,18 @@ export function tonPorHora(tons: number, ms: number): number {
   return +(tons / horas).toFixed(2)
 }
 
-export type OrdemDiariaInsert = Omit<OrdemDiaria, 'id' | 'tons' | 'formula' | 'iniciado_em' | 'finalizado_em' | 'created_at' | 'updated_at'>
+export type OrdemDiariaInsert = Omit<OrdemDiaria, 'id' | 'itens' | 'iniciado_em' | 'finalizado_em' | 'created_at' | 'updated_at'>
 export type OrdemDiariaUpdate = Partial<OrdemDiariaInsert>
 
-export const INGREDIENTES = [
+// Matéria-prima da fórmula (antes chamado "ingredientes").
+export const MATERIAS_PRIMA = [
   { key: 'mo',                 label: 'M.O.'          },
   { key: 'map',                label: 'MAP'           },
-  { key: 'calcario_concha',    label: 'Cal. Concha'   },
-  { key: 'sulfato_amonia',     label: 'Sul. Amônia'   },
-  { key: 'carbonato_ca_mg',    label: 'Carb. Ca+Mg'   },
+  { key: 'calcario_concha',    label: 'CYSY+S'        },
+  { key: 'sulfato_amonia',     label: 'SULFATO'       },
+  { key: 'carbonato_ca_mg',    label: 'CARBONATO'     },
   { key: 'ureia',              label: 'Ureia'         },
-  { key: 'cloreto_potassio',   label: 'Cl. Potássio'  },
+  { key: 'cloreto_potassio',   label: 'CLORETO'       },
   { key: 'boro',               label: 'Boro 10'       },
   { key: 'enxofre_pastilhado', label: 'Enx. Past.'    },
   { key: 'fte_br_12',          label: 'FTE BR 12'     },
@@ -82,11 +99,18 @@ export const INGREDIENTES = [
   { key: 'hiphos_25',          label: 'HIPHOS 25'     },
 ] as const
 
-export type IngredienteKey = typeof INGREDIENTES[number]['key']
+// Alias para compatibilidade com código antigo.
+export const INGREDIENTES = MATERIAS_PRIMA
 
-export function calcularIngrediente(formula: Formula, ingrediente: IngredienteKey): number {
-  return +(formula[ingrediente] * 1000).toFixed(2)
+export type MateriaPrimaKey = typeof MATERIAS_PRIMA[number]['key']
+export type IngredienteKey = MateriaPrimaKey
+
+export function calcularMateriaPrima(formula: Formula, chave: MateriaPrimaKey): number {
+  return +(formula[chave] * 1000).toFixed(2)
 }
+
+// Alias para compatibilidade com código antigo.
+export const calcularIngrediente = calcularMateriaPrima
 
 // Toneladas por unidade de cada embalagem.
 export const PESO_TON: Record<Embalagem, number> = {
@@ -106,6 +130,11 @@ export const EMBALAGEM_OPCOES: Embalagem[] = ['SACOS', 'BAG_750', 'BAG_1000']
 
 export function calcularTons(quantidade: number, embalagem: Embalagem): number {
   return quantidade * (PESO_TON[embalagem] ?? 0)
+}
+
+/** Soma as toneladas de todos os itens de uma carga/caminhão. */
+export function tonsDaOrdem(ordem: Pick<OrdemDiaria, 'itens'>): number {
+  return ordem.itens.reduce((s, it) => s + (it.tons ?? 0), 0)
 }
 
 export function getStatus(ordem: Pick<OrdemDiaria, 'iniciado' | 'finalizado'>): StatusOrdem {

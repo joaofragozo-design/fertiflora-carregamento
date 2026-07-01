@@ -11,8 +11,8 @@ import { OrdensDiariasService } from '@/services/ordens-diarias.service'
 import { useOrdensDiarias, type EditableOrdem } from '@/hooks/use-ordens-diarias'
 import { ROUTES } from '@/constants/routes'
 import type { AppUser } from '@/types'
-import type { OrdemDiaria, Formula, Embalagem, StatusOrdem } from '@/types/formula'
-import { INGREDIENTES, EMBALAGEM_LABEL, EMBALAGEM_OPCOES, calcularIngrediente, calcularTons, getStatus, formatDuracao } from '@/types/formula'
+import type { OrdemDiaria, OrdemItem, Formula, Embalagem, StatusOrdem } from '@/types/formula'
+import { MATERIAS_PRIMA, EMBALAGEM_LABEL, EMBALAGEM_OPCOES, calcularMateriaPrima, calcularTons, tonsDaOrdem, getStatus, formatDuracao } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
 interface OrdensParneProps {
@@ -239,6 +239,37 @@ function Kpi({ label, value, unit, tone }: { label: string; value: string | numb
   )
 }
 
+/** Célula com a matéria-prima (kg/ton) usada pelo item + selo de verificação (Σ 1000). */
+function CelulaMateriaPrima({ formula }: { formula: Formula | null | undefined }) {
+  const usados = formula
+    ? MATERIAS_PRIMA.map((mp) => ({ mp, kg: calcularMateriaPrima(formula, mp.key) })).filter((x) => x.kg > 0)
+    : []
+  const soma = formula ? +usados.reduce((s, x) => s + x.kg, 0).toFixed(1) : null
+  const ok = soma !== null && Math.abs(soma - 1000) < 0.5
+
+  if (!formula) return <span className="text-industrial-500">Selecione uma fórmula</span>
+
+  return (
+    <div className="flex flex-wrap items-center gap-1">
+      {usados.map(({ mp, kg }) => (
+        <span key={mp.key} className="inline-flex items-center gap-1 rounded bg-industrial-900 border border-industrial-700 px-1.5 py-0.5">
+          <span className="text-[10px] text-industrial-400">{mp.label}</span>
+          <span className="text-[10px] font-mono font-bold text-industrial-100">{fmtKg(kg)}</span>
+        </span>
+      ))}
+      <span
+        className={cn(
+          'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold border',
+          ok ? 'bg-brand-100 border-brand-500 text-brand-800' : 'bg-red-100 border-red-400 text-red-700',
+        )}
+        title="Soma total (deve fechar 1000)"
+      >
+        Σ {soma?.toFixed(0)}
+      </span>
+    </div>
+  )
+}
+
 export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: OrdensParneProps) {
   const { ordens, setOrdens } = useOrdensDiarias(initialOrdens, hoje)
   const [isPending, startTransition] = useTransition()
@@ -250,7 +281,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
   const podeEditarDados  = user.role === 'admin' || user.role === 'logistica'
   const podeMarcarStatus = user.role === 'admin' || user.role === 'logistica_02'
 
-  const totalTons = useMemo(() => ordens.reduce((acc, o) => acc + (o.tons ?? 0), 0), [ordens])
+  const totalTons = useMemo(() => ordens.reduce((acc, o) => acc + tonsDaOrdem(o), 0), [ordens])
 
   // Exibe na ordem de prioridade definida pelo Fransua (sequencia).
   const linhas = useMemo(() => [...ordens].sort((a, b) => a.sequencia - b.sequencia), [ordens])
@@ -291,6 +322,64 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
     }
   }
 
+  // ─── Itens da carga (fórmula/quantidade/embalagem) ───────────────────────
+  // Marca a ordem inteira como _dirty durante a edição de um item — reaproveita
+  // a mesma proteção do hook de realtime (não sobrescreve edição em curso).
+  function updateItemLocal(ordemId: string, itemId: string, patch: Partial<OrdemItem>) {
+    setOrdens((prev) =>
+      prev.map((o) =>
+        o.id !== ordemId ? o : { ...o, itens: o.itens.map((it) => (it.id === itemId ? { ...it, ...patch } : it)), _dirty: true },
+      ),
+    )
+  }
+
+  async function saveItemField(ordemId: string, itemId: string, patch: Partial<OrdemItem>) {
+    setOrdens((prev) => prev.map((o) => (o.id === ordemId ? { ...o, _saving: true, _dirty: false } : o)))
+    try {
+      const updated = await svc.atualizarItem(itemId, ordemId, patch)
+      setOrdens((prev) => prev.map((o) => (o.id === ordemId ? { ...updated, _saving: false } : o)))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao salvar item.')
+      setOrdens((prev) => prev.map((o) => (o.id === ordemId ? { ...o, _saving: false, _dirty: true } : o)))
+    }
+  }
+
+  function handleBlurItemQuantidade(ordemId: string, itemId: string) {
+    const ordem = ordens.find((o) => o.id === ordemId)
+    const item = ordem?.itens.find((it) => it.id === itemId)
+    if (!ordem?._dirty || !item) return
+    saveItemField(ordemId, itemId, { quantidade: item.quantidade })
+  }
+
+  async function handleItemFormula(ordemId: string, itemId: string, formulaId: number | null) {
+    updateItemLocal(ordemId, itemId, { formula_id: formulaId })
+    await saveItemField(ordemId, itemId, { formula_id: formulaId })
+  }
+
+  async function handleItemEmbalagem(ordemId: string, itemId: string, emb: Embalagem) {
+    updateItemLocal(ordemId, itemId, { embalagem: emb })
+    await saveItemField(ordemId, itemId, { embalagem: emb })
+  }
+
+  async function handleAddItem(ordemId: string) {
+    try {
+      const updated = await svc.adicionarItem(ordemId, { formula_id: null, quantidade: 0, embalagem: 'SACOS' })
+      setOrdens((prev) => prev.map((o) => (o.id === ordemId ? updated : o)))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao adicionar item.')
+    }
+  }
+
+  async function handleRemoveItem(ordemId: string, itemId: string) {
+    try {
+      const updated = await svc.removerItem(itemId, ordemId)
+      setOrdens((prev) => prev.map((o) => (o.id === ordemId ? updated : o)))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao remover item.')
+    }
+  }
+
+  // ─── Caminhão/carga (cliente, placa, envelopar, status) ──────────────────
   async function handleAddRow() {
     startTransition(async () => {
       try {
@@ -299,11 +388,11 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
           cliente:    '',
           placa:      '',
           envelopar:  false,
-          quantidade: 0,
-          embalagem:  'SACOS',
-          formula_id: null,
           iniciado:   false,
           finalizado: false,
+          formula_id: null,
+          quantidade: 0,
+          embalagem:  'SACOS',
         })
         setOrdens((prev) => (prev.some((o) => o.id === nova.id) ? prev : [...prev, nova]))
       } catch (err) {
@@ -312,12 +401,12 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
     })
   }
 
-  async function handleDelete(id: string) {
-    if (!window.confirm('Remover esta ordem?')) return
+  async function handleDeleteTruck(id: string) {
+    if (!window.confirm('Remover este caminhão/carga (e todos os itens)?')) return
     try {
       await svc.deletar(id)
       setOrdens((prev) => prev.filter((o) => o.id !== id))
-      toast.success('Ordem removida.')
+      toast.success('Carga removida.')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao remover.')
     }
@@ -326,6 +415,10 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
   async function handleToggleIniciado(ordem: EditableOrdem) {
     if (!podeMarcarStatus || ordem.finalizado) return
     const next = !ordem.iniciado
+    if (next) {
+      const outra = ordens.find((o) => o.id !== ordem.id && o.iniciado && !o.finalizado)
+      if (outra) { toast.error('Finalize a carga em andamento antes de iniciar outra.'); return }
+    }
     updateLocal(ordem.id, { iniciado: next })
     await saveField(ordem.id, { iniciado: next })
   }
@@ -333,26 +426,15 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
   async function handleToggleFinalizado(ordem: EditableOrdem) {
     if (!podeMarcarStatus) return
     const next = !ordem.finalizado
-    updateLocal(ordem.id, { finalizado: next, iniciado: next ? true : ordem.iniciado })
-    await saveField(ordem.id, { finalizado: next, iniciado: next ? true : ordem.iniciado })
+    if (next && !ordem.iniciado) { toast.error('Inicie a carga antes de finalizar.'); return }
+    updateLocal(ordem.id, { finalizado: next })
+    await saveField(ordem.id, { finalizado: next })
   }
 
   function handleBlurText(id: string, field: keyof OrdemDiaria, localValue: string) {
     const ordem = ordens.find((o) => o.id === id)
     if (!ordem || !ordem._dirty) return
     saveField(id, { [field]: localValue })
-  }
-
-  async function handleFormula(id: string, formulaId: number | null) {
-    updateLocal(id, { formula_id: formulaId })
-    const full = initialFormulas.find((f) => f.id === formulaId)
-    await saveField(id, { formula_id: formulaId })
-    if (full) toast.success(`Fórmula: ${full.nome}`)
-  }
-
-  async function handleEmbalagem(id: string, emb: Embalagem) {
-    updateLocal(id, { embalagem: emb })
-    await saveField(id, { embalagem: emb })
   }
 
   async function handleEnvelopar(id: string, val: boolean) {
@@ -403,7 +485,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
 
   const thCls = 'px-2 py-2 text-[10px] uppercase tracking-wider text-industrial-400 font-semibold whitespace-nowrap border-b border-industrial-700 bg-industrial-900'
   const tdCls = 'px-2 py-1 border-b border-industrial-800 align-middle'
-  const COLUNAS = 12 + (podeEditarDados ? 1 : 0)
+  const COLUNAS = 12 + (podeEditarDados ? 2 : 0)
 
   const dataLonga = new Date(hoje + 'T12:00:00').toLocaleDateString('pt-BR', {
     weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
@@ -487,7 +569,8 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
                 <th className={cn(thCls, 'text-center w-32')}>Embalagem</th>
                 <th className={cn(thCls, 'text-right w-16')}>Tons</th>
                 <th className={cn(thCls, 'text-left min-w-[210px]')}>Fórmula</th>
-                <th className={cn(thCls, 'text-left min-w-[280px]')}>Ingredientes (kg/ton)</th>
+                <th className={cn(thCls, 'text-left min-w-[280px]')}>Matéria Prima (kg/ton)</th>
+                {podeEditarDados && <th className={cn(thCls, 'w-8')} />}
                 {podeEditarDados && <th className={cn(thCls, 'w-8')} />}
               </tr>
             </thead>
@@ -495,249 +578,266 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
               {linhas.map((ordem, idx) => {
                 const status = getStatus(ordem)
                 const editarDados = podeEditarDados && !ordem.finalizado
-                const tons = calcularTons(ordem.quantidade, ordem.embalagem)
+                const itens = ordem.itens ?? []
+                const tonsCarga = tonsDaOrdem(ordem)
+                const rowSpan = itens.length + (editarDados ? 1 : 0)
 
-                const formula = ordem.formula as Formula | null | undefined
-                const usados = formula
-                  ? INGREDIENTES.map((ing) => ({ ing, kg: calcularIngrediente(formula, ing.key) })).filter((x) => x.kg > 0)
-                  : []
-                const verificacao = formula ? +usados.reduce((s, x) => s + x.kg, 0).toFixed(1) : null
-                const verifOk = verificacao !== null && Math.abs(verificacao - 1000) < 0.5
+                return itens.map((item, itemIdx) => {
+                  const formula = item.formula as Formula | null | undefined
+                  const tons = calcularTons(item.quantidade, item.embalagem)
+                  const primeiraLinha = itemIdx === 0
 
-                return (
-                  <tr
-                    key={ordem.id}
-                    onDragOver={podeEditarDados ? (e) => { e.preventDefault(); if (overId !== ordem.id) setOverId(ordem.id) } : undefined}
-                    onDrop={podeEditarDados ? () => handleDrop(ordem.id) : undefined}
-                    onDragEnd={podeEditarDados ? () => { setDragId(null); setOverId(null) } : undefined}
-                    className={cn(
-                      'transition-colors',
-                      ROW_STYLES[status],
-                      ordem._saving && 'opacity-80',
-                      dragId === ordem.id && 'opacity-40',
-                      overId === ordem.id && dragId && dragId !== ordem.id && 'border-t-2 border-brand-500',
-                    )}
-                  >
-                    <td className={cn(tdCls, 'text-center')}>
-                      <div className="flex items-center justify-center gap-1">
-                        {podeEditarDados && (
-                          <span
-                            draggable
-                            onDragStart={(e) => {
-                              setDragId(ordem.id)
-                              e.dataTransfer.effectAllowed = 'move'
-                              e.dataTransfer.setData('text/plain', ordem.id)
-                            }}
-                            className="cursor-grab active:cursor-grabbing text-industrial-400 hover:text-brand-700"
-                            title="Arraste para reordenar a prioridade"
-                            aria-label="Arraste para reordenar"
-                          >
-                            <GripVertical className="size-4" />
-                          </span>
-                        )}
-                        {podeEditarDados && (
-                          <div className="flex flex-col -my-1">
-                            <button
-                              type="button"
-                              onClick={() => handleMover(ordem, -1)}
-                              disabled={idx === 0}
-                              aria-label="Aumentar prioridade"
-                              className="text-industrial-400 hover:text-brand-700 disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                              <ChevronUp className="size-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleMover(ordem, 1)}
-                              disabled={idx === linhas.length - 1}
-                              aria-label="Diminuir prioridade"
-                              className="text-industrial-400 hover:text-brand-700 disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                              <ChevronDown className="size-3.5" />
-                            </button>
-                          </div>
-                        )}
-                        <span className="text-industrial-500 font-mono">{ordem.sequencia}</span>
-                      </div>
-                    </td>
-
-                    <td className={tdCls}>
-                      {editarDados ? (
-                        <InlineInput
-                          value={ordem.cliente}
-                          onChange={(v) => updateLocal(ordem.id, { cliente: v })}
-                          onBlur={() => handleBlurText(ordem.id, 'cliente', ordem.cliente)}
-                        />
-                      ) : (
-                        <span className="text-industrial-100 font-medium">
-                          {ordem.cliente || <span className="text-industrial-500 font-normal">—</span>}
-                        </span>
+                  return (
+                    <tr
+                      key={item.id}
+                      onDragOver={podeEditarDados && primeiraLinha ? (e) => { e.preventDefault(); if (overId !== ordem.id) setOverId(ordem.id) } : undefined}
+                      onDrop={podeEditarDados && primeiraLinha ? () => handleDrop(ordem.id) : undefined}
+                      onDragEnd={podeEditarDados && primeiraLinha ? () => { setDragId(null); setOverId(null) } : undefined}
+                      className={cn(
+                        'transition-colors',
+                        ROW_STYLES[status],
+                        ordem._saving && 'opacity-80',
+                        dragId === ordem.id && 'opacity-40',
+                        overId === ordem.id && dragId && dragId !== ordem.id && primeiraLinha && 'border-t-2 border-brand-500',
+                        !primeiraLinha && 'border-t border-dashed border-industrial-700/60',
                       )}
-                    </td>
+                    >
+                      {primeiraLinha && (
+                        <>
+                          <td className={cn(tdCls, 'text-center')} rowSpan={rowSpan}>
+                            <div className="flex items-center justify-center gap-1">
+                              {podeEditarDados && (
+                                <span
+                                  draggable
+                                  onDragStart={(e) => {
+                                    setDragId(ordem.id)
+                                    e.dataTransfer.effectAllowed = 'move'
+                                    e.dataTransfer.setData('text/plain', ordem.id)
+                                  }}
+                                  className="cursor-grab active:cursor-grabbing text-industrial-400 hover:text-brand-700"
+                                  title="Arraste para reordenar a prioridade"
+                                  aria-label="Arraste para reordenar"
+                                >
+                                  <GripVertical className="size-4" />
+                                </span>
+                              )}
+                              {podeEditarDados && (
+                                <div className="flex flex-col -my-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMover(ordem, -1)}
+                                    disabled={idx === 0}
+                                    aria-label="Aumentar prioridade"
+                                    className="text-industrial-400 hover:text-brand-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                                  >
+                                    <ChevronUp className="size-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMover(ordem, 1)}
+                                    disabled={idx === linhas.length - 1}
+                                    aria-label="Diminuir prioridade"
+                                    className="text-industrial-400 hover:text-brand-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                                  >
+                                    <ChevronDown className="size-3.5" />
+                                  </button>
+                                </div>
+                              )}
+                              <span className="text-industrial-500 font-mono">{ordem.sequencia}</span>
+                            </div>
+                          </td>
 
-                    <td className={cn(tdCls, 'text-center')}>
-                      <span className={cn('px-2 py-0.5 rounded text-[10px] font-bold', STATUS_STYLES[status])}>
-                        {STATUS_LABEL[status]}
-                      </span>
-                      {ordem.finalizado && ordem.iniciado_em && ordem.finalizado_em && (
-                        <div className="text-[10px] text-industrial-500 mt-0.5" title="Tempo de carregamento">
-                          ⏱ {formatDuracao(new Date(ordem.finalizado_em).getTime() - new Date(ordem.iniciado_em).getTime())}
-                        </div>
-                      )}
-                    </td>
-
-                    <td className={cn(tdCls, 'text-center')}>
-                      {podeMarcarStatus && !ordem.finalizado ? (
-                        <input
-                          type="checkbox"
-                          checked={ordem.iniciado}
-                          onChange={() => handleToggleIniciado(ordem)}
-                          className="size-5 accent-brand-600 cursor-pointer"
-                        />
-                      ) : (
-                        <StatusReadOnly on={ordem.iniciado} />
-                      )}
-                    </td>
-
-                    <td className={cn(tdCls, 'text-center')}>
-                      {podeMarcarStatus ? (
-                        <input
-                          type="checkbox"
-                          checked={ordem.finalizado}
-                          onChange={() => handleToggleFinalizado(ordem)}
-                          className="size-5 accent-brand-600 cursor-pointer"
-                        />
-                      ) : (
-                        <StatusReadOnly on={ordem.finalizado} />
-                      )}
-                    </td>
-
-                    <td className={tdCls}>
-                      {editarDados ? (
-                        <InlineInput
-                          value={ordem.placa}
-                          onChange={(v) => updateLocal(ordem.id, { placa: v.toUpperCase() })}
-                          onBlur={() => handleBlurText(ordem.id, 'placa', ordem.placa)}
-                          className="uppercase font-mono"
-                        />
-                      ) : (
-                        <span className="text-industrial-100 uppercase font-mono font-medium">
-                          {ordem.placa || <span className="text-industrial-500 font-normal normal-case">—</span>}
-                        </span>
-                      )}
-                    </td>
-
-                    <td className={cn(tdCls, 'text-center')}>
-                      {editarDados ? (
-                        <button
-                          type="button"
-                          onClick={() => handleEnvelopar(ordem.id, !ordem.envelopar)}
-                          className={cn(
-                            'px-2 py-0.5 rounded text-[10px] font-bold border transition-colors',
-                            ordem.envelopar
-                              ? 'bg-brand-100 border-brand-500 text-brand-800'
-                              : 'bg-industrial-900 border-industrial-600 text-industrial-500',
-                          )}
-                        >
-                          {ordem.envelopar ? 'SIM' : 'NÃO'}
-                        </button>
-                      ) : (
-                        <span className={cn('text-[11px] font-bold', ordem.envelopar ? 'text-brand-700' : 'text-industrial-500')}>
-                          {ordem.envelopar ? 'SIM' : 'NÃO'}
-                        </span>
-                      )}
-                    </td>
-
-                    <td className={cn(tdCls, 'text-right')}>
-                      {editarDados ? (
-                        <InlineInput
-                          type="number"
-                          value={ordem.quantidade}
-                          onChange={(v) => updateLocal(ordem.id, { quantidade: Number(v) || 0 })}
-                          onBlur={() => { if (ordem._dirty) saveField(ordem.id, { quantidade: ordem.quantidade }) }}
-                          className="text-right"
-                        />
-                      ) : (
-                        <span className="text-industrial-100 font-mono font-medium">{ordem.quantidade}</span>
-                      )}
-                    </td>
-
-                    <td className={cn(tdCls, 'text-center')}>
-                      {editarDados ? (
-                        <select
-                          value={ordem.embalagem}
-                          onChange={(e) => handleEmbalagem(ordem.id, e.target.value as Embalagem)}
-                          className="bg-industrial-900 border border-industrial-600 rounded px-1 py-0.5 text-xs text-industrial-100 focus:outline-none focus:border-brand-500"
-                        >
-                          {EMBALAGEM_OPCOES.map((opt) => (
-                            <option key={opt} value={opt}>{EMBALAGEM_LABEL[opt]}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <span className="text-industrial-100 font-medium">{EMBALAGEM_LABEL[ordem.embalagem]}</span>
-                      )}
-                    </td>
-
-                    <td className={cn(tdCls, 'text-right font-mono text-brand-700 font-bold')}>
-                      {tons.toFixed(2)}
-                    </td>
-
-                    <td className={tdCls}>
-                      {editarDados ? (
-                        <FormulaCombobox
-                          value={ordem.formula_id}
-                          formulas={initialFormulas}
-                          onChange={(id) => handleFormula(ordem.id, id)}
-                        />
-                      ) : (
-                        <span className="text-[13px] font-bold text-industrial-50">
-                          {formula?.nome ?? <span className="text-industrial-500 text-xs font-normal">—</span>}
-                        </span>
-                      )}
-                    </td>
-
-                    <td className={tdCls}>
-                      {formula ? (
-                        <div className="flex flex-wrap items-center gap-1">
-                          {usados.map(({ ing, kg }) => (
-                            <span
-                              key={ing.key}
-                              className="inline-flex items-center gap-1 rounded bg-industrial-900 border border-industrial-700 px-1.5 py-0.5"
-                            >
-                              <span className="text-[10px] text-industrial-400">{ing.label}</span>
-                              <span className="text-[10px] font-mono font-bold text-industrial-100">{fmtKg(kg)}</span>
-                            </span>
-                          ))}
-                          <span
-                            className={cn(
-                              'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold border',
-                              verifOk
-                                ? 'bg-brand-100 border-brand-500 text-brand-800'
-                                : 'bg-red-100 border-red-400 text-red-700',
+                          <td className={tdCls} rowSpan={rowSpan}>
+                            {editarDados ? (
+                              <InlineInput
+                                value={ordem.cliente}
+                                onChange={(v) => updateLocal(ordem.id, { cliente: v })}
+                                onBlur={() => handleBlurText(ordem.id, 'cliente', ordem.cliente)}
+                              />
+                            ) : (
+                              <span className="text-industrial-100 font-medium">
+                                {ordem.cliente || <span className="text-industrial-500 font-normal">—</span>}
+                              </span>
                             )}
-                            title="Soma total (deve fechar 1000)"
-                          >
-                            Σ {verificacao?.toFixed(0)}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className="text-industrial-500">Selecione uma fórmula</span>
-                      )}
-                    </td>
+                          </td>
 
-                    {podeEditarDados && (
+                          <td className={cn(tdCls, 'text-center')} rowSpan={rowSpan}>
+                            <span className={cn('px-2 py-0.5 rounded text-[10px] font-bold', STATUS_STYLES[status])}>
+                              {STATUS_LABEL[status]}
+                            </span>
+                            {ordem.finalizado && ordem.iniciado_em && ordem.finalizado_em && (
+                              <div className="text-[10px] text-industrial-500 mt-0.5" title="Tempo de carregamento">
+                                ⏱ {formatDuracao(new Date(ordem.finalizado_em).getTime() - new Date(ordem.iniciado_em).getTime())}
+                              </div>
+                            )}
+                          </td>
+
+                          <td className={cn(tdCls, 'text-center')} rowSpan={rowSpan}>
+                            {podeMarcarStatus && !ordem.finalizado ? (
+                              <input
+                                type="checkbox"
+                                checked={ordem.iniciado}
+                                disabled={!ordem.iniciado && ordens.some((x) => x.id !== ordem.id && x.iniciado && !x.finalizado)}
+                                onChange={() => handleToggleIniciado(ordem)}
+                                className="size-5 accent-brand-600 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                              />
+                            ) : (
+                              <StatusReadOnly on={ordem.iniciado} />
+                            )}
+                          </td>
+
+                          <td className={cn(tdCls, 'text-center')} rowSpan={rowSpan}>
+                            {podeMarcarStatus ? (
+                              <input
+                                type="checkbox"
+                                checked={ordem.finalizado}
+                                disabled={!ordem.iniciado && !ordem.finalizado}
+                                onChange={() => handleToggleFinalizado(ordem)}
+                                className="size-5 accent-brand-600 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                              />
+                            ) : (
+                              <StatusReadOnly on={ordem.finalizado} />
+                            )}
+                          </td>
+
+                          <td className={tdCls} rowSpan={rowSpan}>
+                            {editarDados ? (
+                              <InlineInput
+                                value={ordem.placa}
+                                onChange={(v) => updateLocal(ordem.id, { placa: v.toUpperCase() })}
+                                onBlur={() => handleBlurText(ordem.id, 'placa', ordem.placa)}
+                                className="uppercase font-mono"
+                              />
+                            ) : (
+                              <span className="text-industrial-100 uppercase font-mono font-medium">
+                                {ordem.placa || <span className="text-industrial-500 font-normal normal-case">—</span>}
+                              </span>
+                            )}
+                          </td>
+
+                          <td className={cn(tdCls, 'text-center')} rowSpan={rowSpan}>
+                            {editarDados ? (
+                              <button
+                                type="button"
+                                onClick={() => handleEnvelopar(ordem.id, !ordem.envelopar)}
+                                className={cn(
+                                  'px-2 py-0.5 rounded text-[10px] font-bold border transition-colors',
+                                  ordem.envelopar
+                                    ? 'bg-brand-100 border-brand-500 text-brand-800'
+                                    : 'bg-industrial-900 border-industrial-600 text-industrial-500',
+                                )}
+                              >
+                                {ordem.envelopar ? 'SIM' : 'NÃO'}
+                              </button>
+                            ) : (
+                              <span className={cn('text-[11px] font-bold', ordem.envelopar ? 'text-brand-700' : 'text-industrial-500')}>
+                                {ordem.envelopar ? 'SIM' : 'NÃO'}
+                              </span>
+                            )}
+                          </td>
+                        </>
+                      )}
+
+                      <td className={cn(tdCls, 'text-right')}>
+                        {editarDados ? (
+                          <InlineInput
+                            type="number"
+                            value={item.quantidade}
+                            onChange={(v) => updateItemLocal(ordem.id, item.id, { quantidade: Number(v) || 0 })}
+                            onBlur={() => handleBlurItemQuantidade(ordem.id, item.id)}
+                            className="text-right"
+                          />
+                        ) : (
+                          <span className="text-industrial-100 font-mono font-medium">{item.quantidade}</span>
+                        )}
+                      </td>
+
                       <td className={cn(tdCls, 'text-center')}>
+                        {editarDados ? (
+                          <select
+                            value={item.embalagem}
+                            onChange={(e) => handleItemEmbalagem(ordem.id, item.id, e.target.value as Embalagem)}
+                            className="bg-industrial-900 border border-industrial-600 rounded px-1 py-0.5 text-xs text-industrial-100 focus:outline-none focus:border-brand-500"
+                          >
+                            {EMBALAGEM_OPCOES.map((opt) => (
+                              <option key={opt} value={opt}>{EMBALAGEM_LABEL[opt]}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span className="text-industrial-100 font-medium">{EMBALAGEM_LABEL[item.embalagem]}</span>
+                        )}
+                      </td>
+
+                      <td className={cn(tdCls, 'text-right font-mono text-brand-700 font-bold')}>
+                        {tons.toFixed(2)}
+                      </td>
+
+                      <td className={tdCls}>
+                        {editarDados ? (
+                          <FormulaCombobox
+                            value={item.formula_id}
+                            formulas={initialFormulas}
+                            onChange={(id) => handleItemFormula(ordem.id, item.id, id)}
+                          />
+                        ) : (
+                          <span className="text-[13px] font-bold text-industrial-50">
+                            {formula?.nome ?? <span className="text-industrial-500 text-xs font-normal">—</span>}
+                          </span>
+                        )}
+                      </td>
+
+                      <td className={tdCls}>
+                        <CelulaMateriaPrima formula={formula} />
+                      </td>
+
+                      {podeEditarDados && (
+                        <td className={cn(tdCls, 'text-center')}>
+                          {editarDados && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveItem(ordem.id, item.id)}
+                              disabled={itens.length <= 1}
+                              className="text-industrial-500 hover:text-red-600 transition-colors p-0.5 rounded disabled:opacity-20 disabled:cursor-not-allowed"
+                              title="Remover item"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          )}
+                        </td>
+                      )}
+
+                      {primeiraLinha && podeEditarDados && (
+                        <td className={cn(tdCls, 'text-center')} rowSpan={rowSpan}>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteTruck(ordem.id)}
+                            className="text-industrial-500 hover:text-red-600 transition-colors p-0.5 rounded"
+                            title="Remover caminhão/carga"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
+                          <div className="text-[10px] font-mono font-bold text-brand-700 mt-2" title="Total do caminhão">
+                            {tonsCarga.toFixed(2)}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  )
+                })
+                .concat(
+                  editarDados ? [
+                    <tr key={`${ordem.id}-add`} className={cn(ROW_STYLES[status])}>
+                      <td colSpan={6} className="px-2 py-1.5">
                         <button
                           type="button"
-                          onClick={() => handleDelete(ordem.id)}
-                          className="text-industrial-500 hover:text-red-600 transition-colors p-0.5 rounded"
-                          title="Remover ordem"
+                          onClick={() => handleAddItem(ordem.id)}
+                          className="flex items-center gap-1.5 text-[11px] font-medium text-industrial-400 hover:text-brand-700 transition-colors"
                         >
-                          <Trash2 className="size-3.5" />
+                          <Plus className="size-3.5" /> Adicionar item ao mesmo caminhão (outra fórmula/embalagem)
                         </button>
                       </td>
-                    )}
-                  </tr>
+                    </tr>,
+                  ] : [],
                 )
               })}
 
@@ -781,7 +881,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
           )}
         >
           <Plus className="size-4" />
-          Adicionar linha
+          Adicionar linha (novo caminhão)
         </button>
       )}
     </div>

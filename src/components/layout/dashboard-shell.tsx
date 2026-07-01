@@ -20,7 +20,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
   const displayUser = authUser ?? user
 
   // Logística usa navegação no cabeçalho (sem sidebar) e largura total da tela.
-  const semSidebar = user.role === 'logistica' || user.role === 'logistica_02'
+  const semSidebar = user.role === 'logistica' || user.role === 'logistica_02' || user.role === 'faturamento'
 
   return (
     <div className="flex min-h-screen flex-col">

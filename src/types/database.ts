@@ -13,20 +13,20 @@ export interface Database {
         Row: {
           id: string
           username: string
-          role: 'operador_carregamento' | 'operador_pa' | 'admin' | 'logistica' | 'logistica_02'
+          role: 'operador_carregamento' | 'operador_pa' | 'admin' | 'logistica' | 'logistica_02' | 'faturamento'
           created_at: string
           insumo_prefs: Json
         }
         Insert: {
           id: string
           username: string
-          role?: 'operador_carregamento' | 'operador_pa' | 'admin' | 'logistica' | 'logistica_02'
+          role?: 'operador_carregamento' | 'operador_pa' | 'admin' | 'logistica' | 'logistica_02' | 'faturamento'
           created_at?: string
           insumo_prefs?: Json
         }
         Update: {
           username?: string
-          role?: 'operador_carregamento' | 'operador_pa' | 'admin' | 'logistica' | 'logistica_02'
+          role?: 'operador_carregamento' | 'operador_pa' | 'admin' | 'logistica' | 'logistica_02' | 'faturamento'
           insumo_prefs?: Json
         }
       }
@@ -90,7 +90,7 @@ export interface Database {
         Args: {
           p_id: string
           p_username: string
-          p_role?: 'operador_carregamento' | 'operador_pa' | 'admin' | 'logistica' | 'logistica_02'
+          p_role?: 'operador_carregamento' | 'operador_pa' | 'admin' | 'logistica' | 'logistica_02' | 'faturamento'
         }
         Returns: {
           id: string
@@ -108,6 +108,7 @@ export interface Database {
         | 'admin'
         | 'logistica'
         | 'logistica_02'
+        | 'faturamento'
     }
   }
 }

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Printer, ArrowLeft } from 'lucide-react'
 import { ROUTES } from '@/constants/routes'
 import type { OrdemDiaria, Formula, StatusOrdem } from '@/types/formula'
-import { INGREDIENTES, EMBALAGEM_LABEL, calcularIngrediente, getStatus, formatDuracao, tonPorHora } from '@/types/formula'
+import { MATERIAS_PRIMA, EMBALAGEM_LABEL, calcularMateriaPrima, calcularTons, tonsDaOrdem, getStatus, formatDuracao, tonPorHora } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
 interface RelatorioDiarioProps {
@@ -35,22 +35,24 @@ function fmtNum(n: number, casas = 0): string {
 }
 
 export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
-  const totalTons = useMemo(() => ordens.reduce((s, o) => s + (o.tons ?? 0), 0), [ordens])
+  const totalTons = useMemo(() => ordens.reduce((s, o) => s + tonsDaOrdem(o), 0), [ordens])
 
-  // Consumo de matéria-prima do dia: Σ (tons da ordem × kg/ton do ingrediente).
+  // Consumo de matéria-prima do dia: Σ (tons do item × kg/ton da matéria-prima).
   const consumo = useMemo(() => {
     const acc: Record<string, number> = {}
     for (const o of ordens) {
-      const f = o.formula as Formula | undefined
-      if (!f) continue
-      const tons = o.tons ?? 0
-      for (const ing of INGREDIENTES) {
-        const kgPorTon = calcularIngrediente(f, ing.key)
-        if (kgPorTon > 0) acc[ing.key] = (acc[ing.key] ?? 0) + tons * kgPorTon
+      for (const item of o.itens ?? []) {
+        const f = item.formula as Formula | undefined
+        if (!f) continue
+        const tons = item.tons ?? calcularTons(item.quantidade, item.embalagem)
+        for (const mp of MATERIAS_PRIMA) {
+          const kgPorTon = calcularMateriaPrima(f, mp.key)
+          if (kgPorTon > 0) acc[mp.key] = (acc[mp.key] ?? 0) + tons * kgPorTon
+        }
       }
     }
-    return INGREDIENTES
-      .map((ing) => ({ ing, kg: acc[ing.key] ?? 0 }))
+    return MATERIAS_PRIMA
+      .map((mp) => ({ mp, kg: acc[mp.key] ?? 0 }))
       .filter((x) => x.kg > 0)
       .sort((a, b) => b.kg - a.kg)
   }, [ordens])
@@ -93,7 +95,7 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
         <p className="text-sm text-industrial-400 capitalize mt-0.5">{dataLonga}</p>
         <div className="flex gap-6 mt-3 text-sm">
           <div>
-            <span className="text-industrial-400">Ordens: </span>
+            <span className="text-industrial-400">Cargas: </span>
             <span className="font-bold text-industrial-100 print:text-black">{ordens.length}</span>
           </div>
           <div>
@@ -113,57 +115,82 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
               <th className={cn(th, 'text-center w-24')}>Status</th>
               <th className={cn(th, 'w-24')}>Placa</th>
               <th className={cn(th, 'text-center w-16')}>Envel.</th>
+              <th className={cn(th, 'text-center w-40')}>Tempo · Ritmo</th>
               <th className={cn(th, 'text-right w-16')}>Quant.</th>
               <th className={cn(th, 'text-center w-20')}>Embalagem</th>
               <th className={cn(th, 'text-right w-16')}>Tons</th>
-              <th className={cn(th, 'text-center w-40')}>Tempo · Ritmo</th>
               <th className={cn(th, 'min-w-[190px]')}>Fórmula</th>
-              <th className={cn(th, 'min-w-[260px]')}>Ingredientes (kg/ton)</th>
+              <th className={cn(th, 'min-w-[260px]')}>Matéria Prima (kg/ton)</th>
             </tr>
           </thead>
           <tbody>
             {ordens.map((o) => {
               const status = getStatus(o)
-              const f = o.formula as Formula | undefined
-              const usados = f
-                ? INGREDIENTES.map((ing) => ({ ing, kg: calcularIngrediente(f, ing.key) })).filter((x) => x.kg > 0)
-                : []
+              const itens = o.itens ?? []
+              const tonsCarga = tonsDaOrdem(o)
               const durMs = o.iniciado_em && o.finalizado_em
                 ? new Date(o.finalizado_em).getTime() - new Date(o.iniciado_em).getTime()
                 : 0
-              return (
-                <tr key={o.id} className={cn(ROW_STYLES[status], 'print:text-black')}>
-                  <td className={cn(td, 'text-center font-mono text-industrial-500')}>{o.sequencia}</td>
-                  <td className={cn(td, 'font-medium')}>{o.cliente || '—'}</td>
-                  <td className={cn(td, 'text-center font-semibold')}>{STATUS_LABEL[status]}</td>
-                  <td className={cn(td, 'font-mono uppercase')}>{o.placa || '—'}</td>
-                  <td className={cn(td, 'text-center font-bold')}>{o.envelopar ? 'SIM' : 'NÃO'}</td>
-                  <td className={cn(td, 'text-right font-mono')}>{o.quantidade}</td>
-                  <td className={cn(td, 'text-center')}>{EMBALAGEM_LABEL[o.embalagem]}</td>
-                  <td className={cn(td, 'text-right font-mono font-bold text-brand-700')}>{(o.tons ?? 0).toFixed(2)}</td>
-                  <td className={cn(td, 'text-center font-mono whitespace-nowrap')}>
-                    {durMs > 0 ? (
-                      <span className="inline-flex items-center justify-center gap-2">
-                        <span className="font-semibold text-industrial-100">{formatDuracao(durMs)}</span>
-                        <span className="font-bold text-brand-700">{tonPorHora(o.tons ?? 0, durMs).toFixed(2)} t/h</span>
-                      </span>
-                    ) : <span className="text-industrial-500">—</span>}
-                  </td>
-                  <td className={cn(td, 'font-bold')}>{f?.nome ?? '—'}</td>
-                  <td className={td}>
-                    {f ? (
-                      <div className="flex flex-wrap gap-1">
-                        {usados.map(({ ing, kg }) => (
-                          <span key={ing.key} className="inline-flex items-center gap-1 rounded border border-industrial-600 px-1.5 py-0.5">
-                            <span className="text-[10px] text-industrial-500">{ing.label}</span>
-                            <span className="text-[10px] font-mono font-bold">{fmtKg(kg)}</span>
-                          </span>
-                        ))}
-                      </div>
-                    ) : '—'}
-                  </td>
-                </tr>
-              )
+              const rowSpan = Math.max(itens.length, 1)
+
+              if (itens.length === 0) {
+                return (
+                  <tr key={o.id} className={cn(ROW_STYLES[status], 'print:text-black')}>
+                    <td className={cn(td, 'text-center font-mono text-industrial-500')}>{o.sequencia}</td>
+                    <td className={cn(td, 'font-medium')}>{o.cliente || '—'}</td>
+                    <td className={cn(td, 'text-center font-semibold')}>{STATUS_LABEL[status]}</td>
+                    <td className={cn(td, 'font-mono uppercase')}>{o.placa || '—'}</td>
+                    <td className={cn(td, 'text-center font-bold')}>{o.envelopar ? 'SIM' : 'NÃO'}</td>
+                    <td className={cn(td, 'text-center')}>—</td>
+                    <td className={cn(td, 'text-center text-industrial-400')} colSpan={5}>Sem itens</td>
+                  </tr>
+                )
+              }
+
+              return itens.map((item, idx) => {
+                const f = item.formula as Formula | undefined
+                const usados = f
+                  ? MATERIAS_PRIMA.map((mp) => ({ mp, kg: calcularMateriaPrima(f, mp.key) })).filter((x) => x.kg > 0)
+                  : []
+                const tons = item.tons ?? calcularTons(item.quantidade, item.embalagem)
+                return (
+                  <tr key={item.id} className={cn(ROW_STYLES[status], 'print:text-black')}>
+                    {idx === 0 && (
+                      <>
+                        <td className={cn(td, 'text-center font-mono text-industrial-500')} rowSpan={rowSpan}>{o.sequencia}</td>
+                        <td className={cn(td, 'font-medium')} rowSpan={rowSpan}>{o.cliente || '—'}</td>
+                        <td className={cn(td, 'text-center font-semibold')} rowSpan={rowSpan}>{STATUS_LABEL[status]}</td>
+                        <td className={cn(td, 'font-mono uppercase')} rowSpan={rowSpan}>{o.placa || '—'}</td>
+                        <td className={cn(td, 'text-center font-bold')} rowSpan={rowSpan}>{o.envelopar ? 'SIM' : 'NÃO'}</td>
+                        <td className={cn(td, 'text-center font-mono whitespace-nowrap')} rowSpan={rowSpan}>
+                          {durMs > 0 ? (
+                            <span className="inline-flex items-center justify-center gap-2">
+                              <span className="font-semibold text-industrial-100">{formatDuracao(durMs)}</span>
+                              <span className="font-bold text-brand-700">{tonPorHora(tonsCarga, durMs).toFixed(2)} t/h</span>
+                            </span>
+                          ) : <span className="text-industrial-500">—</span>}
+                        </td>
+                      </>
+                    )}
+                    <td className={cn(td, 'text-right font-mono')}>{item.quantidade}</td>
+                    <td className={cn(td, 'text-center')}>{EMBALAGEM_LABEL[item.embalagem]}</td>
+                    <td className={cn(td, 'text-right font-mono font-bold text-brand-700')}>{tons.toFixed(2)}</td>
+                    <td className={cn(td, 'font-bold')}>{f?.nome ?? '—'}</td>
+                    <td className={td}>
+                      {f ? (
+                        <div className="flex flex-wrap gap-1">
+                          {usados.map(({ mp, kg }) => (
+                            <span key={mp.key} className="inline-flex items-center gap-1 rounded border border-industrial-600 px-1.5 py-0.5">
+                              <span className="text-[10px] text-industrial-500">{mp.label}</span>
+                              <span className="text-[10px] font-mono font-bold">{fmtKg(kg)}</span>
+                            </span>
+                          ))}
+                        </div>
+                      ) : '—'}
+                    </td>
+                  </tr>
+                )
+              })
             })}
             {ordens.length === 0 && (
               <tr><td colSpan={11} className="text-center py-8 text-industrial-400">Nenhuma ordem neste dia.</td></tr>
@@ -172,9 +199,9 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
           {ordens.length > 0 && (
             <tfoot>
               <tr>
-                <td colSpan={7} className="px-2 py-2 text-right text-xs font-semibold text-industrial-300">Total do dia:</td>
+                <td colSpan={8} className="px-2 py-2 text-right text-xs font-semibold text-industrial-300">Total do dia:</td>
                 <td className="px-2 py-2 text-right font-mono font-bold text-brand-700">{totalTons.toFixed(2)}</td>
-                <td colSpan={3} />
+                <td colSpan={2} />
               </tr>
             </tfoot>
           )}
@@ -188,15 +215,15 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
           <table className="w-full max-w-2xl text-xs border-collapse">
             <thead>
               <tr>
-                <th className={cn(th)}>Ingrediente</th>
+                <th className={cn(th)}>Matéria Prima</th>
                 <th className={cn(th, 'text-right')}>Total (kg)</th>
                 <th className={cn(th, 'text-right')}>Total (ton)</th>
               </tr>
             </thead>
             <tbody>
-              {consumo.map(({ ing, kg }) => (
-                <tr key={ing.key}>
-                  <td className={cn(td, 'font-medium')}>{ing.label}</td>
+              {consumo.map(({ mp, kg }) => (
+                <tr key={mp.key}>
+                  <td className={cn(td, 'font-medium')}>{mp.label}</td>
                   <td className={cn(td, 'text-right font-mono')}>{fmtNum(kg)}</td>
                   <td className={cn(td, 'text-right font-mono')}>{fmtNum(kg / 1000, 2)}</td>
                 </tr>

@@ -11,15 +11,13 @@ const CHANNEL = 'ordens_diarias_changes'
 export type EditableOrdem = OrdemDiaria & { _dirty?: boolean; _saving?: boolean }
 
 /**
- * Estado das ordens do dia com sincronização em tempo real.
+ * Estado das ordens (cargas/caminhões) do dia com sincronização em tempo real.
  *
- * Espelha o padrão de `useOrdens` (carregamentos): assina postgres_changes e
- * combina com defesa-em-profundidade (refetch no reconnect, ao focar a aba e
- * polling). Diferenças importantes para ordens_diarias:
- *  - o payload do realtime NÃO traz o join `formula` → reidratamos via getByDate
- *    (refetch debounced) sempre que chega um evento;
- *  - linhas em edição local (_dirty/_saving) nunca são sobrescritas pelo realtime;
- *  - ordenação por `sequencia`.
+ * Cada carga pode ter vários itens (tabela `ordem_itens`, fórmulas/quantidades
+ * diferentes no mesmo caminhão). O payload do realtime não traz os itens nem
+ * o join `formula` → sempre reidratamos via getByDate (refetch debounced)
+ * quando chega qualquer evento, tanto de `ordens_diarias` quanto de `ordem_itens`.
+ * Linhas em edição local (_dirty/_saving) nunca são sobrescritas.
  */
 export function useOrdensDiarias(initialOrdens: OrdemDiaria[], data: string) {
   const [ordens, setOrdens] = useState<EditableOrdem[]>(initialOrdens)
@@ -46,7 +44,7 @@ export function useOrdensDiarias(initialOrdens: OrdemDiaria[], data: string) {
     let refetchTimer: ReturnType<typeof setTimeout> | null = null
     const agendarRefetch = () => {
       if (refetchTimer) clearTimeout(refetchTimer)
-      // Debounce: reidrata o join `formula` (ausente no payload do realtime).
+      // Debounce: reidrata os itens + join `formula` (ausentes no payload do realtime).
       refetchTimer = setTimeout(() => { fetchOrdens() }, 250)
     }
 
@@ -56,12 +54,12 @@ export function useOrdensDiarias(initialOrdens: OrdemDiaria[], data: string) {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'ordens_diarias' },
         (payload) => {
-          const novo = payload.new as OrdemDiaria
+          const novo = payload.new as Omit<OrdemDiaria, 'itens'>
           if (novo.data !== data) return
           setOrdens((prev) =>
             prev.some((o) => o.id === novo.id)
               ? prev
-              : [...prev, novo].sort((a, b) => a.sequencia - b.sequencia),
+              : [...prev, { ...novo, itens: [] }].sort((a, b) => a.sequencia - b.sequencia),
           )
           agendarRefetch()
         },
@@ -70,13 +68,13 @@ export function useOrdensDiarias(initialOrdens: OrdemDiaria[], data: string) {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'ordens_diarias' },
         (payload) => {
-          const updated = payload.new as OrdemDiaria
+          const updated = payload.new as Omit<OrdemDiaria, 'itens'>
           if (updated.data !== data) return
           setOrdens((prev) =>
             prev.map((o) => {
               if (o.id !== updated.id) return o
-              if (o._dirty || o._saving) return o            // edição em curso: não toca
-              return { ...o, ...updated, formula: o.formula } // preserva o join
+              if (o._dirty || o._saving) return o           // edição em curso: não toca
+              return { ...o, ...updated, itens: o.itens }   // preserva os itens
             }),
           )
           agendarRefetch()
@@ -89,6 +87,13 @@ export function useOrdensDiarias(initialOrdens: OrdemDiaria[], data: string) {
           const old = payload.old as { id?: string }
           if (old?.id) setOrdens((prev) => prev.filter((o) => o.id !== old.id))
         },
+      )
+      // Itens (fórmula/quantidade/embalagem) de qualquer caminhão — reidrata por refetch,
+      // pois exige o join `formula` que o payload cru não traz.
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'ordem_itens' },
+        () => { agendarRefetch() },
       )
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {

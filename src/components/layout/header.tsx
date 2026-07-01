@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Wifi, WifiOff, LogOut, Menu, CalendarDays, CalendarRange, FileSpreadsheet } from 'lucide-react'
+import { Wifi, WifiOff, LogOut, Menu, CalendarDays, CalendarRange, FileSpreadsheet, Tv } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LogoFull } from '@/components/brand/logo'
 import { InstallButton } from '@/components/pwa/install-button'
@@ -21,6 +21,7 @@ const ROLE_LABELS: Record<string, string> = {
   admin:                 'Admin',
   logistica:             'Logística',
   logistica_02:          'Logística 02',
+  faturamento:           'Faturamento',
 }
 
 // Navegação no cabeçalho (para perfis sem barra lateral). Demais perfis usam a Sidebar.
@@ -33,6 +34,11 @@ const HEADER_NAV: Record<string, NavLink[]> = {
   ],
   logistica_02: [
     { href: '/ordens', label: 'Ordens do Dia', icon: CalendarDays },
+  ],
+  faturamento: [
+    { href: '/ordens',          label: 'Ordens',      icon: CalendarDays },
+    { href: '/ordens?vista=tv', label: 'Painel TV',   icon: Tv },
+    { href: '/programacao',     label: 'Programação', icon: CalendarRange },
   ],
 }
 

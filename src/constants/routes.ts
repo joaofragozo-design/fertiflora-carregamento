@@ -15,6 +15,7 @@ export const ROLE_DEFAULT_ROUTES = {
   admin:                 ROUTES.CARREGAMENTO,
   logistica:             ROUTES.ORDENS,
   logistica_02:          ROUTES.ORDENS,
+  faturamento:           ROUTES.ORDENS,
 } as const
 
 // Rotas que cada role pode acessar (além de HOME)
@@ -24,4 +25,5 @@ export const ROLE_ALLOWED_ROUTES: Record<string, string[]> = {
   admin:                 [ROUTES.CARREGAMENTO, ROUTES.PA, ROUTES.ORDENS, ROUTES.PROGRAMACAO, ROUTES.ADMIN_FORMULAS],
   logistica:             [ROUTES.ORDENS, ROUTES.PROGRAMACAO, ROUTES.ADMIN_FORMULAS],
   logistica_02:          [ROUTES.ORDENS, ROUTES.PROGRAMACAO],
+  faturamento:           [ROUTES.ORDENS, ROUTES.PROGRAMACAO, ROUTES.ORDENS_RELATORIO],
 }

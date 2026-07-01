@@ -1,4 +1,4 @@
-export type UserRole = 'operador_carregamento' | 'operador_pa' | 'admin' | 'logistica' | 'logistica_02'
+export type UserRole = 'operador_carregamento' | 'operador_pa' | 'admin' | 'logistica' | 'logistica_02' | 'faturamento'
 
 export interface AppUser {
   id:         string

@@ -25,7 +25,7 @@ function addDias(iso: string, n: number): string {
 export default async function OrdensPage({
   searchParams,
 }: {
-  searchParams: Promise<{ data?: string }>
+  searchParams: Promise<{ data?: string; vista?: string }>
 }) {
   const { sessionUser, profile } = await getAuthContext()
 
@@ -40,20 +40,29 @@ export default async function OrdensPage({
     .from('ordens_diarias')
     .select(`
       *,
-      formula:formulas (
-        id, nome, mo, map, calcario_concha, sulfato_amonia, carbonato_ca_mg,
-        ureia, cloreto_potassio, boro, enxofre_pastilhado, fte_br_12, oxmag_s, tsp, caltimag, hiphos_25,
-        ativo, created_at, updated_at
+      itens:ordem_itens (
+        *,
+        formula:formulas (
+          id, nome, mo, map, calcario_concha, sulfato_amonia, carbonato_ca_mg,
+          ureia, cloreto_potassio, boro, enxofre_pastilhado, fte_br_12, oxmag_s, tsp, caltimag, hiphos_25,
+          ativo, created_at, updated_at
+        )
       )
     `)
     .eq('data', hoje)
     .order('sequencia', { ascending: true })
+    .order('created_at', { foreignTable: 'ordem_itens', ascending: true })
 
   const ordensList = (ordens ?? []) as OrdemDiaria[]
 
-  // Richardson (logistica_02) → painel de TV (cards grandes, só marca status).
+  // Richardson (logistica_02) → sempre painel de TV.
+  // Faturamento/admin → painel de TV sob demanda (?vista=tv), só leitura.
   // Fransua (logistica) e admin → tabela editável (lança os pedidos).
-  if (profile.role === 'logistica_02') {
+  const querTv =
+    profile.role === 'logistica_02' ||
+    ((profile.role === 'faturamento' || profile.role === 'admin') && sp?.vista === 'tv')
+
+  if (querTv) {
     // Programação dos próximos dias (amanhã até +7) para a prévia embutida na TV.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: prog } = await (supabase as any)

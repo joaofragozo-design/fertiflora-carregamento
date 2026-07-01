@@ -31,14 +31,18 @@ export default async function RelatorioPage({
     .from('ordens_diarias')
     .select(`
       *,
-      formula:formulas (
-        id, nome, mo, map, calcario_concha, sulfato_amonia, carbonato_ca_mg,
-        ureia, cloreto_potassio, boro, enxofre_pastilhado, fte_br_12, oxmag_s, tsp, caltimag, hiphos_25,
-        ativo, created_at, updated_at
+      itens:ordem_itens (
+        *,
+        formula:formulas (
+          id, nome, mo, map, calcario_concha, sulfato_amonia, carbonato_ca_mg,
+          ureia, cloreto_potassio, boro, enxofre_pastilhado, fte_br_12, oxmag_s, tsp, caltimag, hiphos_25,
+          ativo, created_at, updated_at
+        )
       )
     `)
     .eq('data', data)
     .order('sequencia', { ascending: true })
+    .order('created_at', { foreignTable: 'ordem_itens', ascending: true })
 
   return <RelatorioDiario ordens={(ordens ?? []) as OrdemDiaria[]} data={data} />
 }

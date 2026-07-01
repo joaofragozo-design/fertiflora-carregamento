@@ -11,7 +11,7 @@ import { ROUTES } from '@/constants/routes'
 import type { AppUser } from '@/types'
 import type { OrdemDiaria, Formula } from '@/types/formula'
 import type { Programacao } from '@/types/programacao'
-import { INGREDIENTES, EMBALAGEM_LABEL, calcularIngrediente, calcularTons, getStatus, formatDuracao, tonPorHora } from '@/types/formula'
+import { MATERIAS_PRIMA, EMBALAGEM_LABEL, calcularMateriaPrima, calcularTons, tonsDaOrdem, getStatus, formatDuracao, tonPorHora } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
 interface TvBoardProps {
@@ -50,7 +50,7 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
 
   const podeMarcar = user.role === 'admin' || user.role === 'logistica_02'
 
-  const totalTons = useMemo(() => ordens.reduce((s, o) => s + (o.tons ?? 0), 0), [ordens])
+  const totalTons = useMemo(() => ordens.reduce((s, o) => s + tonsDaOrdem(o), 0), [ordens])
 
   // Ativos (em andamento primeiro, depois aguardando) ficam no foco.
   // Finalizados vão para uma seção separada e discreta.
@@ -90,15 +90,38 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
     }
   }
 
+  // Carga em andamento (no máximo uma por vez).
+  const cargaEmAndamento = useMemo(
+    () => ordens.find((o) => o.iniciado && !o.finalizado),
+    [ordens],
+  )
+
   function toggleIniciado(o: EditableOrdem) {
     if (!podeMarcar || o.finalizado) return
-    salvar(o.id, { iniciado: !o.iniciado })
+    if (!o.iniciado) {
+      // Iniciar: bloqueia se já há outra em andamento.
+      if (cargaEmAndamento && cargaEmAndamento.id !== o.id) {
+        toast.error('Finalize a carga em andamento antes de iniciar outra.')
+        return
+      }
+      salvar(o.id, { iniciado: true })
+    } else {
+      salvar(o.id, { iniciado: false }) // desfazer início
+    }
   }
 
   function toggleFinalizado(o: EditableOrdem) {
     if (!podeMarcar) return
-    const next = !o.finalizado
-    salvar(o.id, { finalizado: next, iniciado: next ? true : o.iniciado })
+    if (!o.finalizado) {
+      // Finalizar: só se já iniciada.
+      if (!o.iniciado) {
+        toast.error('Inicie a carga antes de finalizar.')
+        return
+      }
+      salvar(o.id, { finalizado: true })
+    } else {
+      salvar(o.id, { finalizado: false }) // reabrir
+    }
   }
 
   return (
@@ -137,11 +160,9 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         {ativos.map((o) => {
           const emAndamento = o.iniciado
-          const formula = o.formula as Formula | null | undefined
-          const usados = formula
-            ? INGREDIENTES.map((ing) => ({ ing, kg: calcularIngrediente(formula, ing.key) })).filter((x) => x.kg > 0)
-            : []
-          const tons = calcularTons(o.quantidade, o.embalagem)
+          const itens = o.itens ?? []
+          const tonsCarga = tonsDaOrdem(o)
+          const bloqueiaIniciar = !o.iniciado && cargaEmAndamento != null && cargaEmAndamento.id !== o.id
 
           return (
             <div
@@ -152,8 +173,8 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
                 emAndamento ? 'bg-amber-200 border-amber-500' : 'bg-industrial-900 border-industrial-300',
               )}
             >
-              {/* Cliente + status */}
-              <div className="flex items-center justify-between gap-3">
+              {/* Cliente + placa + status */}
+              <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div className="flex items-baseline gap-3 min-w-0">
                   <span className="font-mono text-xl text-industrial-500">{o.sequencia}</span>
                   <span className="text-4xl font-bold text-industrial-50 truncate">{o.cliente || 'Sem cliente'}</span>
@@ -175,66 +196,89 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
                 </span>
               </div>
 
-              {/* Quantidade + envelopar (MAIÚSCULO, destaque) + toneladas */}
-              <div className="flex items-center justify-between gap-3 flex-wrap mt-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-4xl font-extrabold text-industrial-50 tracking-wide">
-                    {o.quantidade} × {EMBALAGEM_LABEL[o.embalagem]}
+              {/* Envelopar + total da carga */}
+              <div className="flex items-center justify-between gap-3 flex-wrap mt-3">
+                {o.envelopar ? (
+                  <span className="rounded-md bg-brand-600 text-white text-lg font-bold uppercase tracking-wide px-3 py-1.5">
+                    Envelopar
                   </span>
-                  {o.envelopar && (
-                    <span className="rounded-md bg-brand-600 text-white text-lg font-bold uppercase tracking-wide px-3 py-1.5">
-                      Envelopar
-                    </span>
-                  )}
-                </div>
+                ) : <span />}
                 <span className="text-4xl font-bold text-brand-700">
-                  {tons.toFixed(2)} <span className="text-xl font-normal text-industrial-500">ton</span>
+                  {tonsCarga.toFixed(2)} <span className="text-xl font-normal text-industrial-500">ton</span>
                 </span>
               </div>
 
-              {/* Fórmula — secundária (rótulo) */}
-              <div className="mt-4 text-2xl text-industrial-500">
-                Fórmula:{' '}
-                <span className="font-bold text-industrial-100">
-                  {formula?.nome ?? 'sem fórmula'}
-                </span>
-              </div>
-
-              {/* Ingredientes — PROTAGONISTAS (números bem grandes) */}
-              {usados.length > 0 && (
-                <div className="flex flex-wrap gap-x-12 gap-y-6 mt-5">
-                  {usados.map(({ ing, kg }) => (
-                    <div key={ing.key} className="flex flex-col">
-                      <span className="text-xl font-bold uppercase tracking-wide text-industrial-300">{ing.label}</span>
-                      <span className="text-7xl font-black font-mono text-industrial-50 leading-none">{fmtKg(kg)}</span>
+              {/* Itens da carga — cada um com fórmula + matéria-prima em destaque */}
+              <div className="flex flex-col gap-5 mt-4">
+                {itens.map((item, i) => {
+                  const formula = item.formula as Formula | null | undefined
+                  const usados = formula
+                    ? MATERIAS_PRIMA.map((mp) => ({ mp, kg: calcularMateriaPrima(formula, mp.key) })).filter((x) => x.kg > 0)
+                    : []
+                  const tons = calcularTons(item.quantidade, item.embalagem)
+                  return (
+                    <div key={item.id} className={cn(i > 0 && 'border-t border-industrial-300/60 pt-4')}>
+                      <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <span className="text-3xl font-extrabold text-industrial-50 tracking-wide">
+                          {item.quantidade} × {EMBALAGEM_LABEL[item.embalagem]}
+                        </span>
+                        <span className="text-2xl font-bold text-brand-700">{tons.toFixed(2)} ton</span>
+                      </div>
+                      <div className="mt-2 text-2xl text-industrial-500">
+                        Fórmula:{' '}
+                        <span className="font-bold text-industrial-100">
+                          {formula?.nome ?? 'sem fórmula'}
+                        </span>
+                      </div>
+                      {usados.length > 0 && (
+                        <div className="flex flex-wrap gap-x-12 gap-y-6 mt-4">
+                          {usados.map(({ mp, kg }) => (
+                            <div key={mp.key} className="flex flex-col">
+                              <span className="text-xl font-bold uppercase tracking-wide text-industrial-300">{mp.label}</span>
+                              <span className="text-7xl font-black font-mono text-industrial-50 leading-none">{fmtKg(kg)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
+                  )
+                })}
+              </div>
 
               {/* Botões grandes */}
               {podeMarcar && (
-                <div className="flex gap-4 mt-7">
-                  <button
-                    type="button"
-                    onClick={() => toggleIniciado(o)}
-                    className={cn(
-                      'flex-1 flex items-center justify-center gap-3 rounded-xl px-5 py-6 text-3xl font-bold transition-colors',
-                      o.iniciado
-                        ? 'bg-industrial-900 border-2 border-brand-600 text-brand-700'
-                        : 'bg-amber-500 text-white hover:bg-amber-600',
-                    )}
-                  >
-                    {o.iniciado ? <Check className="size-8" strokeWidth={3} /> : <Play className="size-8" />}
-                    {o.iniciado ? 'Iniciado' : 'Iniciar'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleFinalizado(o)}
-                    className="flex-1 flex items-center justify-center gap-3 rounded-xl px-5 py-6 text-3xl font-bold bg-brand-600 text-white hover:bg-brand-700 transition-colors"
-                  >
-                    <FlagTriangleRight className="size-8" /> Finalizar
-                  </button>
+                <div className="mt-7">
+                  <div className="flex gap-4">
+                    <button
+                      type="button"
+                      onClick={() => toggleIniciado(o)}
+                      disabled={bloqueiaIniciar}
+                      className={cn(
+                        'flex-1 flex items-center justify-center gap-3 rounded-xl px-5 py-6 text-3xl font-bold transition-colors',
+                        o.iniciado
+                          ? 'bg-industrial-900 border-2 border-brand-600 text-brand-700'
+                          : 'bg-amber-500 text-white hover:bg-amber-600',
+                        bloqueiaIniciar && 'opacity-40 cursor-not-allowed hover:bg-amber-500',
+                      )}
+                    >
+                      {o.iniciado ? <Check className="size-8" strokeWidth={3} /> : <Play className="size-8" />}
+                      {o.iniciado ? 'Iniciado' : 'Iniciar'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleFinalizado(o)}
+                      disabled={!o.iniciado}
+                      className={cn(
+                        'flex-1 flex items-center justify-center gap-3 rounded-xl px-5 py-6 text-3xl font-bold transition-colors bg-brand-600 text-white hover:bg-brand-700',
+                        !o.iniciado && 'opacity-40 cursor-not-allowed hover:bg-brand-600',
+                      )}
+                    >
+                      <FlagTriangleRight className="size-8" /> Finalizar
+                    </button>
+                  </div>
+                  {bloqueiaIniciar && (
+                    <p className="text-base text-amber-800 mt-2 text-center">Finalize a carga em andamento primeiro.</p>
+                  )}
                 </div>
               )}
             </div>
@@ -251,11 +295,14 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
             {finalizados.map((o) => {
-              const formula = o.formula as Formula | null | undefined
-              const tons = calcularTons(o.quantidade, o.embalagem)
+              const itens = o.itens ?? []
+              const tonsCarga = tonsDaOrdem(o)
               const durMs = o.iniciado_em && o.finalizado_em
                 ? new Date(o.finalizado_em).getTime() - new Date(o.iniciado_em).getTime()
                 : 0
+              const resumoItens = itens
+                .map((it) => `${(it.formula as Formula | undefined)?.nome ?? 'sem fórmula'} (${it.quantidade} ${EMBALAGEM_LABEL[it.embalagem]})`)
+                .join(' + ')
               return (
                 <div
                   key={o.id}
@@ -271,11 +318,11 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
                       {o.placa && <span className="text-xs font-mono text-industrial-500 uppercase shrink-0">{o.placa}</span>}
                     </div>
                     <div className="text-xs text-industrial-600 truncate mt-0.5">
-                      {formula?.nome ?? 'sem fórmula'} · {tons.toFixed(2)} ton · {o.quantidade} {EMBALAGEM_LABEL[o.embalagem]}
+                      {resumoItens || 'sem itens'} · {tonsCarga.toFixed(2)} ton
                     </div>
                     {durMs > 0 && (
                       <div className="text-xs text-brand-700 font-medium mt-0.5">
-                        <Clock className="inline size-3 mb-0.5" /> {formatDuracao(durMs)} · {tonPorHora(tons, durMs).toFixed(2)} ton/h
+                        <Clock className="inline size-3 mb-0.5" /> {formatDuracao(durMs)} · {tonPorHora(tonsCarga, durMs).toFixed(2)} ton/h
                       </div>
                     )}
                   </div>
