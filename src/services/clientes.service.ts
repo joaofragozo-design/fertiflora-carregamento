@@ -9,7 +9,7 @@ export class ClientesService {
   async getAll(): Promise<Cliente[]> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (this.supabase as any)
-      .from('clientes')
+      .from('clientes_carregamento')
       .select('*')
       .order('nome', { ascending: true })
 
@@ -22,7 +22,7 @@ export class ClientesService {
     const nomeLimpo = nome.trim()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (this.supabase as any)
-      .from('clientes')
+      .from('clientes_carregamento')
       .insert({ nome: nomeLimpo })
       .select('*')
       .single()
@@ -32,7 +32,7 @@ export class ClientesService {
     if (error.message.includes('duplicate') || error.message.includes('unique')) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: existente } = await (this.supabase as any)
-        .from('clientes')
+        .from('clientes_carregamento')
         .select('*')
         .ilike('nome', nomeLimpo)
         .single()

@@ -95,7 +95,7 @@ export default async function OrdensPage({
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: clientes } = await (supabase as any)
-    .from('clientes')
+    .from('clientes_carregamento')
     .select('*')
     .order('nome', { ascending: true })
 

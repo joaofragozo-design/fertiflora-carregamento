@@ -20,7 +20,7 @@ export function useClientes(initial: Cliente[]) {
       .channel('clientes_changes')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'clientes' },
+        { event: 'INSERT', schema: 'public', table: 'clientes_carregamento' },
         (payload) => {
           const novo = payload.new as Cliente
           setClientes((prev) => (prev.some((c) => c.id === novo.id) ? prev : ordenar([...prev, novo])))
