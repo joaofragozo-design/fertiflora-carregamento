@@ -9,15 +9,19 @@ import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { OrdensDiariasService } from '@/services/ordens-diarias.service'
 import { useOrdensDiarias, type EditableOrdem } from '@/hooks/use-ordens-diarias'
+import { useClientes } from '@/hooks/use-clientes'
+import { ClientePicker } from '@/components/clientes/cliente-picker'
 import { ROUTES } from '@/constants/routes'
 import type { AppUser } from '@/types'
 import type { OrdemDiaria, OrdemItem, Formula, Embalagem, StatusOrdem } from '@/types/formula'
+import type { Cliente } from '@/types/cliente'
 import { MATERIAS_PRIMA, EMBALAGEM_LABEL, EMBALAGEM_OPCOES, calcularMateriaPrima, calcularTons, tonsDaOrdem, getStatus, formatDuracao } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
 interface OrdensParneProps {
   initialOrdens:    OrdemDiaria[]
   initialFormulas:  { id: number; nome: string }[]
+  initialClientes:  Cliente[]
   user:             AppUser
   hoje:             string
 }
@@ -270,8 +274,9 @@ function CelulaMateriaPrima({ formula }: { formula: Formula | null | undefined }
   )
 }
 
-export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: OrdensParneProps) {
+export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, user, hoje }: OrdensParneProps) {
   const { ordens, setOrdens } = useOrdensDiarias(initialOrdens, hoje)
+  const { clientes, adicionarCliente } = useClientes(initialClientes)
   const [isPending, startTransition] = useTransition()
   const [dragId, setDragId] = useState<string | null>(null)
   const [overId, setOverId] = useState<string | null>(null)
@@ -440,6 +445,11 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
   async function handleEnvelopar(id: string, val: boolean) {
     updateLocal(id, { envelopar: val })
     await saveField(id, { envelopar: val })
+  }
+
+  async function handleCliente(id: string, nome: string) {
+    updateLocal(id, { cliente: nome })
+    await saveField(id, { cliente: nome })
   }
 
   // Aplica uma nova ordem completa (sequencia = posição). Otimista + persiste.
@@ -649,10 +659,11 @@ export function OrdensParnel({ initialOrdens, initialFormulas, user, hoje }: Ord
 
                           <td className={tdCls} rowSpan={rowSpan}>
                             {editarDados ? (
-                              <InlineInput
+                              <ClientePicker
                                 value={ordem.cliente}
-                                onChange={(v) => updateLocal(ordem.id, { cliente: v })}
-                                onBlur={() => handleBlurText(ordem.id, 'cliente', ordem.cliente)}
+                                clientes={clientes}
+                                onChange={(nome) => handleCliente(ordem.id, nome)}
+                                onCriar={adicionarCliente}
                               />
                             ) : (
                               <span className="text-industrial-100 font-medium">

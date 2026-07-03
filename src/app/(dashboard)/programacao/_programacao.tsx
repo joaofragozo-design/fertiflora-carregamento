@@ -9,21 +9,25 @@ import { createClient } from '@/lib/supabase/client'
 import { ProgramacaoService } from '@/services/programacao.service'
 import { OrdensDiariasService } from '@/services/ordens-diarias.service'
 import { useProgramacaoSemana } from '@/hooks/use-programacao-semana'
+import { useClientes } from '@/hooks/use-clientes'
+import { ClientePicker } from '@/components/clientes/cliente-picker'
 import { ROUTES } from '@/constants/routes'
 import type { Programacao, ProgramacaoItem } from '@/types/programacao'
 import type { Embalagem, Formula } from '@/types/formula'
+import type { Cliente } from '@/types/cliente'
 import { MATERIAS_PRIMA, EMBALAGEM_LABEL, EMBALAGEM_OPCOES, calcularMateriaPrima, calcularTons } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
 interface ProgramacaoSemanaProps {
-  initialItens:  Programacao[]
-  formulas:      { id: number; nome: string }[]
-  semanaInicio:  string // segunda-feira (YYYY-MM-DD)
-  semanaFim:     string // sexta-feira (YYYY-MM-DD)
-  hoje:          string
-  podeEditar:    boolean // admin/logistica — programa a semana
-  podeConfirmar: boolean // admin/faturamento — só confirma chegada do caminhão
-  usuario:       string
+  initialItens:    Programacao[]
+  formulas:        { id: number; nome: string }[]
+  initialClientes: Cliente[]
+  semanaInicio:    string // segunda-feira (YYYY-MM-DD)
+  semanaFim:       string // sexta-feira (YYYY-MM-DD)
+  hoje:            string
+  podeEditar:      boolean // admin/logistica — programa a semana
+  podeConfirmar:   boolean // admin/faturamento — só confirma chegada do caminhão
+  usuario:         string
 }
 
 const DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta']
@@ -148,9 +152,10 @@ interface AgendamentoFormState {
 }
 
 export function ProgramacaoSemana({
-  initialItens, formulas, semanaInicio, semanaFim, hoje, podeEditar, podeConfirmar, usuario,
+  initialItens, formulas, initialClientes, semanaInicio, semanaFim, hoje, podeEditar, podeConfirmar, usuario,
 }: ProgramacaoSemanaProps) {
   const { agendamentos, setAgendamentos } = useProgramacaoSemana(initialItens, semanaInicio, semanaFim)
+  const { clientes, adicionarCliente } = useClientes(initialClientes)
   const [itemForm, setItemForm] = useState<ItemFormState | null>(null)
   const [agForm, setAgForm] = useState<AgendamentoFormState | null>(null)
   const [salvando, setSalvando] = useState(false)
@@ -387,7 +392,13 @@ export function ProgramacaoSemana({
 
               <div className="flex flex-col gap-2">
                 {agendamentosDoDia(data).map((ag) => (
-                  <div key={ag.id} className="rounded-lg border border-industrial-700 bg-industrial-900 p-2">
+                  <div
+                    key={ag.id}
+                    className={cn(
+                      'rounded-lg border p-2 transition-colors',
+                      ag.confirmado_em ? 'border-brand-500 bg-brand-100' : 'border-industrial-700 bg-industrial-900',
+                    )}
+                  >
                     <div className="flex items-start justify-between gap-2">
                       <span className="font-semibold text-industrial-100 text-sm leading-tight flex items-center gap-1.5">
                         {ag.cliente || <span className="text-industrial-500 font-normal">Sem cliente</span>}
@@ -522,10 +533,17 @@ export function ProgramacaoSemana({
               <h2 className="text-base font-semibold text-industrial-100">Editar cliente</h2>
               <button type="button" onClick={() => setAgForm(null)} className="text-industrial-400 hover:text-industrial-100"><X className="size-5" /></button>
             </div>
-            <label className="text-xs font-medium text-industrial-400">Cliente
-              <input value={agForm.cliente} onChange={(e) => setAgForm({ ...agForm, cliente: e.target.value })}
-                className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 focus:outline-none focus:border-brand-500" />
-            </label>
+            <div className="text-xs font-medium text-industrial-400">Cliente
+              <div className="mt-1">
+                <ClientePicker
+                  value={agForm.cliente}
+                  clientes={clientes}
+                  onChange={(nome) => setAgForm({ ...agForm, cliente: nome })}
+                  onCriar={adicionarCliente}
+                  className="[&>button]:py-2 [&>button]:text-sm"
+                />
+              </div>
+            </div>
             <label className="text-xs font-medium text-industrial-400">Observação / nº do pedido
               <input value={agForm.observacao} onChange={(e) => setAgForm({ ...agForm, observacao: e.target.value })}
                 placeholder="ex.: PEDIDO 26092"
@@ -556,10 +574,17 @@ export function ProgramacaoSemana({
 
             {editandoNovoAgendamento && (
               <>
-                <label className="text-xs font-medium text-industrial-400">Cliente
-                  <input value={itemForm.cliente} onChange={(e) => setItemForm({ ...itemForm, cliente: e.target.value })}
-                    className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 focus:outline-none focus:border-brand-500" />
-                </label>
+                <div className="text-xs font-medium text-industrial-400">Cliente
+                  <div className="mt-1">
+                    <ClientePicker
+                      value={itemForm.cliente}
+                      clientes={clientes}
+                      onChange={(nome) => setItemForm({ ...itemForm, cliente: nome })}
+                      onCriar={adicionarCliente}
+                      className="[&>button]:py-2 [&>button]:text-sm"
+                    />
+                  </div>
+                </div>
                 <label className="text-xs font-medium text-industrial-400">Observação / nº do pedido
                   <input value={itemForm.observacao} onChange={(e) => setItemForm({ ...itemForm, observacao: e.target.value })}
                     placeholder="ex.: PEDIDO 26092"

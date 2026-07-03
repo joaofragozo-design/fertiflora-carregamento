@@ -6,6 +6,18 @@
       "runtimeExecutable": "C:\\Program Files\\nodejs\\node.exe",
       "runtimeArgs": ["node_modules/next/dist/bin/next", "dev", "--turbopack"],
       "autoPort": true
+    },
+    {
+      "name": "FertiFlora Vendas Dev",
+      "runtimeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+      "runtimeArgs": ["C:\\Projetos\\FertiFloraVendas\\node_modules\\next\\dist\\bin\\next", "dev", "--turbopack", "C:\\Projetos\\FertiFloraVendas", "--port", "3010"],
+      "port": 3010
+    },
+    {
+      "name": "Prototype Preview Server",
+      "runtimeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+      "runtimeArgs": ["C:\\Users\\lenov\\AppData\\Local\\Temp\\claude\\C--Projetos-FertiFloraCarregamento\\c73f49d2-1f42-4f17-b063-bc36fb637be7\\scratchpad\\staticserver.js"],
+      "port": 4173
     }
   ]
 }

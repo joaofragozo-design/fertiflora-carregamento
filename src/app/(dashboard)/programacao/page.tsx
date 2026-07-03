@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { ROUTES, ROLE_DEFAULT_ROUTES } from '@/constants/routes'
 import { ProgramacaoSemana } from './_programacao'
 import type { Programacao } from '@/types/programacao'
+import type { Cliente } from '@/types/cliente'
 
 export const metadata: Metadata = {
   title: 'Programação de Carregamento',
@@ -78,11 +79,18 @@ export default async function ProgramacaoPage({
     .eq('ativo', true)
     .order('nome', { ascending: true })
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: clientes } = await (supabase as any)
+    .from('clientes')
+    .select('*')
+    .order('nome', { ascending: true })
+
   return (
     <ProgramacaoSemana
       key={semanaInicio}
       initialItens={(itens ?? []) as Programacao[]}
       formulas={(formulas ?? []) as { id: number; nome: string }[]}
+      initialClientes={(clientes ?? []) as Cliente[]}
       semanaInicio={semanaInicio}
       semanaFim={semanaFim}
       hoje={iso(new Date())}

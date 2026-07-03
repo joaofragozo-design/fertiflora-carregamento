@@ -7,14 +7,15 @@ interface LogoMarkProps {
 
 /** Ícone isolado — usa a logo completa em proporção quadrada */
 export function LogoMark({ size = 32, className }: LogoMarkProps) {
+  const width = Math.round(size * 3.3)
   return (
     <Image
       src="/fertiflora-logo.png"
       alt="Fertiflora"
-      width={size * 3}
+      width={width}
       height={size}
       className={className}
-      style={{ objectFit: 'contain', width: size * 3, height: size }}
+      style={{ objectFit: 'contain', width, height: size }}
       priority
     />
   )

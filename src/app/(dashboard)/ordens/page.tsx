@@ -7,6 +7,7 @@ import { OrdensParnel } from './_painel'
 import { TvBoard } from './_tv-board'
 import type { OrdemDiaria } from '@/types/formula'
 import type { Programacao } from '@/types/programacao'
+import type { Cliente } from '@/types/cliente'
 
 export const metadata: Metadata = {
   title: 'Ordens Diárias de Carregamento',
@@ -92,11 +93,18 @@ export default async function OrdensPage({
     .eq('ativo', true)
     .order('nome', { ascending: true })
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: clientes } = await (supabase as any)
+    .from('clientes')
+    .select('*')
+    .order('nome', { ascending: true })
+
   return (
     <OrdensParnel
       key={hoje}
       initialOrdens={ordensList}
       initialFormulas={(formulas ?? []) as { id: number; nome: string }[]}
+      initialClientes={(clientes ?? []) as Cliente[]}
       user={profile}
       hoje={hoje}
     />
