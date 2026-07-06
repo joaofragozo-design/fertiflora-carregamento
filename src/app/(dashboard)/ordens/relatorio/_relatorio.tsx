@@ -1,8 +1,9 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Printer, ArrowLeft } from 'lucide-react'
+import { Printer, ArrowLeft, Mail } from 'lucide-react'
+import { toast } from 'sonner'
 import { ROUTES } from '@/constants/routes'
 import type { OrdemDiaria, Formula, StatusOrdem } from '@/types/formula'
 import { MATERIAS_PRIMA, EMBALAGEM_LABEL, calcularMateriaPrima, calcularTons, tonsDaOrdem, getStatus, formatDuracao, tonPorHora } from '@/types/formula'
@@ -35,7 +36,27 @@ function fmtNum(n: number, casas = 0): string {
 }
 
 export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
+  const [enviando, setEnviando] = useState(false)
   const totalTons = useMemo(() => ordens.reduce((s, o) => s + tonsDaOrdem(o), 0), [ordens])
+
+  async function enviarPorEmail() {
+    setEnviando(true)
+    try {
+      const res = await fetch('/api/relatorio/enviar-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(json.error || 'Erro ao enviar e-mail.')
+      const emCopia = Array.isArray(json.cc) && json.cc.length > 0 ? ` (cópia: ${json.cc.join(', ')})` : ''
+      toast.success(`Relatório enviado para ${json.para}.${emCopia}`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao enviar e-mail.')
+    } finally {
+      setEnviando(false)
+    }
+  }
 
   // Consumo de matéria-prima do dia: Σ (tons do item × kg/ton da matéria-prima).
   const consumo = useMemo(() => {
@@ -80,13 +101,23 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
         >
           <ArrowLeft className="size-4" /> Voltar
         </Link>
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="flex items-center gap-2 rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-medium transition-colors"
-        >
-          <Printer className="size-4" /> Imprimir
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={enviarPorEmail}
+            disabled={enviando}
+            className="flex items-center gap-2 rounded-lg border border-industrial-700 text-industrial-200 hover:border-brand-500 hover:text-brand-700 px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Mail className="size-4" /> {enviando ? 'Enviando…' : 'Enviar por e-mail'}
+          </button>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="flex items-center gap-2 rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-medium transition-colors"
+          >
+            <Printer className="size-4" /> Imprimir
+          </button>
+        </div>
       </div>
 
       {/* Cabeçalho do relatório */}
