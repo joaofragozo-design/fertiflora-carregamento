@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Check, Clock, Play, FlagTriangleRight, Printer, RotateCcw, CalendarRange } from 'lucide-react'
+import { Check, Clock, Play, FlagTriangleRight, Printer, RotateCcw, CalendarRange, Truck } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { OrdensDiariasService } from '@/services/ordens-diarias.service'
@@ -66,7 +66,7 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
     [ordens],
   )
 
-  // Programação agrupada por dia (prévia dos próximos dias).
+  // Programação agrupada por dia (hoje + prévia dos próximos dias).
   const diasProg = useMemo(() => {
     const map = new Map<string, Programacao[]>()
     for (const p of programacao) {
@@ -78,6 +78,35 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([data, itens]) => ({ data, itens }))
   }, [programacao])
+
+  // Programação de HOJE — o que ainda falta carregar, destacado à parte.
+  const agendamentosHoje = useMemo(
+    () => programacao.filter((p) => p.data === hoje),
+    [programacao, hoje],
+  )
+  const proximosDias = useMemo(() => diasProg.filter((d) => d.data !== hoje), [diasProg, hoje])
+
+  const totalTonsHoje = useMemo(
+    () => agendamentosHoje.reduce((s, ag) => s + (ag.itens ?? []).reduce((si, it) => si + (it.tons ?? 0), 0), 0),
+    [agendamentosHoje],
+  )
+
+  // Matéria-prima agregada de tudo que ainda está programado pra hoje.
+  const materiaPrimaHoje = useMemo(() => {
+    const acc: Record<string, number> = {}
+    for (const ag of agendamentosHoje) {
+      for (const item of ag.itens ?? []) {
+        const f = item.formula as Formula | undefined
+        if (!f) continue
+        const tons = item.tons ?? calcularTons(item.quantidade, item.embalagem)
+        for (const mp of MATERIAS_PRIMA) {
+          const kgPorTon = calcularMateriaPrima(f, mp.key)
+          if (kgPorTon > 0) acc[mp.key] = (acc[mp.key] ?? 0) + tons * kgPorTon
+        }
+      }
+    }
+    return MATERIAS_PRIMA.map((mp) => ({ mp, kg: acc[mp.key] ?? 0 })).filter((x) => x.kg > 0)
+  }, [agendamentosHoje])
 
   async function salvar(id: string, patch: Partial<OrdemDiaria>) {
     setOrdens((prev) => prev.map((o) => (o.id === id ? { ...o, ...patch, _saving: true, _dirty: false } : o)))
@@ -233,7 +262,7 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
                       {usados.length > 0 && (
                         <div className="flex flex-wrap gap-x-12 gap-y-6 mt-4">
                           {usados.map(({ mp, kg }) => (
-                            <div key={mp.key} className="flex flex-col">
+                            <div key={mp.key} className="flex flex-col items-center text-center">
                               <span className="text-xl font-bold uppercase tracking-wide text-industrial-300">{mp.label}</span>
                               <span className="text-7xl font-black font-mono text-industrial-50 leading-none">{fmtKg(kg)}</span>
                             </div>
@@ -343,15 +372,59 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
         </div>
       )}
 
+      {/* PROGRAMAÇÃO DE HOJE — destacada: o que ainda falta carregar */}
+      {agendamentosHoje.length > 0 && (
+        <div className="mt-2 rounded-2xl border-2 border-brand-500 bg-brand-50 p-5">
+          <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+            <div className="flex items-center gap-2.5">
+              <Truck className="size-6 text-brand-700" />
+              <h2 className="text-2xl font-bold text-industrial-50">Programação de Hoje</h2>
+              <span className="rounded-full bg-brand-600 text-white text-sm font-bold px-3 py-1">
+                {agendamentosHoje.length} {agendamentosHoje.length === 1 ? 'caminhão' : 'caminhões'} pra carregar
+              </span>
+            </div>
+            <span className="text-2xl font-bold text-brand-700">{totalTonsHoje.toFixed(2)} <span className="text-base font-normal text-industrial-500">ton</span></span>
+          </div>
+
+          {/* Matéria-prima agregada do que ainda falta carregar hoje */}
+          {materiaPrimaHoje.length > 0 && (
+            <div className="flex flex-wrap gap-x-10 gap-y-4 mb-5 pb-5 border-b border-brand-300">
+              {materiaPrimaHoje.map(({ mp, kg }) => (
+                <div key={mp.key} className="flex flex-col items-center text-center">
+                  <span className="text-base font-bold uppercase tracking-wide text-industrial-500">{mp.label}</span>
+                  <span className="text-4xl font-black font-mono text-industrial-50 leading-none">{fmtKg(kg)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+            {agendamentosHoje.map((ag) => {
+              const totalAg = (ag.itens ?? []).reduce((s, it) => s + (it.tons ?? 0), 0)
+              const resumo = (ag.itens ?? [])
+                .map((it) => `${it.formula?.nome ?? 'sem fórmula'} (${it.quantidade} ${EMBALAGEM_LABEL[it.embalagem]})`)
+                .join(' + ')
+              return (
+                <div key={ag.id} className="rounded-lg bg-industrial-900 px-3 py-2">
+                  <span className="font-bold text-industrial-50">{ag.cliente || 'Sem cliente'}</span>
+                  {resumo && <span className="text-brand-700"> · {resumo}</span>}
+                  <span className="text-industrial-500"> · {totalAg.toFixed(2)} ton</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* PROGRAMAÇÃO — prévia dos próximos dias (embutida, somente leitura) */}
-      {diasProg.length > 0 && (
+      {proximosDias.length > 0 && (
         <div className="mt-2">
           <div className="flex items-center gap-2 text-sm font-semibold text-industrial-400 uppercase tracking-wide border-t border-industrial-700 pt-3 mb-3">
             <CalendarRange className="size-4 text-brand-600" />
             Programação dos próximos dias
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-            {diasProg.map(({ data, itens: agendamentos }) => (
+            {proximosDias.map(({ data, itens: agendamentos }) => (
               <div key={data} className="rounded-xl border border-industrial-800 p-3">
                 <p className="text-sm font-bold text-industrial-200 capitalize mb-2">{labelDia(data)}</p>
                 <div className="flex flex-col gap-1.5">

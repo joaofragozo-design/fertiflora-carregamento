@@ -64,12 +64,12 @@ export default async function OrdensPage({
     (['faturamento', 'logistica', 'admin'].includes(profile.role) && sp?.vista === 'tv')
 
   if (querTv) {
-    // Programação dos próximos dias (amanhã até +7) para a prévia embutida na TV.
+    // Programação de hoje + próximos dias (até +7) para a prévia embutida na TV.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: prog } = await (supabase as any)
       .from('programacao_carregamento')
       .select('*, itens:programacao_itens (*, formula:formulas (id, nome))')
-      .gte('data', addDias(hoje, 1))
+      .gte('data', hoje)
       .lte('data', addDias(hoje, 7))
       .order('data', { ascending: true })
       .order('created_at', { ascending: true })
