@@ -82,14 +82,16 @@ export type OrdemDiariaInsert = Omit<OrdemDiaria, 'id' | 'itens' | 'iniciado_em'
 export type OrdemDiariaUpdate = Partial<OrdemDiariaInsert>
 
 // Matéria-prima da fórmula (antes chamado "ingredientes").
+// Ordem alinhada com a tela da automação da fábrica (UREIA, CLORETO, MAP,
+// CARBONATO, M.O., SULFATO primeiro) — o resto mantém a ordem original.
 export const MATERIAS_PRIMA = [
-  { key: 'mo',                 label: 'M.O.'          },
-  { key: 'map',                label: 'MAP'           },
-  { key: 'calcario_concha',    label: 'CYSY+S'        },
-  { key: 'sulfato_amonia',     label: 'SULFATO'       },
-  { key: 'carbonato_ca_mg',    label: 'CARBONATO'     },
   { key: 'ureia',              label: 'Ureia'         },
   { key: 'cloreto_potassio',   label: 'CLORETO'       },
+  { key: 'map',                label: 'MAP'           },
+  { key: 'carbonato_ca_mg',    label: 'CARBONATO'     },
+  { key: 'mo',                 label: 'M.O.'          },
+  { key: 'sulfato_amonia',     label: 'SULFATO'       },
+  { key: 'calcario_concha',    label: 'CYSY+S'        },
   { key: 'boro',               label: 'Boro 10'       },
   { key: 'enxofre_pastilhado', label: 'Enx. Past.'    },
   { key: 'fte_br_12',          label: 'FTE BR 12'     },
