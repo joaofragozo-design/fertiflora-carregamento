@@ -15,7 +15,7 @@ import { ROUTES } from '@/constants/routes'
 import type { AppUser } from '@/types'
 import type { OrdemDiaria, OrdemItem, Formula, Embalagem, StatusOrdem } from '@/types/formula'
 import type { Cliente } from '@/types/cliente'
-import { MATERIAS_PRIMA, EMBALAGEM_LABEL, EMBALAGEM_OPCOES, calcularMateriaPrima, calcularTons, tonsDaOrdem, getStatus, formatDuracao } from '@/types/formula'
+import { MATERIAS_PRIMA, EMBALAGEM_LABEL, EMBALAGEM_OPCOES, calcularMateriaPrima, labelMateriaPrima, calcularTons, tonsDaOrdem, getStatus, formatDuracao } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
 interface OrdensParneProps {
@@ -246,7 +246,7 @@ function Kpi({ label, value, unit, tone }: { label: string; value: string | numb
 /** Célula com a matéria-prima (kg/ton) usada pelo item + selo de verificação (Σ 1000). */
 function CelulaMateriaPrima({ formula }: { formula: Formula | null | undefined }) {
   const usados = formula
-    ? MATERIAS_PRIMA.map((mp) => ({ mp, kg: calcularMateriaPrima(formula, mp.key) })).filter((x) => x.kg > 0)
+    ? MATERIAS_PRIMA.map((mp) => ({ mp, label: labelMateriaPrima(formula, mp.key), kg: calcularMateriaPrima(formula, mp.key) })).filter((x) => x.kg > 0)
     : []
   const soma = formula ? +usados.reduce((s, x) => s + x.kg, 0).toFixed(1) : null
   const ok = soma !== null && Math.abs(soma - 1000) < 0.5
@@ -255,9 +255,9 @@ function CelulaMateriaPrima({ formula }: { formula: Formula | null | undefined }
 
   return (
     <div className="flex flex-wrap items-center gap-1">
-      {usados.map(({ mp, kg }) => (
+      {usados.map(({ mp, label, kg }) => (
         <span key={mp.key} className="inline-flex items-center gap-1 rounded bg-industrial-900 border border-industrial-700 px-1.5 py-0.5">
-          <span className="text-[10px] text-industrial-400">{mp.label}</span>
+          <span className="text-[10px] text-industrial-400">{label}</span>
           <span className="text-[10px] font-mono font-bold text-industrial-100">{fmtKg(kg)}</span>
         </span>
       ))}

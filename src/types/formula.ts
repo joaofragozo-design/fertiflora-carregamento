@@ -114,6 +114,16 @@ export function calcularMateriaPrima(formula: Formula, chave: MateriaPrimaKey): 
 // Alias para compatibilidade com código antigo.
 export const calcularIngrediente = calcularMateriaPrima
 
+// A planilha reaproveita a mesma coluna `caltimag` pra dois produtos físicos
+// diferentes (a fábrica trocou o produto em várias fórmulas) — o nome da
+// fórmula indica qual foi usado (ex.: "...+FERTIMAG(Ca 8,0+4,4%Mg)"). Por
+// isso o rótulo dessa matéria-prima é calculado por fórmula, não fixo como
+// os demais.
+export function labelMateriaPrima(formula: Formula, chave: MateriaPrimaKey): string {
+  if (chave === 'caltimag' && /fertimag/i.test(formula.nome)) return 'FERTIMAG'
+  return MATERIAS_PRIMA.find((m) => m.key === chave)!.label
+}
+
 // Toneladas por unidade de cada embalagem.
 export const PESO_TON: Record<Embalagem, number> = {
   SACOS:    0.05, //   50 kg

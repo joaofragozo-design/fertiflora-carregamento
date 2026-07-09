@@ -15,7 +15,7 @@ import { ROUTES } from '@/constants/routes'
 import type { Programacao, ProgramacaoItem } from '@/types/programacao'
 import type { Embalagem, Formula } from '@/types/formula'
 import type { Cliente } from '@/types/cliente'
-import { MATERIAS_PRIMA, EMBALAGEM_LABEL, EMBALAGEM_OPCOES, calcularMateriaPrima, calcularTons } from '@/types/formula'
+import { MATERIAS_PRIMA, EMBALAGEM_LABEL, EMBALAGEM_OPCOES, calcularMateriaPrima, labelMateriaPrima, calcularTons } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
 interface ProgramacaoSemanaProps {
@@ -176,22 +176,31 @@ export function ProgramacaoSemana({
   const agendamentosDoDia = (data: string) => agendamentos.filter((ag) => ag.data === data)
   const totalDia = (data: string) => agendamentosDoDia(data).reduce((s, ag) => s + tonsDoAgendamento(ag), 0)
 
-  // Matéria-prima consumida pela programação do dia: Σ tons do item × kg/ton.
-  function insumosDoDia(data: string): { label: string; kg: number }[] {
-    const acc: Record<string, { label: string; kg: number }> = {}
-    for (const ag of agendamentosDoDia(data)) {
+  // Matéria-prima consumida pelos agendamentos passados: Σ tons do item × kg/ton.
+  // Agrupa por RÓTULO (não pela chave da coluna) porque a mesma coluna
+  // `caltimag` pode representar CALTIMAG numa fórmula e FERTIMAG noutra.
+  function materiaPrimaDosAgendamentos(ags: Programacao[]): { label: string; kg: number }[] {
+    const acc: Record<string, number> = {}
+    for (const ag of ags) {
       for (const item of ag.itens ?? []) {
         const f = item.formula as Formula | undefined
         if (!f) continue
         const tons = item.tons ?? calcularTons(item.quantidade, item.embalagem)
         for (const mp of MATERIAS_PRIMA) {
           const kgPorTon = calcularMateriaPrima(f, mp.key)
-          if (kgPorTon > 0) acc[mp.key] = { label: mp.label, kg: (acc[mp.key]?.kg ?? 0) + tons * kgPorTon }
+          if (kgPorTon > 0) {
+            const label = labelMateriaPrima(f, mp.key)
+            acc[label] = (acc[label] ?? 0) + tons * kgPorTon
+          }
         }
       }
     }
-    return Object.values(acc).sort((a, b) => b.kg - a.kg)
+    return Object.entries(acc).map(([label, kg]) => ({ label, kg })).sort((a, b) => b.kg - a.kg)
   }
+  function insumosDoDia(data: string): { label: string; kg: number }[] {
+    return materiaPrimaDosAgendamentos(agendamentosDoDia(data))
+  }
+  const materiaPrimaDaSemana = useMemo(() => materiaPrimaDosAgendamentos(agendamentos), [agendamentos])
 
   function irParaSemana(inicio: string) {
     router.push(`${ROUTES.PROGRAMACAO}?semana=${inicio}`)
@@ -507,7 +516,7 @@ export function ProgramacaoSemana({
 
               {insumos.length > 0 && (
                 <div className="rounded-lg bg-industrial-950 border border-industrial-700 p-2 mt-auto">
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-industrial-400 mb-1.5">Insumos do dia</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-industrial-400 mb-1.5">Matéria-prima do dia</p>
                   <div className="flex flex-col gap-1">
                     {insumos.map((m) => (
                       <div key={m.label} className="flex items-center justify-between gap-2 text-xs">
@@ -524,6 +533,23 @@ export function ProgramacaoSemana({
           )
         })}
       </div>
+
+      {/* Total de matéria-prima carregado na semana inteira (todos os dias somados) */}
+      {materiaPrimaDaSemana.length > 0 && (
+        <div className="rounded-xl border border-industrial-800 p-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-industrial-400 mb-2">Matéria-prima da semana</p>
+          <div className="flex flex-wrap gap-3">
+            {materiaPrimaDaSemana.map((m) => (
+              <div key={m.label} className="flex flex-col rounded-lg bg-industrial-950 border border-industrial-700 px-3 py-1.5 min-w-[110px]">
+                <span className="text-[10px] text-industrial-400 truncate">{m.label}</span>
+                <span className="font-mono font-bold text-brand-600">
+                  {m.kg.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} <span className="text-[10px] font-normal text-industrial-500">kg</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Modal de cliente/observação (nível agendamento) */}
       {agForm && (

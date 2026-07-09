@@ -6,7 +6,7 @@ import { Printer, ArrowLeft, Mail } from 'lucide-react'
 import { toast } from 'sonner'
 import { ROUTES } from '@/constants/routes'
 import type { OrdemDiaria, Formula, StatusOrdem } from '@/types/formula'
-import { MATERIAS_PRIMA, EMBALAGEM_LABEL, calcularMateriaPrima, calcularTons, tonsDaOrdem, getStatus, formatDuracao, tonPorHora } from '@/types/formula'
+import { MATERIAS_PRIMA, EMBALAGEM_LABEL, calcularMateriaPrima, labelMateriaPrima, calcularTons, tonsDaOrdem, getStatus, formatDuracao, tonPorHora } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
 interface RelatorioDiarioProps {
@@ -59,6 +59,8 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
   }
 
   // Consumo de matéria-prima do dia: Σ (tons do item × kg/ton da matéria-prima).
+  // Agrupa por RÓTULO (não pela chave da coluna) porque a mesma coluna
+  // `caltimag` pode representar CALTIMAG numa fórmula e FERTIMAG noutra.
   const consumo = useMemo(() => {
     const acc: Record<string, number> = {}
     for (const o of ordens) {
@@ -68,13 +70,15 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
         const tons = item.tons ?? calcularTons(item.quantidade, item.embalagem)
         for (const mp of MATERIAS_PRIMA) {
           const kgPorTon = calcularMateriaPrima(f, mp.key)
-          if (kgPorTon > 0) acc[mp.key] = (acc[mp.key] ?? 0) + tons * kgPorTon
+          if (kgPorTon > 0) {
+            const label = labelMateriaPrima(f, mp.key)
+            acc[label] = (acc[label] ?? 0) + tons * kgPorTon
+          }
         }
       }
     }
-    return MATERIAS_PRIMA
-      .map((mp) => ({ mp, kg: acc[mp.key] ?? 0 }))
-      .filter((x) => x.kg > 0)
+    return Object.entries(acc)
+      .map(([label, kg]) => ({ label, kg }))
       .sort((a, b) => b.kg - a.kg)
   }, [ordens])
 
@@ -181,7 +185,7 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
               return itens.map((item, idx) => {
                 const f = item.formula as Formula | undefined
                 const usados = f
-                  ? MATERIAS_PRIMA.map((mp) => ({ mp, kg: calcularMateriaPrima(f, mp.key) })).filter((x) => x.kg > 0)
+                  ? MATERIAS_PRIMA.map((mp) => ({ mp, label: labelMateriaPrima(f, mp.key), kg: calcularMateriaPrima(f, mp.key) })).filter((x) => x.kg > 0)
                   : []
                 const tons = item.tons ?? calcularTons(item.quantidade, item.embalagem)
                 return (
@@ -210,9 +214,9 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
                     <td className={td}>
                       {f ? (
                         <div className="flex flex-wrap gap-1">
-                          {usados.map(({ mp, kg }) => (
+                          {usados.map(({ mp, label, kg }) => (
                             <span key={mp.key} className="inline-flex items-center gap-1 rounded border border-industrial-600 px-1.5 py-0.5">
-                              <span className="text-[10px] text-industrial-500">{mp.label}</span>
+                              <span className="text-[10px] text-industrial-500">{label}</span>
                               <span className="text-[10px] font-mono font-bold">{fmtKg(kg)}</span>
                             </span>
                           ))}
@@ -252,9 +256,9 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
               </tr>
             </thead>
             <tbody>
-              {consumo.map(({ mp, kg }) => (
-                <tr key={mp.key}>
-                  <td className={cn(td, 'font-medium')}>{mp.label}</td>
+              {consumo.map(({ label, kg }) => (
+                <tr key={label}>
+                  <td className={cn(td, 'font-medium')}>{label}</td>
                   <td className={cn(td, 'text-right font-mono')}>{fmtNum(kg)}</td>
                   <td className={cn(td, 'text-right font-mono')}>{fmtNum(kg / 1000, 2)}</td>
                 </tr>

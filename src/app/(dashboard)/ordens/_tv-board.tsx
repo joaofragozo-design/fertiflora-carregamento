@@ -11,7 +11,7 @@ import { ROUTES } from '@/constants/routes'
 import type { AppUser } from '@/types'
 import type { OrdemDiaria, Formula } from '@/types/formula'
 import type { Programacao } from '@/types/programacao'
-import { MATERIAS_PRIMA, EMBALAGEM_LABEL, calcularMateriaPrima, calcularTons, tonsDaOrdem, getStatus, formatDuracao, tonPorHora } from '@/types/formula'
+import { MATERIAS_PRIMA, EMBALAGEM_LABEL, calcularMateriaPrima, labelMateriaPrima, calcularTons, tonsDaOrdem, getStatus, formatDuracao, tonPorHora } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
 interface TvBoardProps {
@@ -92,6 +92,8 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
   )
 
   // Matéria-prima agregada de tudo que ainda está programado pra hoje.
+  // Agrupa por RÓTULO (não pela chave da coluna) porque a mesma coluna
+  // `caltimag` pode representar CALTIMAG numa fórmula e FERTIMAG noutra.
   const materiaPrimaHoje = useMemo(() => {
     const acc: Record<string, number> = {}
     for (const ag of agendamentosHoje) {
@@ -101,11 +103,14 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
         const tons = item.tons ?? calcularTons(item.quantidade, item.embalagem)
         for (const mp of MATERIAS_PRIMA) {
           const kgPorTon = calcularMateriaPrima(f, mp.key)
-          if (kgPorTon > 0) acc[mp.key] = (acc[mp.key] ?? 0) + tons * kgPorTon
+          if (kgPorTon > 0) {
+            const label = labelMateriaPrima(f, mp.key)
+            acc[label] = (acc[label] ?? 0) + tons * kgPorTon
+          }
         }
       }
     }
-    return MATERIAS_PRIMA.map((mp) => ({ mp, kg: acc[mp.key] ?? 0 })).filter((x) => x.kg > 0)
+    return Object.entries(acc).map(([label, kg]) => ({ label, kg })).sort((a, b) => b.kg - a.kg)
   }, [agendamentosHoje])
 
   async function salvar(id: string, patch: Partial<OrdemDiaria>) {
@@ -242,7 +247,7 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
                 {itens.map((item, i) => {
                   const formula = item.formula as Formula | null | undefined
                   const usados = formula
-                    ? MATERIAS_PRIMA.map((mp) => ({ mp, kg: calcularMateriaPrima(formula, mp.key) })).filter((x) => x.kg > 0)
+                    ? MATERIAS_PRIMA.map((mp) => ({ mp, label: labelMateriaPrima(formula, mp.key), kg: calcularMateriaPrima(formula, mp.key) })).filter((x) => x.kg > 0)
                     : []
                   const tons = calcularTons(item.quantidade, item.embalagem)
                   return (
@@ -261,9 +266,9 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
                       </div>
                       {usados.length > 0 && (
                         <div className="flex flex-wrap gap-x-12 gap-y-6 mt-4">
-                          {usados.map(({ mp, kg }) => (
+                          {usados.map(({ mp, label, kg }) => (
                             <div key={mp.key} className="flex flex-col items-center text-center">
-                              <span className="text-xl font-bold uppercase tracking-wide text-industrial-300">{mp.label}</span>
+                              <span className="text-xl font-bold uppercase tracking-wide text-industrial-300">{label}</span>
                               <span className="text-7xl font-black font-mono text-industrial-50 leading-none">{fmtKg(kg)}</span>
                             </div>
                           ))}
@@ -389,9 +394,9 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
           {/* Matéria-prima agregada do que ainda falta carregar hoje */}
           {materiaPrimaHoje.length > 0 && (
             <div className="flex flex-wrap gap-x-10 gap-y-4 mb-5 pb-5 border-b border-brand-300">
-              {materiaPrimaHoje.map(({ mp, kg }) => (
-                <div key={mp.key} className="flex flex-col items-center text-center">
-                  <span className="text-base font-bold uppercase tracking-wide text-industrial-500">{mp.label}</span>
+              {materiaPrimaHoje.map(({ label, kg }) => (
+                <div key={label} className="flex flex-col items-center text-center">
+                  <span className="text-base font-bold uppercase tracking-wide text-industrial-500">{label}</span>
                   <span className="text-4xl font-black font-mono text-industrial-50 leading-none">{fmtKg(kg)}</span>
                 </div>
               ))}
