@@ -52,6 +52,7 @@ export class ProgramacaoService {
   async criar(input: {
     data: string
     cliente: string
+    cliente_codigo: number | null
     observacao: string
     formula_id: number | null
     quantidade: number
@@ -60,7 +61,7 @@ export class ProgramacaoService {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: prog, error } = await (this.supabase as any)
       .from('programacao_carregamento')
-      .insert({ data: input.data, cliente: input.cliente, observacao: input.observacao })
+      .insert({ data: input.data, cliente: input.cliente, cliente_codigo: input.cliente_codigo, observacao: input.observacao })
       .select('*')
       .single()
 

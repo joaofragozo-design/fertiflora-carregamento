@@ -21,6 +21,7 @@ export interface Programacao {
   id:            string
   data:          string
   cliente:       string
+  cliente_codigo: number | null
   itens:         ProgramacaoItem[]
   observacao:    string
   enviado_em:    string | null

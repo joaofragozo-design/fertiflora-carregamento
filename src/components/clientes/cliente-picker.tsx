@@ -6,18 +6,25 @@ import { ChevronDown, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils/cn'
 import type { Cliente } from '@/types/cliente'
+import type { ClienteErp } from '@/types/cliente-erp'
 
 interface ClientePickerProps {
   value: string
   clientes: Cliente[]
-  onChange: (nome: string) => void
+  /** Clientes reais do ERP (com código) -- mesclados com `clientes` na lista, preferidos em caso de nome repetido. */
+  clientesErp?: ClienteErp[]
+  onChange: (nome: string, codigo: number | null) => void
   onCriar: (nome: string) => Promise<Cliente>
   placeholder?: string
   className?: string
 }
 
-/** Combobox de clientes: busca entre os já cadastrados ou cadastra um novo na hora. */
-export function ClientePicker({ value, clientes, onChange, onCriar, placeholder = 'Selecionar cliente…', className }: ClientePickerProps) {
+function normalizar(nome: string): string {
+  return nome.trim().toLowerCase()
+}
+
+/** Combobox de clientes: busca entre os já cadastrados/ERP ou cadastra um novo na hora. */
+export function ClientePicker({ value, clientes, clientesErp = [], onChange, onCriar, placeholder = 'Selecionar cliente…', className }: ClientePickerProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [criando, setCriando] = useState(false)
@@ -26,15 +33,24 @@ export function ClientePicker({ value, clientes, onChange, onCriar, placeholder 
   const popRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // Mescla cadastro manual (clientes_carregamento, sem código) com o ERP (com código) --
+  // em caso de nome repetido, o ERP vence porque carrega o código de verdade.
+  const opcoes = useMemo(() => {
+    const porNome = new Map<string, { nome: string; codigo: number | null }>()
+    for (const c of clientes) porNome.set(normalizar(c.nome), { nome: c.nome, codigo: null })
+    for (const c of clientesErp) porNome.set(normalizar(c.nome), { nome: c.nome, codigo: c.codigo })
+    return [...porNome.values()].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
+  }, [clientes, clientesErp])
+
   const filtered = useMemo(() => {
-    if (!query) return clientes.slice(0, 50)
+    if (!query) return opcoes.slice(0, 50)
     const q = query.toLowerCase()
-    return clientes.filter((c) => c.nome.toLowerCase().includes(q)).slice(0, 50)
-  }, [clientes, query])
+    return opcoes.filter((c) => c.nome.toLowerCase().includes(q)).slice(0, 50)
+  }, [opcoes, query])
 
   const existeExato = useMemo(
-    () => clientes.some((c) => c.nome.toLowerCase() === query.trim().toLowerCase()),
-    [clientes, query],
+    () => opcoes.some((c) => normalizar(c.nome) === normalizar(query)),
+    [opcoes, query],
   )
 
   function fechar() {
@@ -72,8 +88,8 @@ export function ClientePicker({ value, clientes, onChange, onCriar, placeholder 
     }
   }, [open])
 
-  function selecionar(nome: string) {
-    onChange(nome)
+  function selecionar(nome: string, codigo: number | null) {
+    onChange(nome, codigo)
     fechar()
   }
 
@@ -83,7 +99,7 @@ export function ClientePicker({ value, clientes, onChange, onCriar, placeholder 
     setCriando(true)
     try {
       const novo = await onCriar(nome)
-      onChange(novo.nome)
+      onChange(novo.nome, null)
       fechar()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao cadastrar cliente.')
@@ -146,16 +162,17 @@ export function ClientePicker({ value, clientes, onChange, onCriar, placeholder 
               </li>
             )}
             {filtered.map((c) => (
-              <li key={c.id}>
+              <li key={`${c.codigo ?? 'manual'}-${c.nome}`}>
                 <button
                   type="button"
-                  onClick={() => selecionar(c.nome)}
+                  onClick={() => selecionar(c.nome, c.codigo)}
                   className={cn(
-                    'w-full text-left text-xs px-3 py-2 truncate hover:bg-industrial-800',
+                    'w-full text-left text-xs px-3 py-2 truncate hover:bg-industrial-800 flex items-center justify-between gap-2',
                     c.nome === value ? 'text-brand-700 font-semibold' : 'text-industrial-100',
                   )}
                 >
-                  {c.nome}
+                  <span className="truncate">{c.nome}</span>
+                  {c.codigo != null && <span className="shrink-0 text-[10px] text-industrial-500">#{c.codigo}</span>}
                 </button>
               </li>
             ))}

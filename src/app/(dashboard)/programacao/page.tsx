@@ -4,6 +4,7 @@ import { getAuthContext } from '@/lib/supabase/get-user'
 import { createClient } from '@/lib/supabase/server'
 import { ROUTES, ROLE_DEFAULT_ROUTES } from '@/constants/routes'
 import { ProgramacaoSemana } from './_programacao'
+import { listarClientesErp } from '@/services/clientes-erp.service'
 import type { Programacao } from '@/types/programacao'
 import type { Cliente } from '@/types/cliente'
 
@@ -85,12 +86,15 @@ export default async function ProgramacaoPage({
     .select('*')
     .order('nome', { ascending: true })
 
+  const clientesErp = await listarClientesErp(supabase)
+
   return (
     <ProgramacaoSemana
       key={semanaInicio}
       initialItens={(itens ?? []) as Programacao[]}
       formulas={(formulas ?? []) as { id: number; nome: string }[]}
       initialClientes={(clientes ?? []) as Cliente[]}
+      clientesErp={clientesErp}
       semanaInicio={semanaInicio}
       semanaFim={semanaFim}
       hoje={iso(new Date())}

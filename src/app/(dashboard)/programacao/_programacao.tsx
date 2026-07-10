@@ -15,6 +15,7 @@ import { ROUTES } from '@/constants/routes'
 import type { Programacao, ProgramacaoItem } from '@/types/programacao'
 import type { Embalagem, Formula } from '@/types/formula'
 import type { Cliente } from '@/types/cliente'
+import type { ClienteErp } from '@/types/cliente-erp'
 import { MATERIAS_PRIMA, EMBALAGEM_LABEL, EMBALAGEM_OPCOES, calcularMateriaPrima, labelMateriaPrima, calcularTons } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
@@ -22,6 +23,7 @@ interface ProgramacaoSemanaProps {
   initialItens:    Programacao[]
   formulas:        { id: number; nome: string }[]
   initialClientes: Cliente[]
+  clientesErp:     ClienteErp[]
   semanaInicio:    string // segunda-feira (YYYY-MM-DD)
   semanaFim:       string // sexta-feira (YYYY-MM-DD)
   hoje:            string
@@ -134,6 +136,7 @@ interface ItemFormState {
   itemId:        string | null // null = novo item
   data:          string
   cliente:       string
+  clienteCodigo: number | null
   observacao:    string
   formula_id:    number | null
   quantidade:    number
@@ -141,18 +144,19 @@ interface ItemFormState {
 }
 
 const ITEM_FORM_VAZIO: Omit<ItemFormState, 'data' | 'agendamentoId'> = {
-  itemId: null, cliente: '', observacao: '', formula_id: null, quantidade: 0, embalagem: 'SACOS',
+  itemId: null, cliente: '', clienteCodigo: null, observacao: '', formula_id: null, quantidade: 0, embalagem: 'SACOS',
 }
 
 // ─── Formulário do AGENDAMENTO (cliente/observação) ────────────────────────
 interface AgendamentoFormState {
-  id:         string
-  cliente:    string
-  observacao: string
+  id:            string
+  cliente:       string
+  clienteCodigo: number | null
+  observacao:    string
 }
 
 export function ProgramacaoSemana({
-  initialItens, formulas, initialClientes, semanaInicio, semanaFim, hoje, podeEditar, podeConfirmar, usuario,
+  initialItens, formulas, initialClientes, clientesErp, semanaInicio, semanaFim, hoje, podeEditar, podeConfirmar, usuario,
 }: ProgramacaoSemanaProps) {
   const { agendamentos, setAgendamentos } = useProgramacaoSemana(initialItens, semanaInicio, semanaFim)
   const { clientes, adicionarCliente } = useClientes(initialClientes)
@@ -215,12 +219,12 @@ export function ProgramacaoSemana({
   function abrirEdicaoItem(ag: Programacao, item: ProgramacaoItem) {
     setItemForm({
       agendamentoId: ag.id, itemId: item.id, data: ag.data,
-      cliente: ag.cliente, observacao: ag.observacao,
+      cliente: ag.cliente, clienteCodigo: ag.cliente_codigo, observacao: ag.observacao,
       formula_id: item.formula_id, quantidade: item.quantidade, embalagem: item.embalagem,
     })
   }
   function abrirEdicaoAgendamento(ag: Programacao) {
-    setAgForm({ id: ag.id, cliente: ag.cliente, observacao: ag.observacao })
+    setAgForm({ id: ag.id, cliente: ag.cliente, clienteCodigo: ag.cliente_codigo, observacao: ag.observacao })
   }
 
   async function salvarItem() {
@@ -244,6 +248,7 @@ export function ProgramacaoSemana({
         const novo = await svc.criar({
           data: itemForm.data,
           cliente: itemForm.cliente.trim(),
+          cliente_codigo: itemForm.clienteCodigo,
           observacao: itemForm.observacao.trim(),
           formula_id: itemForm.formula_id,
           quantidade: itemForm.quantidade,
@@ -263,7 +268,7 @@ export function ProgramacaoSemana({
     if (!agForm) return
     setSalvando(true)
     try {
-      const upd = await svc.atualizar(agForm.id, { cliente: agForm.cliente.trim(), observacao: agForm.observacao.trim() })
+      const upd = await svc.atualizar(agForm.id, { cliente: agForm.cliente.trim(), cliente_codigo: agForm.clienteCodigo, observacao: agForm.observacao.trim() })
       setAgendamentos((prev) => prev.map((a) => (a.id === upd.id ? upd : a)))
       setAgForm(null)
     } catch (err) {
@@ -411,6 +416,9 @@ export function ProgramacaoSemana({
                     <div className="flex items-start justify-between gap-2">
                       <span className="font-semibold text-industrial-100 text-sm leading-tight flex items-center gap-1.5">
                         {ag.cliente || <span className="text-industrial-500 font-normal">Sem cliente</span>}
+                        {ag.cliente_codigo != null && (
+                          <span className="shrink-0 text-[10px] font-normal text-industrial-500" title="Código do cliente no ERP">#{ag.cliente_codigo}</span>
+                        )}
                         {ag.confirmado_em && (
                           <span
                             className="inline-flex shrink-0"
@@ -564,7 +572,8 @@ export function ProgramacaoSemana({
                 <ClientePicker
                   value={agForm.cliente}
                   clientes={clientes}
-                  onChange={(nome) => setAgForm({ ...agForm, cliente: nome })}
+                  clientesErp={clientesErp}
+                  onChange={(nome, codigo) => setAgForm({ ...agForm, cliente: nome, clienteCodigo: codigo })}
                   onCriar={adicionarCliente}
                   className="[&>button]:py-2 [&>button]:text-sm"
                 />
@@ -605,7 +614,8 @@ export function ProgramacaoSemana({
                     <ClientePicker
                       value={itemForm.cliente}
                       clientes={clientes}
-                      onChange={(nome) => setItemForm({ ...itemForm, cliente: nome })}
+                      clientesErp={clientesErp}
+                      onChange={(nome, codigo) => setItemForm({ ...itemForm, cliente: nome, clienteCodigo: codigo })}
                       onCriar={adicionarCliente}
                       className="[&>button]:py-2 [&>button]:text-sm"
                     />
