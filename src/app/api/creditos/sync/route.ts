@@ -38,6 +38,67 @@ function fmtBRL(v: number): string {
   return "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+const TAMANHO_PAGINA = 1000;
+
+/** PostgREST limita a 1000 linhas por requisição -- sem isso, tabelas grandes (ex: notas_fiscais_importadas) ficam truncadas silenciosamente. */
+async function buscarTodasAsPaginas<T>(
+  buscarPagina: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>
+): Promise<T[]> {
+  const todas: T[] = [];
+  let from = 0;
+  while (true) {
+    const { data, error } = await buscarPagina(from, from + TAMANHO_PAGINA - 1);
+    if (error) throw new Error(error.message);
+    const pagina = data ?? [];
+    todas.push(...pagina);
+    if (pagina.length < TAMANHO_PAGINA) break;
+    from += TAMANHO_PAGINA;
+  }
+  return todas;
+}
+
+/**
+ * `curto` é prefixo de `longo` até uma fronteira de palavra (fim da string ou espaço logo
+ * depois) -- cobre "VERDES PASTOS" (planilha) vs "VERDES PASTOS PRODUTOS AGROPECUARIOS LTDA"
+ * (ERP, razão social completa) sem confundir com um nome coincidentemente parecido tipo
+ * "AGRORURAL" vs um hipotético "AGRORURALGADO" (sem espaço logo após o prefixo).
+ */
+function prefixoComFronteira(curto: string, longo: string): boolean {
+  if (!longo.startsWith(curto)) return false;
+  return longo.length === curto.length || longo[curto.length] === " ";
+}
+
+/**
+ * `curto` (sem espaço) bate com a concatenação (sem espaço) de um prefixo de PALAVRAS INTEIRAS
+ * de `longo` -- cobre "AGROFRONTEIRA" (planilha, junto) vs "AGRO FRONTEIRA MAQUINAS..." (ERP,
+ * separado) sem confundir com coincidências de prefixo de caracteres tipo "AGROMEL" vs
+ * "AGROMELLO..." (letras "LO" a mais não formam um limite de palavra válido).
+ */
+function prefixoDePalavrasSemEspaco(curto: string, longo: string): boolean {
+  let acumulado = "";
+  for (const palavra of longo.split(" ")) {
+    acumulado += palavra;
+    if (acumulado === curto) return true;
+    if (acumulado.length > curto.length) return false;
+  }
+  return false;
+}
+
+/**
+ * Correspondências confirmadas manualmente (financeiro) pra nomes que o algoritmo não consegue
+ * resolver sozinho com segurança -- geralmente porque batem com mais de uma empresa
+ * genuinamente diferente no ERP e só um humano sabe qual é a certa. Checado antes de qualquer
+ * tentativa automática. Chave = nome exatamente como normalizarNome() deixa o texto da planilha.
+ */
+const ALIASES_MANUAIS: Record<string, number> = {
+  // "Alvorada - RO" na planilha é a unidade de Nova Andradina/MS (não existe unidade em
+  // Rondônia no ERP) -- confirmado com o financeiro em 10/07/2026.
+  "ALVORADA - RO": 265896,
+  // "Agromel" na planilha é a AGROPECUARIA AGROMEL LTDA -- confirmado que NÃO é a AGROMELLO
+  // COMMODITIES LTDA (empresa diferente, só o prefixo de letras coincide) -- 10/07/2026.
+  AGROMEL: 302171,
+};
+
 /** Mantém só linhas com nome de cliente preenchido. */
 function sanitizeRow(raw: Record<string, unknown>): CreditoRow | null {
   const clienteNomeRaw = String(raw["cliente"] ?? "").trim();
@@ -106,36 +167,78 @@ export async function POST(req: NextRequest) {
   // Também aproveita a mesma leitura pra saber qual(is) vendedor_codigo já
   // vendeu pra cada cliente_codigo -- é quem recebe a notificação de
   // aumento de limite, mais abaixo.
-  const [{ data: notas }, { data: pedidos }, { data: existentesAntes }] = await Promise.all([
-    supabaseAdmin.from("notas_fiscais_importadas").select("cliente_codigo, cliente_nome, vendedor_codigo"),
-    supabaseAdmin.from("pedidos_erp_importados").select("cliente_codigo, cliente_nome, vendedor_codigo"),
-    supabaseAdmin.from("clientes_limite_credito").select("id, cliente_nome_norm, limite_liberado"),
+  type LinhaErp = { cliente_codigo: number; cliente_nome: string; vendedor_codigo: number };
+  const [notas, pedidos, existentesAntes] = await Promise.all([
+    buscarTodasAsPaginas<LinhaErp>((from, to) =>
+      supabaseAdmin.from("notas_fiscais_importadas").select("cliente_codigo, cliente_nome, vendedor_codigo").range(from, to)
+    ),
+    buscarTodasAsPaginas<LinhaErp>((from, to) =>
+      supabaseAdmin.from("pedidos_erp_importados").select("cliente_codigo, cliente_nome, vendedor_codigo").range(from, to)
+    ),
+    buscarTodasAsPaginas<{ id: string; cliente_nome_norm: string; limite_liberado: number }>((from, to) =>
+      supabaseAdmin.from("clientes_limite_credito").select("id, cliente_nome_norm, limite_liberado").range(from, to)
+    ),
   ]);
 
   const codigosPorNome = new Map<string, Set<number>>();
   const vendedoresPorClienteCodigo = new Map<number, Set<number>>();
-  for (const row of [...(notas ?? []), ...(pedidos ?? [])] as {
-    cliente_codigo: number;
-    cliente_nome: string;
-    vendedor_codigo: number;
-  }[]) {
+  const linhasPorCodigo = new Map<number, number>();
+  for (const row of [...notas, ...pedidos]) {
     const norm = normalizarNome(row.cliente_nome);
     if (!codigosPorNome.has(norm)) codigosPorNome.set(norm, new Set());
     codigosPorNome.get(norm)!.add(row.cliente_codigo);
 
     if (!vendedoresPorClienteCodigo.has(row.cliente_codigo)) vendedoresPorClienteCodigo.set(row.cliente_codigo, new Set());
     vendedoresPorClienteCodigo.get(row.cliente_codigo)!.add(row.vendedor_codigo);
+
+    linhasPorCodigo.set(row.cliente_codigo, (linhasPorCodigo.get(row.cliente_codigo) ?? 0) + 1);
+  }
+  const nomesNormalizadosErp = [...codigosPorNome.keys()];
+
+  /** Quando um nome bate com mais de um código (mesma empresa cadastrada 2x no ERP, ex:
+   * "VERDES PASTOS" -- confirmado pelo financeiro que não tem problema incluir), fica com o
+   * código de maior atividade (mais notas/pedidos) -- é o cadastro efetivamente em uso. */
+  function codigoMaisAtivo(codigos: Set<number>): number {
+    return [...codigos].sort((a, b) => (linhasPorCodigo.get(b) ?? 0) - (linhasPorCodigo.get(a) ?? 0))[0];
+  }
+
+  /**
+   * Resolve o cliente_codigo pra um nome da planilha: 0) alias manual; 1) nomes (podem ser
+   * vários, ex: match por prefixo) que bateram via exato, prefixo com fronteira ou prefixo sem
+   * espaço, nessa ordem -- só avança pro próximo critério se o anterior não achar nada. Se os
+   * nomes que bateram forem todos UM SÓ (ainda que esse nome tenha 2+ códigos por duplicidade de
+   * cadastro), resolve pelo mais ativo. Se baterem nomes DIFERENTES (empresas realmente
+   * distintas), fica ambíguo -- null.
+   */
+  function resolverCodigo(nomeNorm: string): number | null {
+    if (nomeNorm in ALIASES_MANUAIS) return ALIASES_MANUAIS[nomeNorm];
+
+    if (codigosPorNome.has(nomeNorm)) {
+      return codigoMaisAtivo(codigosPorNome.get(nomeNorm)!);
+    }
+
+    const viaPrefixo = nomesNormalizadosErp.filter(
+      (nomeErp) => prefixoComFronteira(nomeNorm, nomeErp) || prefixoComFronteira(nomeErp, nomeNorm)
+    );
+    if (viaPrefixo.length === 1) return codigoMaisAtivo(codigosPorNome.get(viaPrefixo[0])!);
+    if (viaPrefixo.length > 1) return null;
+
+    const viaSemEspaco = nomesNormalizadosErp.filter(
+      (nomeErp) => prefixoDePalavrasSemEspaco(nomeNorm, nomeErp) || prefixoDePalavrasSemEspaco(nomeErp, nomeNorm)
+    );
+    if (viaSemEspaco.length === 1) return codigoMaisAtivo(codigosPorNome.get(viaSemEspaco[0])!);
+
+    return null;
   }
 
   const limiteAntigoPorNome = new Map<string, number>();
-  for (const row of (existentesAntes ?? []) as { cliente_nome_norm: string; limite_liberado: number }[]) {
+  for (const row of existentesAntes) {
     limiteAntigoPorNome.set(row.cliente_nome_norm, Number(row.limite_liberado));
   }
 
   const semCorrespondencia: string[] = [];
   const paraGravar = unicas.map((linha) => {
-    const codigos = codigosPorNome.get(linha.clienteNomeNorm);
-    const clienteCodigo = codigos && codigos.size === 1 ? [...codigos][0] : null;
+    const clienteCodigo = resolverCodigo(linha.clienteNomeNorm);
     if (clienteCodigo === null) semCorrespondencia.push(linha.clienteNomeRaw);
 
     return {
@@ -190,9 +293,9 @@ export async function POST(req: NextRequest) {
   let removidos = 0;
   const nomesNaPlanilha = new Set(unicas.map((l) => l.clienteNomeNorm));
 
-  const totalAtual = existentesAntes?.length ?? 0;
+  const totalAtual = existentesAntes.length;
   if (totalAtual === 0 || nomesNaPlanilha.size >= totalAtual * 0.5) {
-    const orfaos = ((existentesAntes ?? []) as { id: string; cliente_nome_norm: string }[])
+    const orfaos = existentesAntes
       .filter((c) => !nomesNaPlanilha.has(c.cliente_nome_norm))
       .map((c) => c.id);
 
