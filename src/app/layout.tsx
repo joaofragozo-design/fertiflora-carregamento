@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
+    statusBarStyle: 'default',
     title: 'FertiFlora',
   },
   robots: { index: false, follow: false },
@@ -35,8 +35,6 @@ export const viewport: Viewport = {
   colorScheme: 'dark',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 }
 
 export default async function RootLayout({
@@ -48,9 +46,6 @@ export default async function RootLayout({
 
   return (
     <html lang="pt-BR" className="dark">
-      <head>
-        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} bg-industrial-950 min-h-screen`}>
         <Providers initialUser={initialUser}>
           {children}
