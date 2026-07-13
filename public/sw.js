@@ -1,10 +1,6 @@
-const CACHE = 'fertiflora-v2'
-const PRECACHE = ['/', '/carregamento', '/pa', '/login', '/fertiflora-logo.png']
+const CACHE = 'fertiflora-v3'
 
-self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)))
-  self.skipWaiting()
-})
+self.addEventListener('install', () => self.skipWaiting())
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
@@ -16,16 +12,24 @@ self.addEventListener('activate', (e) => {
 })
 
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return
-  if (e.request.url.includes('/api/')) return
+  const url = new URL(e.request.url)
+
+  // Só cacheia assets estáticos do Next.js — nunca HTML/navegação
+  const isStaticAsset =
+    url.pathname.startsWith('/_next/static/') ||
+    url.pathname.startsWith('/icons/') ||
+    url.pathname === '/fertiflora-logo.png'
+
+  if (!isStaticAsset) return // deixa o browser lidar normalmente
 
   e.respondWith(
-    fetch(e.request)
-      .then((res) => {
+    caches.match(e.request).then((cached) => {
+      if (cached) return cached
+      return fetch(e.request).then((res) => {
         const clone = res.clone()
         caches.open(CACHE).then((c) => c.put(e.request, clone))
         return res
       })
-      .catch(() => caches.match(e.request))
+    })
   )
 })
