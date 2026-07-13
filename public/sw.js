@@ -1,4 +1,4 @@
-const CACHE = 'fertiflora-v1'
+const CACHE = 'fertiflora-v2'
 const PRECACHE = ['/', '/carregamento', '/pa', '/login', '/fertiflora-logo.png']
 
 self.addEventListener('install', (e) => {
