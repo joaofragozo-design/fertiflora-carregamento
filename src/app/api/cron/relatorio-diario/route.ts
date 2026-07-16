@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
-import { enviarRelatorioDiario, hojeBrasil } from '@/lib/relatorio-email'
+import { enviarRelatorioDiario, dataAlvoCron } from '@/lib/relatorio-email'
 
 // Disparado pela Vercel Cron (vercel.json) às 23:59 (horário de Brasília).
 // Sem sessão de usuário — a Vercel injeta `Authorization: Bearer $CRON_SECRET`
@@ -15,7 +15,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
   }
 
-  const resultado = await enviarRelatorioDiario(supabaseAdmin, hojeBrasil())
+  const data = dataAlvoCron()
+  console.log('[cron/relatorio-diario] disparado', new Date().toISOString(), '→ data-alvo', data)
+  const resultado = await enviarRelatorioDiario(supabaseAdmin, data)
 
   if ('error' in resultado) {
     console.error('[cron/relatorio-diario]', resultado.error)

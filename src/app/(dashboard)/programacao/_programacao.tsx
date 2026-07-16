@@ -159,7 +159,7 @@ export function ProgramacaoSemana({
   initialItens, formulas, initialClientes, clientesErp, semanaInicio, semanaFim, hoje, podeEditar, podeConfirmar, usuario,
 }: ProgramacaoSemanaProps) {
   const { agendamentos, setAgendamentos } = useProgramacaoSemana(initialItens, semanaInicio, semanaFim)
-  const { clientes, adicionarCliente } = useClientes(initialClientes)
+  const { clientes, adicionarCliente, editarCliente } = useClientes(initialClientes)
   const [itemForm, setItemForm] = useState<ItemFormState | null>(null)
   const [agForm, setAgForm] = useState<AgendamentoFormState | null>(null)
   const [salvando, setSalvando] = useState(false)
@@ -575,6 +575,7 @@ export function ProgramacaoSemana({
                   clientesErp={clientesErp}
                   onChange={(nome, codigo) => setAgForm({ ...agForm, cliente: nome, clienteCodigo: codigo })}
                   onCriar={adicionarCliente}
+                  onEditar={editarCliente}
                   className="[&>button]:py-2 [&>button]:text-sm"
                 />
               </div>
@@ -617,6 +618,7 @@ export function ProgramacaoSemana({
                       clientesErp={clientesErp}
                       onChange={(nome, codigo) => setItemForm({ ...itemForm, cliente: nome, clienteCodigo: codigo })}
                       onCriar={adicionarCliente}
+                      onEditar={editarCliente}
                       className="[&>button]:py-2 [&>button]:text-sm"
                     />
                   </div>

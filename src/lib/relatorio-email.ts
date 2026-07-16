@@ -25,6 +25,28 @@ export function hojeBrasil(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date())
 }
 
+function diaAnteriorIso(data: string): string {
+  const [y, m, d] = data.split('-').map(Number)
+  const dt = new Date(y, m - 1, d)
+  dt.setDate(dt.getDate() - 1)
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`
+}
+
+/**
+ * Data-alvo do cron das 23:59. A Vercel pode atrasar o disparo (comum no
+ * plano Hobby) e rodar já depois da meia-noite em Brasília — nesse caso
+ * `hojeBrasil()` já teria virado o dia seguinte, que ainda não tem nenhuma
+ * carga, e o relatório sairia vazio. Se o cron rodar de madrugada (< 6h),
+ * assume que o alvo era o dia anterior, que acabou de terminar.
+ */
+export function dataAlvoCron(): string {
+  const hoje = hojeBrasil()
+  const hora = Number(
+    new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', hour: '2-digit', hourCycle: 'h23' }).format(new Date()),
+  )
+  return hora < 6 ? diaAnteriorIso(hoje) : hoje
+}
+
 /** Lê uma lista de e-mails separada por vírgula de uma env var, ignorando vazios. */
 export function lerListaEmails(valor: string | undefined): string[] {
   if (!valor) return []

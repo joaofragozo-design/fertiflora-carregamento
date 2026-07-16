@@ -43,4 +43,22 @@ export class ClientesService {
     console.error('[ClientesService.criar]', error.message)
     throw new Error('Erro ao cadastrar cliente. Tente novamente.')
   }
+
+  /** Corrige nome e/ou código do ERP de um cliente já cadastrado. */
+  async atualizar(id: string, dados: { nome: string; codigo: number | null }): Promise<Cliente> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (this.supabase as any)
+      .from('clientes_carregamento')
+      .update({ nome: dados.nome.trim(), codigo: dados.codigo })
+      .eq('id', id)
+      .select('*')
+      .single()
+
+    if (error) {
+      if (error.message.includes('row-level security')) throw new Error('Sem permissão para editar cliente.')
+      console.error('[ClientesService.atualizar]', error.message)
+      throw new Error('Erro ao salvar cliente. Tente novamente.')
+    }
+    return data as Cliente
+  }
 }

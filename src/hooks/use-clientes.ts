@@ -26,6 +26,14 @@ export function useClientes(initial: Cliente[]) {
           setClientes((prev) => (prev.some((c) => c.id === novo.id) ? prev : ordenar([...prev, novo])))
         },
       )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'clientes_carregamento' },
+        (payload) => {
+          const upd = payload.new as Cliente
+          setClientes((prev) => ordenar(prev.map((c) => (c.id === upd.id ? upd : c))))
+        },
+      )
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
@@ -37,5 +45,11 @@ export function useClientes(initial: Cliente[]) {
     return novo
   }, [svc])
 
-  return { clientes, adicionarCliente }
+  const editarCliente = useCallback(async (id: string, dados: { nome: string; codigo: number | null }) => {
+    const atualizado = await svc.atualizar(id, dados)
+    setClientes((prev) => ordenar(prev.map((c) => (c.id === id ? atualizado : c))))
+    return atualizado
+  }, [svc])
+
+  return { clientes, adicionarCliente, editarCliente }
 }

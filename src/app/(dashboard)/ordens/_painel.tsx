@@ -276,7 +276,7 @@ function CelulaMateriaPrima({ formula }: { formula: Formula | null | undefined }
 
 export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, user, hoje }: OrdensParneProps) {
   const { ordens, setOrdens } = useOrdensDiarias(initialOrdens, hoje)
-  const { clientes, adicionarCliente } = useClientes(initialClientes)
+  const { clientes, adicionarCliente, editarCliente } = useClientes(initialClientes)
   const [isPending, startTransition] = useTransition()
   const [dragId, setDragId] = useState<string | null>(null)
   const [overId, setOverId] = useState<string | null>(null)
@@ -664,6 +664,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
                                 clientes={clientes}
                                 onChange={(nome) => handleCliente(ordem.id, nome)}
                                 onCriar={adicionarCliente}
+                                onEditar={editarCliente}
                               />
                             ) : (
                               <span className="text-industrial-100 font-medium">

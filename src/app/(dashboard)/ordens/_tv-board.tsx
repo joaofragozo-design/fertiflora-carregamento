@@ -66,6 +66,33 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
     [ordens],
   )
 
+  // Só existe uma carga em andamento por vez, então a ordem de início reflete
+  // a ordem real de execução — dá pra calcular o intervalo entre uma carga e
+  // a próxima (tempo parado entre o fim de uma e o início da seguinte).
+  const cronologicas = useMemo(
+    () =>
+      ordens
+        .filter((o): o is OrdemDiaria & { iniciado_em: string } => !!o.iniciado_em)
+        .sort((a, b) => new Date(a.iniciado_em).getTime() - new Date(b.iniciado_em).getTime()),
+    [ordens],
+  )
+  function intervaloAteProxima(ordem: OrdemDiaria): number | null {
+    if (!ordem.finalizado_em) return null
+    const idx = cronologicas.findIndex((o) => o.id === ordem.id)
+    const proxima = idx >= 0 ? cronologicas[idx + 1] : undefined
+    if (!proxima) return null
+    const ms = new Date(proxima.iniciado_em).getTime() - new Date(ordem.finalizado_em).getTime()
+    return ms > 0 ? ms : null
+  }
+  // Última carga finalizada hoje (pra mostrar o cronômetro de "parado desde")
+  // enquanto nenhuma outra estiver em andamento.
+  const ultimoFinalizado = useMemo(() => {
+    const comFim = ordens
+      .filter((o): o is OrdemDiaria & { finalizado_em: string } => !!o.finalizado_em)
+      .sort((a, b) => new Date(b.finalizado_em).getTime() - new Date(a.finalizado_em).getTime())
+    return comFim[0] ?? null
+  }, [ordens])
+
   // Programação agrupada por dia (hoje + prévia dos próximos dias).
   const diasProg = useMemo(() => {
     const map = new Map<string, Programacao[]>()
@@ -173,6 +200,16 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
           </span>
         </div>
         <div className="flex items-center gap-4 shrink-0">
+          {/* Parado entre cargas — só aparece enquanto nenhuma carga está em andamento */}
+          {!cargaEmAndamento && ultimoFinalizado && (
+            <div className="flex items-center gap-2 rounded-lg border border-amber-500 bg-amber-100 px-3 py-1.5">
+              <Clock className="size-4 text-amber-800" />
+              <span className="text-xs text-amber-800 font-medium">Parado há</span>
+              <span className="text-lg font-mono font-bold text-amber-900">
+                <Cronometro inicio={ultimoFinalizado.finalizado_em} />
+              </span>
+            </div>
+          )}
           <div className="text-right">
             <span className="text-sm text-industrial-400">Total do dia </span>
             <span className="text-2xl font-bold text-brand-700">{totalTons.toFixed(2)} ton</span>
@@ -337,6 +374,7 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
               const resumoItens = itens
                 .map((it) => `${(it.formula as Formula | undefined)?.nome ?? 'sem fórmula'} (${it.quantidade} ${EMBALAGEM_LABEL[it.embalagem]})`)
                 .join(' + ')
+              const intervalo = intervaloAteProxima(o)
               return (
                 <div
                   key={o.id}
@@ -357,6 +395,11 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
                     {durMs > 0 && (
                       <div className="text-xs text-brand-700 font-medium mt-0.5">
                         <Clock className="inline size-3 mb-0.5" /> {formatDuracao(durMs)} · {tonPorHora(tonsCarga, durMs).toFixed(2)} ton/h
+                      </div>
+                    )}
+                    {intervalo != null && (
+                      <div className="text-xs text-amber-800 font-medium mt-0.5">
+                        Intervalo até a próxima: {formatDuracao(intervalo)}
                       </div>
                     )}
                   </div>
