@@ -86,7 +86,7 @@ export class OrdensDiariasService {
    * um agendamento da Programação direto para as Ordens do Dia).
    */
   async criarComItens(
-    base: { data: string; cliente: string; placa: string; envelopar: boolean; iniciado: boolean; finalizado: boolean },
+    base: { data: string; cliente: string; placa: string; envelopar: boolean; iniciado: boolean; finalizado: boolean; programacao_id?: string },
     itens: Omit<OrdemItemInsert, 'ordem_id'>[],
   ): Promise<OrdemDiaria> {
     if (itens.length === 0) throw new Error('É preciso pelo menos um item para criar a carga.')

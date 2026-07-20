@@ -229,6 +229,10 @@ export function ProgramacaoSemana({
 
   async function salvarItem() {
     if (!itemForm) return
+    if (!itemForm.formula_id) {
+      toast.error('Selecione uma fórmula antes de salvar o item.')
+      return
+    }
     setSalvando(true)
     try {
       if (itemForm.agendamentoId && itemForm.itemId) {
@@ -299,7 +303,7 @@ export function ProgramacaoSemana({
     setEnviandoId(ag.id)
     try {
       await ordensSvc.criarComItens(
-        { data: ag.data, cliente: ag.cliente, placa: '', envelopar: false, iniciado: false, finalizado: false },
+        { data: ag.data, cliente: ag.cliente, placa: '', envelopar: false, iniciado: false, finalizado: false, programacao_id: ag.id },
         itens.map((it) => ({ formula_id: it.formula_id, quantidade: it.quantidade, embalagem: it.embalagem })),
       )
       const upd = await svc.marcarEnviado(ag.id)
@@ -653,7 +657,8 @@ export function ProgramacaoSemana({
               <div className="flex gap-2">
                 <button type="button" onClick={() => setItemForm(null)}
                   className="rounded-lg border border-industrial-600 px-4 py-2 text-sm font-medium text-industrial-300 hover:bg-industrial-800">Cancelar</button>
-                <button type="button" onClick={salvarItem} disabled={salvando}
+                <button type="button" onClick={salvarItem} disabled={salvando || !itemForm.formula_id}
+                  title={!itemForm.formula_id ? 'Selecione uma fórmula antes de salvar' : undefined}
                   className="rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-medium disabled:opacity-50">
                   {salvando ? 'Salvando…' : 'Salvar'}
                 </button>

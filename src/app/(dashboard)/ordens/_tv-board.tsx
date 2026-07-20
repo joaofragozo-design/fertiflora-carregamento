@@ -140,6 +140,15 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
     return Object.entries(acc).map(([label, kg]) => ({ label, kg })).sort((a, b) => b.kg - a.kg)
   }, [agendamentosHoje])
 
+  // Agendamentos de hoje cuja carga (enviada às Ordens do Dia) já foi finalizada.
+  const agendamentosCarregadosHoje = useMemo(() => {
+    const ids = new Set<string>()
+    for (const o of ordens) {
+      if (o.finalizado && o.programacao_id) ids.add(o.programacao_id)
+    }
+    return ids
+  }, [ordens])
+
   async function salvar(id: string, patch: Partial<OrdemDiaria>) {
     setOrdens((prev) => prev.map((o) => (o.id === id ? { ...o, ...patch, _saving: true, _dirty: false } : o)))
     try {
@@ -452,11 +461,19 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
               const resumo = (ag.itens ?? [])
                 .map((it) => `${it.formula?.nome ?? 'sem fórmula'} (${it.quantidade} ${EMBALAGEM_LABEL[it.embalagem]})`)
                 .join(' + ')
+              const carregado = agendamentosCarregadosHoje.has(ag.id)
               return (
-                <div key={ag.id} className="rounded-lg bg-industrial-900 px-3 py-2">
-                  <span className="font-bold text-industrial-50">{ag.cliente || 'Sem cliente'}</span>
+                <div
+                  key={ag.id}
+                  className={cn(
+                    'rounded-lg px-3 py-2',
+                    carregado ? 'bg-brand-100 border border-brand-500' : 'bg-industrial-900',
+                  )}
+                >
+                  {carregado && <Check className="inline size-3.5 text-brand-700 mr-1 mb-0.5" strokeWidth={3} />}
+                  <span className={cn('font-bold', carregado ? 'text-brand-800' : 'text-industrial-50')}>{ag.cliente || 'Sem cliente'}</span>
                   {resumo && <span className="text-brand-700"> · {resumo}</span>}
-                  <span className="text-industrial-500"> · {totalAg.toFixed(2)} ton</span>
+                  <span className={carregado ? 'text-brand-700' : 'text-industrial-500'}> · {totalAg.toFixed(2)} ton</span>
                 </div>
               )
             })}

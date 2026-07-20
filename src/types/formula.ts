@@ -45,19 +45,22 @@ export type OrdemItemUpdate = Partial<OrdemItemInsert>
 // A carga/caminhão. O envelopar, status e cronômetro são do caminhão inteiro;
 // os itens (fórmula/quantidade/embalagem) ficam em `itens`.
 export interface OrdemDiaria {
-  id:            string
-  data:          string
-  sequencia:     number
-  cliente:       string
-  placa:         string
-  envelopar:     boolean
-  itens:         OrdemItem[]
-  iniciado:      boolean
-  finalizado:    boolean
-  iniciado_em:   string | null
-  finalizado_em: string | null
-  created_at:    string
-  updated_at:    string
+  id:             string
+  data:           string
+  sequencia:      number
+  cliente:        string
+  placa:          string
+  envelopar:      boolean
+  itens:          OrdemItem[]
+  iniciado:       boolean
+  finalizado:     boolean
+  iniciado_em:    string | null
+  finalizado_em:  string | null
+  // Agendamento de origem (Programação) que gerou esta carga, quando enviada
+  // por lá -- permite saber, na TV, se um agendamento de hoje já foi carregado.
+  programacao_id: string | null
+  created_at:     string
+  updated_at:     string
 }
 
 /** Formata uma duração em ms como "1h 23m" ou "12m" ou "45s". */
