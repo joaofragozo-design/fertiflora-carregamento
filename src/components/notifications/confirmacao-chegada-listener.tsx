@@ -67,11 +67,13 @@ function tocarBeep() {
  * se o navegador tiver permissão) e mostra um balão que só fecha no X.
  */
 export function ConfirmacaoChegadaListener() {
+  const [mounted, setMounted] = useState(false)
   const [banners, setBanners] = useState<Banner[]>([])
   const [notifPermitida, setNotifPermitida] = useState(false)
   const supabase = useRef(createClient()).current
 
   useEffect(() => {
+    setMounted(true)
     setNotifPermitida(typeof Notification !== 'undefined' && Notification.permission === 'granted')
   }, [])
 
@@ -142,7 +144,7 @@ export function ConfirmacaoChegadaListener() {
     setNotifPermitida(permissao === 'granted')
   }
 
-  if (typeof document === 'undefined') return null
+  if (!mounted) return null
 
   return createPortal(
     <>
