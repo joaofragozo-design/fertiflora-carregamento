@@ -239,6 +239,10 @@ export function ProgramacaoSemana({
       toast.error('Selecione uma fórmula antes de salvar o item.')
       return
     }
+    if (!itemForm.quantidade || itemForm.quantidade <= 0) {
+      toast.error('Informe uma quantidade maior que zero.')
+      return
+    }
     setSalvando(true)
     try {
       if (itemForm.agendamentoId && itemForm.itemId) {
@@ -753,7 +757,7 @@ export function ProgramacaoSemana({
 
             <div className="grid grid-cols-2 gap-3">
               <label className="text-xs font-medium text-industrial-400">Quantidade
-                <input type="number" value={itemForm.quantidade} onChange={(e) => setItemForm({ ...itemForm, quantidade: Number(e.target.value) || 0 })}
+                <input type="number" min={1} value={itemForm.quantidade} onChange={(e) => setItemForm({ ...itemForm, quantidade: Number(e.target.value) || 0 })}
                   className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 focus:outline-none focus:border-brand-500" />
               </label>
               <label className="text-xs font-medium text-industrial-400">Embalagem
@@ -769,8 +773,8 @@ export function ProgramacaoSemana({
               <div className="flex gap-2">
                 <button type="button" onClick={() => setItemForm(null)}
                   className="rounded-lg border border-industrial-600 px-4 py-2 text-sm font-medium text-industrial-300 hover:bg-industrial-800">Cancelar</button>
-                <button type="button" onClick={salvarItem} disabled={salvando || !itemForm.formula_id}
-                  title={!itemForm.formula_id ? 'Selecione uma fórmula antes de salvar' : undefined}
+                <button type="button" onClick={salvarItem} disabled={salvando || !itemForm.formula_id || itemForm.quantidade <= 0}
+                  title={!itemForm.formula_id ? 'Selecione uma fórmula antes de salvar' : itemForm.quantidade <= 0 ? 'Informe uma quantidade maior que zero' : undefined}
                   className="rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-medium disabled:opacity-50">
                   {salvando ? 'Salvando…' : 'Salvar'}
                 </button>

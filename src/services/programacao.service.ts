@@ -185,10 +185,15 @@ export class ProgramacaoService {
     return this.getById(id)
   }
 
-  /** Logística (Françoa) libera a solicitação — na sequência a interface abre o WhatsApp do motorista. */
+  /**
+   * Logística (Françoa) libera a solicitação — na sequência a interface abre o WhatsApp do motorista.
+   * Guard otimista: só grava se AINDA estiver SOLICITADO, pra duas abas/usuários clicando "Liberar"
+   * quase ao mesmo tempo não sobrescreverem liberado_em/liberado_por um do outro (o que renovaria
+   * a validade de 48h mostrada à transportadora e poderia reabrir o WhatsApp pro motorista errado).
+   */
   async liberarSolicitacao(id: string, usuario: string): Promise<Programacao> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (this.supabase as any)
+    const { data, error } = await (this.supabase as any)
       .from('programacao_carregamento')
       .update({
         solicitacao_status: 'LIBERADO',
@@ -196,8 +201,11 @@ export class ProgramacaoService {
         liberado_por: usuario,
       })
       .eq('id', id)
+      .eq('solicitacao_status', 'SOLICITADO')
+      .select('id')
 
     if (error) throw new Error(this.traduzirErro(error.message, 'liberar solicitação'))
+    if (!data || data.length === 0) throw new Error('Esta solicitação já foi liberada por outra pessoa.')
     return this.getById(id)
   }
 
