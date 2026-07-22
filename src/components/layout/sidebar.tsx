@@ -30,7 +30,7 @@ const NAV_ITEMS: NavItem[] = [
     href:  '/programacao',
     label: 'Programação',
     icon:  CalendarRange,
-    roles: ['admin'],
+    roles: ['admin', 'logistica', 'logistica_02', 'faturamento'],
   },
   {
     href:  '/carregamento',
