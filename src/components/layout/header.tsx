@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Wifi, WifiOff, LogOut, Menu, CalendarDays, CalendarRange, FileSpreadsheet, Tv } from 'lucide-react'
+import { Wifi, WifiOff, LogOut, Menu, CalendarDays, CalendarRange, FileSpreadsheet, Tv, Container } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LogoFull } from '@/components/brand/logo'
 import { InstallButton } from '@/components/pwa/install-button'
@@ -32,6 +32,7 @@ const HEADER_NAV: Record<string, NavLink[]> = {
     { href: '/ordens?vista=tv', label: 'Painel TV',    icon: Tv },
     { href: '/programacao',    label: 'Programação',   icon: CalendarRange },
     { href: '/admin/formulas', label: 'Fórmulas',      icon: FileSpreadsheet },
+    { href: '/transportadoras', label: 'Transportadoras', icon: Container },
   ],
   logistica_02: [
     { href: '/ordens', label: 'Ordens do Dia', icon: CalendarDays },
