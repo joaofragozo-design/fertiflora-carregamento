@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Trash2, Pencil, X, ChevronLeft, ChevronRight, ChevronDown, Printer, Send, CheckCircle2, Truck, Container, MessageCircle } from 'lucide-react'
+import { Plus, Trash2, Pencil, X, ChevronLeft, ChevronRight, ChevronDown, Printer, Send, CheckCircle2, Truck, Container } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { ProgramacaoService } from '@/services/programacao.service'
@@ -18,8 +18,7 @@ import type { Cliente } from '@/types/cliente'
 import type { ClienteErp } from '@/types/cliente-erp'
 import type { Transportadora } from '@/types/transportadora'
 import { SOLICITACAO_STATUS_LABEL } from '@/types/transportadora'
-import { linkWhatsApp, montarMensagemLiberacao } from '@/lib/whatsapp'
-import { MATERIAS_PRIMA, EMBALAGEM_LABEL, EMBALAGEM_OPCOES, calcularMateriaPrima, labelMateriaPrima, calcularTons, mascararNomeFormula } from '@/types/formula'
+import { MATERIAS_PRIMA, EMBALAGEM_LABEL, EMBALAGEM_OPCOES, calcularMateriaPrima, labelMateriaPrima, calcularTons } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
 interface ProgramacaoSemanaProps {
@@ -172,11 +171,6 @@ export function ProgramacaoSemana({
   // Fluxo transportadora: modal de escolha + estado do botão de liberar
   const [transpModal, setTranspModal] = useState<{ agendamento: Programacao; transportadoraId: string } | null>(null)
   const [enviandoTranspId, setEnviandoTranspId] = useState<string | null>(null)
-  const [liberandoId, setLiberandoId] = useState<string | null>(null)
-  // Depois de liberar, o agendamento fica no painel até a Logística clicar em
-  // "Abrir WhatsApp" — esse Set só controla a visibilidade do painel (o botão
-  // no card do dia continua disponível pra reabrir depois, se precisar).
-  const [whatsappAbertoIds, setWhatsappAbertoIds] = useState<Set<string>>(new Set())
   const svc = useMemo(() => new ProgramacaoService(createClient()), [])
   const ordensSvc = useMemo(() => new OrdensDiariasService(createClient()), [])
   const router = useRouter()
@@ -344,15 +338,8 @@ export function ProgramacaoSemana({
   }
 
   // ─── Fluxo transportadora/motorista ────────────────────────────────────
-
-  const solicitacoesPendentes = useMemo(
-    () => agendamentos.filter((ag) => ag.solicitacao_status === 'SOLICITADO'),
-    [agendamentos],
-  )
-  const liberadosAguardandoWhatsapp = useMemo(
-    () => agendamentos.filter((ag) => ag.solicitacao_status === 'LIBERADO' && !whatsappAbertoIds.has(ag.id)),
-    [agendamentos, whatsappAbertoIds],
-  )
+  // Liberar a solicitação e abrir o WhatsApp do motorista ficam na aba
+  // Transportadoras (PainelSolicitacoes) — aqui só o envio inicial.
 
   async function enviarParaTransportadora() {
     if (!transpModal || !transpModal.transportadoraId) return
@@ -368,44 +355,6 @@ export function ProgramacaoSemana({
     } finally {
       setEnviandoTranspId(null)
     }
-  }
-
-  // Françoa libera a solicitação — a mensagem fica pronta pra conferir e o
-  // WhatsApp só abre no clique seguinte (função abrirWhatsapp), evitando o
-  // bloqueio de pop-up que ocorre quando window.open roda depois de um await.
-  async function liberarSolicitacao(ag: Programacao) {
-    if (!ag.motorista?.whatsapp) {
-      toast.error('Solicitação sem motorista com WhatsApp — peça pra transportadora reenviar.')
-      return
-    }
-    setLiberandoId(ag.id)
-    try {
-      const upd = await svc.liberarSolicitacao(ag.id, usuario)
-      setAgendamentos((prev) => prev.map((a) => (a.id === upd.id ? upd : a)))
-      toast.success(`Liberado — mensagem pronta pra ${ag.motorista.nome}. Clique em "Abrir WhatsApp" para enviar.`)
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao liberar a solicitação.')
-    } finally {
-      setLiberandoId(null)
-    }
-  }
-
-  // Segundo clique: monta a mensagem (fórmula mascarada + regras da fábrica) e
-  // abre o WhatsApp do motorista. Fica disponível mesmo depois, pra reabrir.
-  function abrirWhatsapp(ag: Programacao) {
-    if (!ag.motorista?.whatsapp) return
-    const mensagem = montarMensagemLiberacao({
-      motorista: ag.motorista.nome,
-      transportadora: ag.transportadora?.nome ?? '',
-      data: ag.data,
-      itens: (ag.itens ?? []).map((it) => ({
-        formulaMascarada: it.formula?.nome ? mascararNomeFormula(it.formula.nome) : '—',
-        quantidade: it.quantidade,
-        embalagem: it.embalagem,
-      })),
-    })
-    window.open(linkWhatsApp(ag.motorista.whatsapp, mensagem), '_blank', 'noopener')
-    setWhatsappAbertoIds((prev) => new Set(prev).add(ag.id))
   }
 
   async function excluirAgendamento(ag: Programacao) {
@@ -460,64 +409,6 @@ export function ProgramacaoSemana({
           </div>
         </div>
       </div>
-
-      {/* Solicitações de transportadora: liberar (clique 1) e abrir WhatsApp (clique 2) */}
-      {podeEditar && (solicitacoesPendentes.length > 0 || liberadosAguardandoWhatsapp.length > 0) && (
-        <div className="rounded-2xl border-2 border-amber-500 bg-amber-100 p-4">
-          <p className="flex items-center gap-2 text-sm font-bold text-amber-900 mb-2.5">
-            <Container className="size-4" />
-            Solicitações de carregamento · {solicitacoesPendentes.length + liberadosAguardandoWhatsapp.length}
-          </p>
-          <div className="flex flex-col gap-2">
-            {solicitacoesPendentes.map((ag) => (
-              <div key={ag.id} className="flex items-center justify-between gap-3 flex-wrap rounded-xl bg-industrial-900 border border-industrial-700 px-3 py-2.5">
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-industrial-100">
-                    {ag.transportadora?.nome ?? 'Transportadora'}
-                    <span className="font-normal text-industrial-400"> · {ag.cliente || 'sem cliente'} · {ddmm(ag.data)}</span>
-                  </p>
-                  <p className="text-xs text-industrial-400 mt-0.5">
-                    Motorista: <span className="font-semibold text-industrial-200">{ag.motorista?.nome ?? '—'}</span>
-                    {ag.motorista?.whatsapp && <span className="font-mono"> · {ag.motorista.whatsapp}</span>}
-                    <span className="text-industrial-500"> · {tonsDoAgendamento(ag).toFixed(2)} ton</span>
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => liberarSolicitacao(ag)}
-                  disabled={liberandoId === ag.id}
-                  className="flex items-center gap-1.5 rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50 shrink-0"
-                >
-                  <CheckCircle2 className="size-4" />
-                  {liberandoId === ag.id ? 'Liberando…' : 'Liberar'}
-                </button>
-              </div>
-            ))}
-            {liberadosAguardandoWhatsapp.map((ag) => (
-              <div key={ag.id} className="flex items-center justify-between gap-3 flex-wrap rounded-xl bg-brand-50 border-2 border-brand-500 px-3 py-2.5">
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-industrial-100 flex items-center gap-1.5">
-                    <CheckCircle2 className="size-3.5 text-brand-700 shrink-0" />
-                    {ag.transportadora?.nome ?? 'Transportadora'}
-                    <span className="font-normal text-industrial-400"> · {ag.cliente || 'sem cliente'} · {ddmm(ag.data)}</span>
-                  </p>
-                  <p className="text-xs text-industrial-400 mt-0.5">
-                    Liberado — motorista: <span className="font-semibold text-industrial-200">{ag.motorista?.nome ?? '—'}</span>
-                    {ag.motorista?.whatsapp && <span className="font-mono"> · {ag.motorista.whatsapp}</span>}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => abrirWhatsapp(ag)}
-                  className="flex items-center gap-1.5 rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-semibold transition-colors shrink-0"
-                >
-                  <MessageCircle className="size-4" /> Abrir WhatsApp
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Grade da semana */}
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-3">
@@ -638,16 +529,6 @@ export function ProgramacaoSemana({
                             <Container className="size-3" />
                             {ag.solicitacao_status ? 'Transportadora ✓' : 'Transportadora'}
                           </button>
-                          {ag.solicitacao_status === 'LIBERADO' && ag.motorista?.whatsapp && (
-                            <button
-                              type="button"
-                              onClick={() => abrirWhatsapp(ag)}
-                              title="Reabrir o WhatsApp do motorista"
-                              className="flex items-center gap-1 text-[11px] font-semibold text-brand-700 hover:text-brand-800 transition-colors"
-                            >
-                              <MessageCircle className="size-3" /> WhatsApp
-                            </button>
-                          )}
                           <button
                             type="button"
                             onClick={() => enviarParaOrdens(ag)}
@@ -749,7 +630,7 @@ export function ProgramacaoSemana({
 
             <p className="text-xs text-industrial-400">
               A transportadora recebe este carregamento na tela dela, indica o motorista (com WhatsApp) e envia a
-              solicitação de volta pra você liberar.
+              solicitação de volta — você libera na aba Transportadoras.
             </p>
 
             <label className="text-xs font-medium text-industrial-400">Transportadora

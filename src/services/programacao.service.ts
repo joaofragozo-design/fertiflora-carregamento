@@ -201,6 +201,22 @@ export class ProgramacaoService {
     return this.getById(id)
   }
 
+  /** Solicitações aguardando ação da Logística (liberar ou abrir o WhatsApp) — aba Transportadoras. */
+  async getPendentesLiberacao(): Promise<Programacao[]> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (this.supabase as any)
+      .from('programacao_carregamento')
+      .select(SELECT_COM_ITENS)
+      .in('solicitacao_status', ['SOLICITADO', 'LIBERADO'])
+      .is('confirmado_em', null)
+      .order('data', { ascending: true })
+      .order('created_at', { ascending: true })
+      .order('created_at', { foreignTable: 'programacao_itens', ascending: true })
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'carregar solicitações'))
+    return data as Programacao[]
+  }
+
   /** Agendamentos endereçados a uma transportadora (tela da transportadora). */
   async getDaTransportadora(transportadoraId: string): Promise<Programacao[]> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -3,8 +3,10 @@ import type { Metadata } from 'next'
 import { getAuthContext } from '@/lib/supabase/get-user'
 import { createClient } from '@/lib/supabase/server'
 import { ROUTES, ROLE_DEFAULT_ROUTES } from '@/constants/routes'
+import { ProgramacaoService } from '@/services/programacao.service'
 import type { Transportadora } from '@/types/transportadora'
 import { GestaoTransportadoras } from './_gestao'
+import { PainelSolicitacoes } from '@/components/transportadoras/painel-solicitacoes'
 
 export const metadata: Metadata = {
   title: 'Transportadoras',
@@ -24,5 +26,13 @@ export default async function TransportadorasPage() {
     .select('*')
     .order('nome', { ascending: true })
 
-  return <GestaoTransportadoras initialTransportadoras={(transportadoras ?? []) as Transportadora[]} />
+  const progSvc = new ProgramacaoService(supabase)
+  const solicitacoes = await progSvc.getPendentesLiberacao().catch(() => [])
+
+  return (
+    <div className="flex flex-col gap-4">
+      <PainelSolicitacoes initialSolicitacoes={solicitacoes} usuario={profile.username} />
+      <GestaoTransportadoras initialTransportadoras={(transportadoras ?? []) as Transportadora[]} />
+    </div>
+  )
 }
