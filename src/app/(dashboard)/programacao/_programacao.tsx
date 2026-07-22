@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Trash2, Pencil, X, ChevronLeft, ChevronRight, ChevronDown, Printer, Send, CheckCircle2, Truck } from 'lucide-react'
+import { Plus, Trash2, Pencil, X, ChevronLeft, ChevronRight, ChevronDown, Printer, Send, CheckCircle2, Truck, Container, MessageCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { ProgramacaoService } from '@/services/programacao.service'
@@ -16,7 +16,10 @@ import type { Programacao, ProgramacaoItem } from '@/types/programacao'
 import type { Embalagem, Formula } from '@/types/formula'
 import type { Cliente } from '@/types/cliente'
 import type { ClienteErp } from '@/types/cliente-erp'
-import { MATERIAS_PRIMA, EMBALAGEM_LABEL, EMBALAGEM_OPCOES, calcularMateriaPrima, labelMateriaPrima, calcularTons } from '@/types/formula'
+import type { Transportadora } from '@/types/transportadora'
+import { SOLICITACAO_STATUS_LABEL } from '@/types/transportadora'
+import { linkWhatsApp, montarMensagemLiberacao } from '@/lib/whatsapp'
+import { MATERIAS_PRIMA, EMBALAGEM_LABEL, EMBALAGEM_OPCOES, calcularMateriaPrima, labelMateriaPrima, calcularTons, mascararNomeFormula } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
 interface ProgramacaoSemanaProps {
@@ -24,6 +27,7 @@ interface ProgramacaoSemanaProps {
   formulas:        { id: number; nome: string }[]
   initialClientes: Cliente[]
   clientesErp:     ClienteErp[]
+  transportadoras: Transportadora[]
   semanaInicio:    string // segunda-feira (YYYY-MM-DD)
   semanaFim:       string // sexta-feira (YYYY-MM-DD)
   hoje:            string
@@ -156,7 +160,7 @@ interface AgendamentoFormState {
 }
 
 export function ProgramacaoSemana({
-  initialItens, formulas, initialClientes, clientesErp, semanaInicio, semanaFim, hoje, podeEditar, podeConfirmar, usuario,
+  initialItens, formulas, initialClientes, clientesErp, transportadoras, semanaInicio, semanaFim, hoje, podeEditar, podeConfirmar, usuario,
 }: ProgramacaoSemanaProps) {
   const { agendamentos, setAgendamentos } = useProgramacaoSemana(initialItens, semanaInicio, semanaFim)
   const { clientes, adicionarCliente, editarCliente } = useClientes(initialClientes)
@@ -165,6 +169,10 @@ export function ProgramacaoSemana({
   const [salvando, setSalvando] = useState(false)
   const [enviandoId, setEnviandoId] = useState<string | null>(null)
   const [confirmandoId, setConfirmandoId] = useState<string | null>(null)
+  // Fluxo transportadora: modal de escolha + estado do botão de liberar
+  const [transpModal, setTranspModal] = useState<{ agendamento: Programacao; transportadoraId: string } | null>(null)
+  const [enviandoTranspId, setEnviandoTranspId] = useState<string | null>(null)
+  const [liberandoId, setLiberandoId] = useState<string | null>(null)
   const svc = useMemo(() => new ProgramacaoService(createClient()), [])
   const ordensSvc = useMemo(() => new OrdensDiariasService(createClient()), [])
   const router = useRouter()
@@ -331,6 +339,60 @@ export function ProgramacaoSemana({
     }
   }
 
+  // ─── Fluxo transportadora/motorista ────────────────────────────────────
+
+  const solicitacoesPendentes = useMemo(
+    () => agendamentos.filter((ag) => ag.solicitacao_status === 'SOLICITADO'),
+    [agendamentos],
+  )
+
+  async function enviarParaTransportadora() {
+    if (!transpModal || !transpModal.transportadoraId) return
+    const ag = transpModal.agendamento
+    setEnviandoTranspId(ag.id)
+    try {
+      const upd = await svc.enviarParaTransportadora(ag.id, transpModal.transportadoraId)
+      setAgendamentos((prev) => prev.map((a) => (a.id === upd.id ? upd : a)))
+      setTranspModal(null)
+      toast.success(`Enviado para ${upd.transportadora?.nome ?? 'a transportadora'} — ela vai indicar o motorista.`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao enviar para a transportadora.')
+    } finally {
+      setEnviandoTranspId(null)
+    }
+  }
+
+  // Françoa libera a solicitação e o sistema abre o WhatsApp do motorista com
+  // a mensagem pronta (dados da carga com fórmula mascarada + regras da fábrica).
+  async function liberarSolicitacao(ag: Programacao) {
+    if (!ag.motorista?.whatsapp) {
+      toast.error('Solicitação sem motorista com WhatsApp — peça pra transportadora reenviar.')
+      return
+    }
+    setLiberandoId(ag.id)
+    try {
+      const upd = await svc.liberarSolicitacao(ag.id, usuario)
+      setAgendamentos((prev) => prev.map((a) => (a.id === upd.id ? upd : a)))
+
+      const mensagem = montarMensagemLiberacao({
+        motorista: ag.motorista.nome,
+        transportadora: ag.transportadora?.nome ?? '',
+        data: ag.data,
+        itens: (ag.itens ?? []).map((it) => ({
+          formulaMascarada: it.formula?.nome ? mascararNomeFormula(it.formula.nome) : '—',
+          quantidade: it.quantidade,
+          embalagem: it.embalagem,
+        })),
+      })
+      window.open(linkWhatsApp(ag.motorista.whatsapp, mensagem), '_blank', 'noopener')
+      toast.success(`Liberado — WhatsApp de ${ag.motorista.nome} aberto com a mensagem pronta.`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao liberar a solicitação.')
+    } finally {
+      setLiberandoId(null)
+    }
+  }
+
   async function excluirAgendamento(ag: Programacao) {
     if (!window.confirm('Remover este agendamento (e todos os itens)?')) return
     try {
@@ -383,6 +445,42 @@ export function ProgramacaoSemana({
           </div>
         </div>
       </div>
+
+      {/* Solicitações de transportadora aguardando liberação (Françoa) */}
+      {podeEditar && solicitacoesPendentes.length > 0 && (
+        <div className="rounded-2xl border-2 border-amber-500 bg-amber-100 p-4">
+          <p className="flex items-center gap-2 text-sm font-bold text-amber-900 mb-2.5">
+            <Container className="size-4" />
+            Solicitações de carregamento aguardando sua liberação · {solicitacoesPendentes.length}
+          </p>
+          <div className="flex flex-col gap-2">
+            {solicitacoesPendentes.map((ag) => (
+              <div key={ag.id} className="flex items-center justify-between gap-3 flex-wrap rounded-xl bg-industrial-900 border border-industrial-700 px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-industrial-100">
+                    {ag.transportadora?.nome ?? 'Transportadora'}
+                    <span className="font-normal text-industrial-400"> · {ag.cliente || 'sem cliente'} · {ddmm(ag.data)}</span>
+                  </p>
+                  <p className="text-xs text-industrial-400 mt-0.5">
+                    Motorista: <span className="font-semibold text-industrial-200">{ag.motorista?.nome ?? '—'}</span>
+                    {ag.motorista?.whatsapp && <span className="font-mono"> · {ag.motorista.whatsapp}</span>}
+                    <span className="text-industrial-500"> · {tonsDoAgendamento(ag).toFixed(2)} ton</span>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => liberarSolicitacao(ag)}
+                  disabled={liberandoId === ag.id}
+                  className="flex items-center gap-1.5 rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50 shrink-0"
+                >
+                  <MessageCircle className="size-4" />
+                  {liberandoId === ag.id ? 'Liberando…' : 'Liberar e avisar motorista'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Grade da semana */}
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-3">
@@ -470,25 +568,53 @@ export function ProgramacaoSemana({
 
                     {ag.observacao && <p className="text-xs text-industrial-400 italic mt-1">{ag.observacao}</p>}
 
+                    {/* Status do fluxo de transportadora */}
+                    {ag.solicitacao_status && (
+                      <p className={cn(
+                        'flex items-center gap-1 text-[11px] font-semibold mt-1',
+                        ag.solicitacao_status === 'LIBERADO' ? 'text-brand-700' : 'text-amber-700',
+                      )}>
+                        <Container className="size-3 shrink-0" />
+                        <span className="truncate">
+                          {ag.transportadora?.nome ?? 'Transportadora'} · {SOLICITACAO_STATUS_LABEL[ag.solicitacao_status]}
+                          {ag.solicitacao_status !== 'ENVIADO_TRANSPORTADORA' && ag.motorista?.nome ? ` · ${ag.motorista.nome}` : ''}
+                        </span>
+                      </p>
+                    )}
+
                     {podeEditar && (
-                      <div className="flex items-center justify-between gap-2 mt-1.5">
+                      <div className="flex items-center justify-between gap-2 mt-1.5 flex-wrap">
                         <button type="button" onClick={() => abrirNovoItem(ag)}
                           className="flex items-center gap-1 text-[11px] font-medium text-industrial-500 hover:text-brand-700 transition-colors">
                           <Plus className="size-3" /> Adicionar item
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => enviarParaOrdens(ag)}
-                          disabled={enviandoId === ag.id}
-                          title={ag.enviado_em ? `Enviado em ${new Date(ag.enviado_em).toLocaleString('pt-BR')} — clique para reenviar` : 'Enviar para Ordens do Dia'}
-                          className={cn(
-                            'flex items-center gap-1 text-[11px] font-semibold transition-colors disabled:opacity-50',
-                            ag.enviado_em ? 'text-brand-700' : 'text-industrial-500 hover:text-brand-700',
-                          )}
-                        >
-                          {ag.enviado_em ? <CheckCircle2 className="size-3" /> : <Send className="size-3" />}
-                          {enviandoId === ag.id ? 'Enviando…' : ag.enviado_em ? 'Enviado' : 'Enviar p/ Ordens'}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setTranspModal({ agendamento: ag, transportadoraId: ag.transportadora_id ?? '' })}
+                            title={ag.solicitacao_status ? 'Reenviar / trocar a transportadora' : 'Enviar para uma transportadora indicar o motorista'}
+                            className={cn(
+                              'flex items-center gap-1 text-[11px] font-semibold transition-colors',
+                              ag.solicitacao_status ? 'text-brand-700' : 'text-industrial-500 hover:text-brand-700',
+                            )}
+                          >
+                            <Container className="size-3" />
+                            {ag.solicitacao_status ? 'Transportadora ✓' : 'Transportadora'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => enviarParaOrdens(ag)}
+                            disabled={enviandoId === ag.id}
+                            title={ag.enviado_em ? `Enviado em ${new Date(ag.enviado_em).toLocaleString('pt-BR')} — clique para reenviar` : 'Enviar para Ordens do Dia'}
+                            className={cn(
+                              'flex items-center gap-1 text-[11px] font-semibold transition-colors disabled:opacity-50',
+                              ag.enviado_em ? 'text-brand-700' : 'text-industrial-500 hover:text-brand-700',
+                            )}
+                          >
+                            {ag.enviado_em ? <CheckCircle2 className="size-3" /> : <Send className="size-3" />}
+                            {enviandoId === ag.id ? 'Enviando…' : ag.enviado_em ? 'Enviado' : 'Enviar p/ Ordens'}
+                          </button>
+                        </div>
                       </div>
                     )}
 
@@ -559,6 +685,64 @@ export function ProgramacaoSemana({
                 </span>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Modal de envio pra transportadora */}
+      {transpModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setTranspModal(null)}>
+          <div className="w-full max-w-md rounded-xl bg-industrial-900 border border-industrial-700 p-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold text-industrial-100">
+                Enviar pra transportadora · {transpModal.agendamento.cliente || 'sem cliente'}
+              </h2>
+              <button type="button" onClick={() => setTranspModal(null)} className="text-industrial-400 hover:text-industrial-100"><X className="size-5" /></button>
+            </div>
+
+            <p className="text-xs text-industrial-400">
+              A transportadora recebe este carregamento na tela dela, indica o motorista (com WhatsApp) e envia a
+              solicitação de volta pra você liberar.
+            </p>
+
+            <label className="text-xs font-medium text-industrial-400">Transportadora
+              <select
+                value={transpModal.transportadoraId}
+                onChange={(e) => setTranspModal({ ...transpModal, transportadoraId: e.target.value })}
+                className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 focus:outline-none focus:border-brand-500"
+              >
+                <option value="">Selecionar transportadora…</option>
+                {transportadoras.map((t) => (
+                  <option key={t.id} value={t.id}>{t.nome}{t.profile_id ? '' : ' (sem login criado)'}</option>
+                ))}
+              </select>
+            </label>
+
+            {transportadoras.length === 0 && (
+              <p className="text-xs text-amber-700 font-medium">
+                Nenhuma transportadora cadastrada — crie o acesso dela na tela Transportadoras.
+              </p>
+            )}
+
+            {transpModal.agendamento.solicitacao_status && (
+              <p className="text-xs text-amber-700 font-medium">
+                Este agendamento já está com uma transportadora ({SOLICITACAO_STATUS_LABEL[transpModal.agendamento.solicitacao_status]}).
+                Reenviar recomeça o fluxo do zero.
+              </p>
+            )}
+
+            <div className="flex justify-end gap-2 pt-1">
+              <button type="button" onClick={() => setTranspModal(null)}
+                className="rounded-lg border border-industrial-600 px-4 py-2 text-sm font-medium text-industrial-300 hover:bg-industrial-800">Cancelar</button>
+              <button
+                type="button"
+                onClick={enviarParaTransportadora}
+                disabled={enviandoTranspId != null || !transpModal.transportadoraId}
+                className="rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-medium disabled:opacity-50"
+              >
+                {enviandoTranspId ? 'Enviando…' : 'Enviar'}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -11,12 +11,15 @@ import { ROUTES } from '@/constants/routes'
 import type { AppUser } from '@/types'
 import type { OrdemDiaria, Formula } from '@/types/formula'
 import type { Programacao } from '@/types/programacao'
+import type { RecebimentoPrevisto } from '@/services/recebimentos.service'
+import { RecebimentosTv } from '@/components/recebimentos/painel-recebimentos'
 import { MATERIAS_PRIMA, EMBALAGEM_LABEL, calcularMateriaPrima, labelMateriaPrima, calcularTons, tonsDaOrdem, getStatus, formatDuracao, tonPorHora } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
 interface TvBoardProps {
   initialOrdens: OrdemDiaria[]
   programacao: Programacao[]
+  recebimentos?: RecebimentoPrevisto[]
   user: AppUser
   hoje: string
 }
@@ -44,7 +47,7 @@ function labelDia(data: string): string {
   return new Date(data + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })
 }
 
-export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps) {
+export function TvBoard({ initialOrdens, programacao, recebimentos = [], user, hoje }: TvBoardProps) {
   const { ordens, setOrdens } = useOrdensDiarias(initialOrdens, hoje)
   const svc = useMemo(() => new OrdensDiariasService(createClient()), [])
 
@@ -512,6 +515,9 @@ export function TvBoard({ initialOrdens, programacao, user, hoje }: TvBoardProps
           </div>
         </div>
       )}
+
+      {/* PREVISÃO DE CHEGADA DE MATÉRIA-PRIMA — lançada na Programação */}
+      <RecebimentosTv recebimentos={recebimentos} />
     </div>
   )
 }

@@ -14,7 +14,9 @@ const SELECT_COM_ITENS = `
   itens:programacao_itens (
     *,
     formula:formulas ( ${SELECT_ITEM_FORMULA} )
-  )
+  ),
+  transportadora:transportadoras ( id, nome, profile_id, ativo, created_at, updated_at ),
+  motorista:motoristas ( id, transportadora_id, nome, whatsapp, created_at, updated_at )
 `.trim()
 
 export class ProgramacaoService {
@@ -142,6 +144,77 @@ export class ProgramacaoService {
 
     if (error) throw new Error(this.traduzirErro(error.message, 'confirmar chegada'))
     return this.getById(id)
+  }
+
+  // ─── Fluxo transportadora/motorista ────────────────────────────────────
+
+  /** Logística envia o agendamento para a transportadora escolhida. */
+  async enviarParaTransportadora(id: string, transportadoraId: string): Promise<Programacao> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (this.supabase as any)
+      .from('programacao_carregamento')
+      .update({
+        transportadora_id: transportadoraId,
+        solicitacao_status: 'ENVIADO_TRANSPORTADORA',
+        enviado_transportadora_em: new Date().toISOString(),
+        // Reenvio pra outra transportadora zera o que a anterior preencheu.
+        motorista_id: null,
+        solicitado_em: null,
+        liberado_em: null,
+        liberado_por: null,
+      })
+      .eq('id', id)
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'enviar para transportadora'))
+    return this.getById(id)
+  }
+
+  /** Transportadora anexa o motorista e envia a solicitação pra Logística liberar. */
+  async enviarSolicitacao(id: string, motoristaId: string): Promise<Programacao> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (this.supabase as any)
+      .from('programacao_carregamento')
+      .update({
+        motorista_id: motoristaId,
+        solicitacao_status: 'SOLICITADO',
+        solicitado_em: new Date().toISOString(),
+      })
+      .eq('id', id)
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'enviar solicitação'))
+    return this.getById(id)
+  }
+
+  /** Logística (Françoa) libera a solicitação — na sequência a interface abre o WhatsApp do motorista. */
+  async liberarSolicitacao(id: string, usuario: string): Promise<Programacao> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (this.supabase as any)
+      .from('programacao_carregamento')
+      .update({
+        solicitacao_status: 'LIBERADO',
+        liberado_em: new Date().toISOString(),
+        liberado_por: usuario,
+      })
+      .eq('id', id)
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'liberar solicitação'))
+    return this.getById(id)
+  }
+
+  /** Agendamentos endereçados a uma transportadora (tela da transportadora). */
+  async getDaTransportadora(transportadoraId: string): Promise<Programacao[]> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (this.supabase as any)
+      .from('programacao_carregamento')
+      .select(SELECT_COM_ITENS)
+      .eq('transportadora_id', transportadoraId)
+      .not('solicitacao_status', 'is', null)
+      .order('data', { ascending: true })
+      .order('created_at', { ascending: true })
+      .order('created_at', { foreignTable: 'programacao_itens', ascending: true })
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'carregar agendamentos'))
+    return data as Programacao[]
   }
 
   /** Marca o agendamento como enviado para as Ordens do Dia (selo, não bloqueia reenvio). */

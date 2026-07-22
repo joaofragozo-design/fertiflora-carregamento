@@ -8,6 +8,7 @@ import { TvBoard } from './_tv-board'
 import type { OrdemDiaria } from '@/types/formula'
 import type { Programacao } from '@/types/programacao'
 import type { Cliente } from '@/types/cliente'
+import type { RecebimentoPrevisto } from '@/services/recebimentos.service'
 
 export const metadata: Metadata = {
   title: 'Ordens Diárias de Carregamento',
@@ -75,11 +76,20 @@ export default async function OrdensPage({
       .order('created_at', { ascending: true })
       .order('created_at', { foreignTable: 'programacao_itens', ascending: true })
 
+    // Previsão de chegada de matéria-prima (lançada na Programação).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: recebimentos } = await (supabase as any)
+      .from('recebimentos_previstos')
+      .select('*')
+      .eq('recebido', false)
+      .order('data_prevista', { ascending: true })
+
     return (
       <TvBoard
         key={hoje}
         initialOrdens={ordensList}
         programacao={(prog ?? []) as Programacao[]}
+        recebimentos={(recebimentos ?? []) as RecebimentoPrevisto[]}
         user={profile}
         hoje={hoje}
       />

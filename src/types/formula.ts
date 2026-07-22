@@ -117,6 +117,17 @@ export function calcularMateriaPrima(formula: Formula, chave: MateriaPrimaKey): 
 // Alias para compatibilidade com código antigo.
 export const calcularIngrediente = calcularMateriaPrima
 
+// Versão "pra fora" do nome da fórmula: transportadora/motorista/cliente não
+// devem ver a composição — só a numeração NPK do começo do nome, com hífen
+// (ex.: "02-06-08+CO+CALTIMAG+S(Ca 6,3%...)" → "02-06-08"). Cobre também o
+// formato com barra ("00-11/05-00+CO..." → "00-11/05-00"). Se o nome não
+// seguir o padrão NPK, corta no primeiro "+" ou "(" pra não vazar detalhe.
+export function mascararNomeFormula(nome: string): string {
+  const npk = nome.match(/^\d{2}-\d{2}(?:\/\d{2})?-\d{2}/)
+  if (npk) return npk[0]
+  return nome.split(/[+(]/)[0].trim() || 'Fórmula'
+}
+
 // A planilha reaproveita a mesma coluna `caltimag` pra dois produtos físicos
 // diferentes (a fábrica trocou o produto em várias fórmulas) — o nome da
 // fórmula indica qual foi usado (ex.: "...+FERTIMAG(Ca 8,0+4,4%Mg)"). Por
