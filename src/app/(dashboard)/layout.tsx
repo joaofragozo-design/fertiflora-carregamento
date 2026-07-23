@@ -24,11 +24,12 @@ export default async function DashboardLayout({
   if (profile.role === 'operador_carregamento' && pathname.startsWith(ROUTES.PA)) {
     redirect(ROUTES.CARREGAMENTO)
   }
-  // logística: /ordens, /programacao, /admin e /transportadoras (gestão)
+  // logística: /ordens, /programacao, /recebimento, /admin e /transportadoras (gestão)
   if (
     profile.role === 'logistica' &&
     !pathname.startsWith(ROUTES.ORDENS) &&
     !pathname.startsWith(ROUTES.PROGRAMACAO) &&
+    !pathname.startsWith(ROUTES.RECEBIMENTO) &&
     !pathname.startsWith('/admin') &&
     !pathname.startsWith(ROUTES.TRANSPORTADORAS)
   ) {
@@ -42,18 +43,21 @@ export default async function DashboardLayout({
   ) {
     redirect(ROUTES.ORDENS)
   }
-  // faturamento: acompanha /ordens e /programacao (somente leitura)
+  // faturamento: acompanha /ordens, /programacao e /recebimento (confirma chegada)
   if (
     profile.role === 'faturamento' &&
     !pathname.startsWith(ROUTES.ORDENS) &&
-    !pathname.startsWith(ROUTES.PROGRAMACAO)
+    !pathname.startsWith(ROUTES.PROGRAMACAO) &&
+    !pathname.startsWith(ROUTES.RECEBIMENTO)
   ) {
     redirect(ROUTES.ORDENS)
   }
-  // transportadora: só a própria tela (/transportadora)
+  // transportadora: só a própria tela (/transportadora — checagem exata pra não
+  // colidir com /transportadoras, a tela de gestão da Logística/admin)
   if (
     profile.role === 'transportadora' &&
-    !pathname.startsWith(ROUTES.TRANSPORTADORA)
+    pathname !== ROUTES.TRANSPORTADORA &&
+    !pathname.startsWith(`${ROUTES.TRANSPORTADORA}/`)
   ) {
     redirect(ROUTES.TRANSPORTADORA)
   }

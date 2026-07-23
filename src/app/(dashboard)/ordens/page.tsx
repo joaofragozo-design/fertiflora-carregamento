@@ -76,13 +76,26 @@ export default async function OrdensPage({
       .order('created_at', { ascending: true })
       .order('created_at', { foreignTable: 'programacao_itens', ascending: true })
 
-    // Previsão de chegada de matéria-prima (lançada na Programação).
+    // Previsão de chegada de matéria-prima (lançada na Programação de
+    // Recebimento). Tenta com a relation de fornecedor + o filtro novo
+    // (confirmado_em); se a migration 063 ainda não rodou, cai no SELECT E no
+    // filtro antigos (recebido) — as duas colunas não coexistem antes dela,
+    // então o fallback precisa trocar os dois juntos, não só o SELECT.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: recebimentos } = await (supabase as any)
+    let { data: recebimentos } = await (supabase as any)
       .from('recebimentos_previstos')
-      .select('*')
-      .eq('recebido', false)
+      .select('*, fornecedor_rel:fornecedores ( id, nome, created_at, updated_at )')
+      .is('confirmado_em', null)
       .order('data_prevista', { ascending: true })
+
+    if (!recebimentos) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;({ data: recebimentos } = await (supabase as any)
+        .from('recebimentos_previstos')
+        .select('*')
+        .eq('recebido', false)
+        .order('data_prevista', { ascending: true }))
+    }
 
     return (
       <TvBoard

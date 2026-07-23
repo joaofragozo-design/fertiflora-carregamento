@@ -4,12 +4,10 @@ import { getAuthContext } from '@/lib/supabase/get-user'
 import { createClient } from '@/lib/supabase/server'
 import { ROUTES, ROLE_DEFAULT_ROUTES } from '@/constants/routes'
 import { ProgramacaoSemana } from './_programacao'
-import { PainelRecebimentos } from '@/components/recebimentos/painel-recebimentos'
 import { listarClientesErp } from '@/services/clientes-erp.service'
 import type { Programacao } from '@/types/programacao'
 import type { Cliente } from '@/types/cliente'
 import type { Transportadora } from '@/types/transportadora'
-import type { RecebimentoPrevisto } from '@/services/recebimentos.service'
 
 export const metadata: Metadata = {
   title: 'Programação de Carregamento',
@@ -110,35 +108,22 @@ export default async function ProgramacaoPage({
     .eq('ativo', true)
     .order('nome', { ascending: true })
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: recebimentos } = await (supabase as any)
-    .from('recebimentos_previstos')
-    .select('*')
-    .eq('recebido', false)
-    .order('data_prevista', { ascending: true })
-
   const podeEditar = profile.role === 'admin' || profile.role === 'logistica'
 
   return (
-    <div className="flex flex-col gap-4">
-      <ProgramacaoSemana
-        key={semanaInicio}
-        initialItens={(itens ?? []) as Programacao[]}
-        formulas={(formulas ?? []) as { id: number; nome: string }[]}
-        initialClientes={(clientes ?? []) as Cliente[]}
-        clientesErp={clientesErp}
-        transportadoras={(transportadoras ?? []) as Transportadora[]}
-        semanaInicio={semanaInicio}
-        semanaFim={semanaFim}
-        hoje={iso(new Date())}
-        podeEditar={podeEditar}
-        podeConfirmar={profile.role === 'admin' || profile.role === 'faturamento'}
-        usuario={profile.username}
-      />
-      <PainelRecebimentos
-        initialRecebimentos={(recebimentos ?? []) as RecebimentoPrevisto[]}
-        podeEditar={podeEditar}
-      />
-    </div>
+    <ProgramacaoSemana
+      key={semanaInicio}
+      initialItens={(itens ?? []) as Programacao[]}
+      formulas={(formulas ?? []) as { id: number; nome: string }[]}
+      initialClientes={(clientes ?? []) as Cliente[]}
+      clientesErp={clientesErp}
+      transportadoras={(transportadoras ?? []) as Transportadora[]}
+      semanaInicio={semanaInicio}
+      semanaFim={semanaFim}
+      hoje={iso(new Date())}
+      podeEditar={podeEditar}
+      podeConfirmar={profile.role === 'admin' || profile.role === 'faturamento'}
+      usuario={profile.username}
+    />
   )
 }

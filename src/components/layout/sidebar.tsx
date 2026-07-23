@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, ClipboardList, Truck, X, CalendarDays, CalendarRange, FileSpreadsheet, Container } from 'lucide-react'
+import { LayoutDashboard, ClipboardList, Truck, X, CalendarDays, CalendarRange, FileSpreadsheet, Container, Package } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { AppUser } from '@/types'
 
@@ -31,6 +31,12 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Programação',
     icon:  CalendarRange,
     roles: ['admin', 'logistica', 'logistica_02', 'faturamento'],
+  },
+  {
+    href:  '/recebimento',
+    label: 'Programação de Recebimento',
+    icon:  Package,
+    roles: ['admin', 'logistica', 'faturamento'],
   },
   {
     href:  '/carregamento',
