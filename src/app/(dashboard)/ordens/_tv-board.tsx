@@ -13,6 +13,8 @@ import type { OrdemDiaria, Formula } from '@/types/formula'
 import type { Programacao } from '@/types/programacao'
 import type { RecebimentoPrevisto } from '@/services/recebimentos.service'
 import { RecebimentosTv } from '@/components/recebimentos/painel-recebimentos'
+import { EstoqueTv } from '@/components/estoque/estoque-tv'
+import type { EstoqueAtual, EstoqueConfig } from '@/types/estoque'
 import { MATERIAS_PRIMA, EMBALAGEM_LABEL, calcularMateriaPrima, labelMateriaPrima, calcularTons, tonsDaOrdem, getStatus, formatDuracao, tonPorHora } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
@@ -20,6 +22,8 @@ interface TvBoardProps {
   initialOrdens: OrdemDiaria[]
   programacao: Programacao[]
   recebimentos?: RecebimentoPrevisto[]
+  estoqueAtual?: EstoqueAtual[]
+  estoqueConfig?: EstoqueConfig[]
   user: AppUser
   hoje: string
 }
@@ -47,7 +51,7 @@ function labelDia(data: string): string {
   return new Date(data + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })
 }
 
-export function TvBoard({ initialOrdens, programacao, recebimentos = [], user, hoje }: TvBoardProps) {
+export function TvBoard({ initialOrdens, programacao, recebimentos = [], estoqueAtual = [], estoqueConfig = [], user, hoje }: TvBoardProps) {
   const { ordens, setOrdens } = useOrdensDiarias(initialOrdens, hoje)
   const svc = useMemo(() => new OrdensDiariasService(createClient()), [])
 
@@ -143,6 +147,41 @@ export function TvBoard({ initialOrdens, programacao, recebimentos = [], user, h
     return Object.entries(acc).map(([label, kg]) => ({ label, kg })).sort((a, b) => b.kg - a.kg)
   }, [agendamentosHoje])
 
+  // Agendamentos de hoje cuja carga já foi INICIADA (em andamento ou já
+  // finalizada) — o desconto de estoque acontece no início, não na
+  // finalização, então essas já saíram do estoque_atual e não podem entrar
+  // de novo na conta de "quanto ainda falta consumir hoje" (senão conta
+  // duas vezes: uma no estoque já descontado, outra aqui no "vai consumir").
+  const agendamentosIniciadosHoje = useMemo(() => {
+    const ids = new Set<string>()
+    for (const o of ordens) {
+      if (o.iniciado && o.programacao_id) ids.add(o.programacao_id)
+    }
+    return ids
+  }, [ordens])
+
+  // Mesmo cálculo de matéria-prima de hoje, mas por CHAVE (não rótulo), em
+  // toneladas (não kg), e só do que AINDA NÃO foi iniciado — usado só pra
+  // comparar contra o estoque atual no termômetro (a barra de estoque tem um
+  // saldo só por chave, então CALTIMAG e FERTIMAG entram juntos no mesmo
+  // balde, igual no estoque em si).
+  const consumoHojePorChave = useMemo(() => {
+    const acc: Record<string, number> = {}
+    for (const ag of agendamentosHoje) {
+      if (agendamentosIniciadosHoje.has(ag.id)) continue
+      for (const item of ag.itens ?? []) {
+        const f = item.formula as Formula | undefined
+        if (!f) continue
+        const tons = item.tons ?? calcularTons(item.quantidade, item.embalagem)
+        for (const mp of MATERIAS_PRIMA) {
+          const kgPorTon = calcularMateriaPrima(f, mp.key)
+          if (kgPorTon > 0) acc[mp.key] = (acc[mp.key] ?? 0) + (tons * kgPorTon) / 1000
+        }
+      }
+    }
+    return acc
+  }, [agendamentosHoje, agendamentosIniciadosHoje])
+
   // Agendamentos de hoje cuja carga (enviada às Ordens do Dia) já foi finalizada.
   const agendamentosCarregadosHoje = useMemo(() => {
     const ids = new Set<string>()
@@ -234,6 +273,8 @@ export function TvBoard({ initialOrdens, programacao, recebimentos = [], user, h
           </Link>
         </div>
       </div>
+
+      <EstoqueTv initialEstoque={estoqueAtual} initialConfig={estoqueConfig} consumoHojePorChave={consumoHojePorChave} />
 
       {ordens.length === 0 && (
         <div className="text-center py-24 text-xl text-industrial-400">Nenhum pedido para hoje ainda.</div>

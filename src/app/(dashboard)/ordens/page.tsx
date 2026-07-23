@@ -9,6 +9,7 @@ import type { OrdemDiaria } from '@/types/formula'
 import type { Programacao } from '@/types/programacao'
 import type { Cliente } from '@/types/cliente'
 import type { RecebimentoPrevisto } from '@/services/recebimentos.service'
+import type { EstoqueAtual, EstoqueConfig } from '@/types/estoque'
 
 export const metadata: Metadata = {
   title: 'Ordens Diárias de Carregamento',
@@ -97,12 +98,21 @@ export default async function OrdensPage({
         .order('data_prevista', { ascending: true }))
     }
 
+    // Estoque em tempo real (migration 064) — se ainda não rodou, os arrays
+    // ficam vazios e o painel simplesmente não aparece (sem quebrar a TV).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: estoqueAtual } = await (supabase as any).from('estoque_atual').select('*')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: estoqueConfig } = await (supabase as any).from('estoque_config').select('*')
+
     return (
       <TvBoard
         key={hoje}
         initialOrdens={ordensList}
         programacao={(prog ?? []) as Programacao[]}
         recebimentos={(recebimentos ?? []) as RecebimentoPrevisto[]}
+        estoqueAtual={(estoqueAtual ?? []) as EstoqueAtual[]}
+        estoqueConfig={(estoqueConfig ?? []) as EstoqueConfig[]}
         user={profile}
         hoje={hoje}
       />
