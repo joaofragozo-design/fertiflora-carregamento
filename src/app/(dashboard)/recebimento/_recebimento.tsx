@@ -8,14 +8,19 @@ import { createClient } from '@/lib/supabase/client'
 import { RecebimentosService, type RecebimentoPrevisto } from '@/services/recebimentos.service'
 import { FornecedoresService } from '@/services/fornecedores.service'
 import { FornecedorPicker } from '@/components/fornecedores/fornecedor-picker'
+import { EstoqueConfigPainel } from '@/components/estoque/estoque-config-painel'
 import { ROUTES } from '@/constants/routes'
 import type { Fornecedor } from '@/types/fornecedor'
+import type { Transportadora } from '@/types/transportadora'
+import type { EstoqueConfig } from '@/types/estoque'
 import { MATERIAS_PRIMA } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
 interface RecebimentoSemanaProps {
   initialRecebimentos: RecebimentoPrevisto[]
   initialFornecedores: Fornecedor[]
+  initialTransportadoras: Transportadora[]
+  initialEstoqueConfig: EstoqueConfig[]
   semanaInicio:         string
   semanaFim:            string
   hoje:                 string
@@ -56,12 +61,19 @@ interface FormState {
   quantidade_ton:    string
   fornecedor:        string
   fornecedor_id:     string | null
-  placa:             string
+  transportadora_id: string
+  motorista_nome:    string
+  numero_nota:       string
+  placa_cavalo:      string
+  placa_1:           string
+  placa_2:           string
+  placa_3:           string
+  placa_4:           string
   observacao:        string
 }
 
 export function RecebimentoSemana({
-  initialRecebimentos, initialFornecedores, semanaInicio, semanaFim, hoje, podeEditar, podeConfirmar, usuario,
+  initialRecebimentos, initialFornecedores, initialTransportadoras, initialEstoqueConfig, semanaInicio, semanaFim, hoje, podeEditar, podeConfirmar, usuario,
 }: RecebimentoSemanaProps) {
   const [recebimentos, setRecebimentos] = useState(initialRecebimentos)
   const [fornecedores, setFornecedores] = useState(initialFornecedores)
@@ -94,7 +106,11 @@ export function RecebimentoSemana({
   }
 
   function abrirNovo(data: string) {
-    setForm({ data, materia_prima_key: '', quantidade_ton: '', fornecedor: '', fornecedor_id: null, placa: '', observacao: '' })
+    setForm({
+      data, materia_prima_key: '', quantidade_ton: '', fornecedor: '', fornecedor_id: null,
+      transportadora_id: '', motorista_nome: '', numero_nota: '',
+      placa_cavalo: '', placa_1: '', placa_2: '', placa_3: '', placa_4: '', observacao: '',
+    })
   }
 
   async function lancar() {
@@ -108,12 +124,16 @@ export function RecebimentoSemana({
       toast.error('Informe uma quantidade maior que zero.')
       return
     }
-    if (!form.placa.trim()) {
-      toast.error('Informe a placa do caminhão.')
-      return
-    }
     if (!form.fornecedor_id) {
       toast.error('Selecione o fornecedor (ou cadastre um novo) antes de lançar.')
+      return
+    }
+    if (!form.placa_cavalo.trim()) {
+      toast.error('Informe a placa do cavalo.')
+      return
+    }
+    if (!form.placa_1.trim()) {
+      toast.error('Informe a placa do reboque (placa 1).')
       return
     }
     setSalvando(true)
@@ -123,7 +143,14 @@ export function RecebimentoSemana({
         materia_prima_key: form.materia_prima_key,
         quantidade_ton: tons,
         fornecedor_id: form.fornecedor_id,
-        placa: form.placa,
+        transportadora_id: form.transportadora_id || null,
+        motorista_nome: form.motorista_nome,
+        numero_nota: form.numero_nota,
+        placa_cavalo: form.placa_cavalo,
+        placa_1: form.placa_1,
+        placa_2: form.placa_2,
+        placa_3: form.placa_3,
+        placa_4: form.placa_4,
         observacao: form.observacao.trim(),
       })
       setRecebimentos((prev) => [...prev, novo])
@@ -241,7 +268,19 @@ export function RecebimentoSemana({
                       <span className="font-bold text-industrial-300">{(r.quantidade_ton ?? 0).toFixed(2)} ton</span>
                       {' · '}{labelFornecedor(r)}
                     </p>
-                    {r.placa && <p className="text-xs font-mono text-industrial-400 uppercase mt-0.5">Placa: {r.placa}</p>}
+                    {(r.transportadora?.nome || r.motorista_nome) && (
+                      <p className="text-xs text-industrial-400 mt-0.5">
+                        {r.transportadora?.nome}{r.transportadora?.nome && r.motorista_nome && ' · '}{r.motorista_nome}
+                      </p>
+                    )}
+                    {(r.placa_cavalo || r.placa) && (
+                      <p className="text-xs font-mono text-industrial-400 uppercase mt-0.5">
+                        Placa: {r.placa_cavalo || r.placa}
+                        {[r.placa_1, r.placa_2, r.placa_3, r.placa_4].filter(Boolean).length > 0 &&
+                          ` / ${[r.placa_1, r.placa_2, r.placa_3, r.placa_4].filter(Boolean).join(' / ')}`}
+                      </p>
+                    )}
+                    {r.numero_nota && <p className="text-xs text-industrial-400 mt-0.5">NF-e: {r.numero_nota}</p>}
                     {r.observacao && <p className="text-xs text-industrial-400 italic mt-1">{r.observacao}</p>}
 
                     {podeConfirmar && (
@@ -282,10 +321,14 @@ export function RecebimentoSemana({
         })}
       </div>
 
+      {podeEditar && (
+        <EstoqueConfigPainel initialConfig={initialEstoqueConfig} usuario={usuario} />
+      )}
+
       {/* Modal de novo recebimento */}
       {form && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setForm(null)}>
-          <div className="w-full max-w-md rounded-xl bg-industrial-900 border border-industrial-700 p-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={() => setForm(null)}>
+          <div className="w-full max-w-md rounded-xl bg-industrial-900 border border-industrial-700 p-5 flex flex-col gap-3 my-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-industrial-100 flex items-center gap-2">
                 <Package className="size-4 text-brand-600" /> Novo recebimento · {ddmm(form.data)}
@@ -323,16 +366,68 @@ export function RecebimentoSemana({
                   placeholder="ex.: 35"
                   className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
               </label>
-              <label className="text-xs font-medium text-industrial-400">Placa do caminhão
-                <input value={form.placa} onChange={(e) => setForm({ ...form, placa: e.target.value.toUpperCase() })}
-                  placeholder="ABC1D23"
-                  className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
+              <label className="text-xs font-medium text-industrial-400">Número da nota (NF-e)
+                <input value={form.numero_nota} onChange={(e) => setForm({ ...form, numero_nota: e.target.value })}
+                  placeholder="ex.: 116533"
+                  className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
               </label>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <label className="text-xs font-medium text-industrial-400">Transportadora (opcional)
+                <select
+                  value={form.transportadora_id}
+                  onChange={(e) => setForm({ ...form, transportadora_id: e.target.value })}
+                  className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 focus:outline-none focus:border-brand-500"
+                >
+                  <option value="">— Não informar —</option>
+                  {initialTransportadoras.map((t) => (
+                    <option key={t.id} value={t.id}>{t.nome}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-xs font-medium text-industrial-400">Nome do motorista (opcional)
+                <input value={form.motorista_nome} onChange={(e) => setForm({ ...form, motorista_nome: e.target.value })}
+                  placeholder="ex.: José da Silva"
+                  className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
+              </label>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold text-industrial-300 mb-1.5">Placas do veículo</p>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="text-xs font-medium text-industrial-400">Placa cavalo
+                  <input value={form.placa_cavalo} onChange={(e) => setForm({ ...form, placa_cavalo: e.target.value.toUpperCase() })}
+                    placeholder="ABC1D23"
+                    className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
+                </label>
+                <label className="text-xs font-medium text-industrial-400">Placa 1
+                  <input value={form.placa_1} onChange={(e) => setForm({ ...form, placa_1: e.target.value.toUpperCase() })}
+                    placeholder="ABC1D23"
+                    className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
+                </label>
+              </div>
+              <div className="grid grid-cols-3 gap-3 mt-3">
+                <label className="text-xs font-medium text-industrial-400">Placa 2
+                  <input value={form.placa_2} onChange={(e) => setForm({ ...form, placa_2: e.target.value.toUpperCase() })}
+                    placeholder="opcional"
+                    className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
+                </label>
+                <label className="text-xs font-medium text-industrial-400">Placa 3
+                  <input value={form.placa_3} onChange={(e) => setForm({ ...form, placa_3: e.target.value.toUpperCase() })}
+                    placeholder="opcional"
+                    className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
+                </label>
+                <label className="text-xs font-medium text-industrial-400">Placa 4
+                  <input value={form.placa_4} onChange={(e) => setForm({ ...form, placa_4: e.target.value.toUpperCase() })}
+                    placeholder="opcional"
+                    className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
+                </label>
+              </div>
             </div>
 
             <label className="text-xs font-medium text-industrial-400">Observação (opcional)
               <input value={form.observacao} onChange={(e) => setForm({ ...form, observacao: e.target.value })}
-                placeholder="ex.: NF-e 116533"
                 className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
             </label>
 
@@ -342,7 +437,7 @@ export function RecebimentoSemana({
               <button
                 type="button"
                 onClick={lancar}
-                disabled={salvando || !form.materia_prima_key || !form.placa.trim() || !form.fornecedor_id}
+                disabled={salvando || !form.materia_prima_key || !form.fornecedor_id || !form.placa_cavalo.trim() || !form.placa_1.trim()}
                 className="rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-medium disabled:opacity-50"
               >
                 {salvando ? 'Lançando…' : 'Lançar'}

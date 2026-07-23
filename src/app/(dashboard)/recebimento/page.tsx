@@ -6,6 +6,8 @@ import { ROUTES, ROLE_DEFAULT_ROUTES } from '@/constants/routes'
 import { RecebimentoSemana } from './_recebimento'
 import type { RecebimentoPrevisto } from '@/services/recebimentos.service'
 import type { Fornecedor } from '@/types/fornecedor'
+import type { Transportadora } from '@/types/transportadora'
+import type { EstoqueConfig } from '@/types/estoque'
 
 export const metadata: Metadata = {
   title: 'Programação de Recebimento',
@@ -51,8 +53,9 @@ export default async function RecebimentoPage({
 
   const supabase = await createClient()
 
-  // Tenta com a relation de fornecedor; se a migration 063 ainda não rodou,
-  // cai no SELECT antigo pra semana nunca aparecer em branco.
+  // Tenta com as duas relations (fornecedor + transportadora, migration 065);
+  // se só a 063 rodou, cai pra só fornecedor; se nenhuma rodou ainda, cai pro
+  // SELECT antigo — em qualquer caso a semana não fica em branco à toa.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const buscarSemana = (select: string) => (supabase as any)
     .from('recebimentos_previstos')
@@ -63,8 +66,11 @@ export default async function RecebimentoPage({
     .order('created_at', { ascending: true })
 
   let { data: recebimentos } = await buscarSemana(
-    '*, fornecedor_rel:fornecedores ( id, nome, created_at, updated_at )',
+    '*, fornecedor_rel:fornecedores ( id, nome, created_at, updated_at ), transportadora:transportadoras ( id, nome, profile_id, ativo, created_at, updated_at )',
   )
+  if (!recebimentos) {
+    ;({ data: recebimentos } = await buscarSemana('*, fornecedor_rel:fornecedores ( id, nome, created_at, updated_at )'))
+  }
   if (!recebimentos) {
     ;({ data: recebimentos } = await buscarSemana('*'))
   }
@@ -75,13 +81,25 @@ export default async function RecebimentoPage({
     .select('*')
     .order('nome', { ascending: true })
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: transportadoras } = await (supabase as any)
+    .from('transportadoras')
+    .select('*')
+    .eq('ativo', true)
+    .order('nome', { ascending: true })
+
   const podeEditar = profile.role === 'admin' || profile.role === 'logistica'
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: estoqueConfig } = await (supabase as any).from('estoque_config').select('*')
 
   return (
     <RecebimentoSemana
       key={semanaInicio}
       initialRecebimentos={(recebimentos ?? []) as RecebimentoPrevisto[]}
       initialFornecedores={(fornecedores ?? []) as Fornecedor[]}
+      initialTransportadoras={(transportadoras ?? []) as Transportadora[]}
+      initialEstoqueConfig={(estoqueConfig ?? []) as EstoqueConfig[]}
       semanaInicio={semanaInicio}
       semanaFim={semanaFim}
       hoje={iso(new Date())}
