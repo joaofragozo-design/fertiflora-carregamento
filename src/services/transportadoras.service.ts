@@ -64,7 +64,7 @@ export class TransportadorasService {
   private traduzirErro(msg: string, acao: string): string {
     if (msg.includes('row-level security') || msg.includes('new row violates'))
       return 'Sem permissão para esta operação.'
-    if (msg.includes('transportadoras') || msg.includes('motoristas'))
+    if (msg.includes('relation') && msg.includes('does not exist'))
       return 'Tabelas do fluxo de transportadora não encontradas — rode as migrations 057/058 no Supabase.'
     console.error(`[TransportadorasService.${acao}]`, msg)
     return `Erro ao ${acao}. Tente novamente.`

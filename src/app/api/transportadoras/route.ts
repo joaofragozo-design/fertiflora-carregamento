@@ -37,8 +37,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Mesmo padrão de login do app: o e-mail no Supabase Auth é um e-mail fake
-  // username@fertiflora.local, e o trigger handle_new_user cria o profile com
-  // o role vindo do metadata.
+  // username@fertiflora.local.
   const { data: created, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email: `${username}@fertiflora.local`,
     password: senha,
@@ -55,6 +54,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Erro ao criar o usuário. Tente novamente.' }, { status: 500 })
   }
 
+  // Cria o profile diretamente — o gatilho handle_new_user (que deveria fazer
+  // isso automaticamente) não existe mais neste banco, então sem este passo
+  // o usuário do Auth ficava sem profile e o insert em `transportadoras`
+  // falhava com violação de chave estrangeira (profile_id inexistente).
+  const { error: profileError } = await supabaseAdmin
+    .from('profiles')
+    .upsert({ id: created.user.id, username, role: 'transportadora', active: true }, { onConflict: 'id' })
+
+  if (profileError) {
+    await supabaseAdmin.auth.admin.deleteUser(created.user.id)
+    console.error('[api/transportadoras] profile', profileError.message)
+    return NextResponse.json({ error: 'Erro ao criar o perfil do usuário. Tente novamente.' }, { status: 500 })
+  }
+
   const { data: transportadora, error: dbError } = await supabaseAdmin
     .from('transportadoras')
     .insert({ nome, profile_id: created.user.id })
@@ -62,9 +75,10 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (dbError) {
-    // Evita usuário órfão sem transportadora (as duas criações não são atômicas).
+    // Evita usuário órfão sem transportadora (as criações não são atômicas).
+    await supabaseAdmin.from('profiles').delete().eq('id', created.user.id)
     await supabaseAdmin.auth.admin.deleteUser(created.user.id)
-    if (dbError.message.includes('transportadoras')) {
+    if (dbError.message.includes('relation') && dbError.message.includes('does not exist')) {
       return NextResponse.json(
         { error: 'Tabela de transportadoras não encontrada — rode as migrations 057/058 no Supabase.' },
         { status: 503 },
