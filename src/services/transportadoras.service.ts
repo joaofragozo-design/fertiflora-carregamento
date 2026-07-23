@@ -43,17 +43,48 @@ export class TransportadorasService {
     return data as Motorista[]
   }
 
-  /** Cadastra um motorista novo (WhatsApp obrigatório — recebe a liberação). */
-  async criarMotorista(input: { transportadora_id: string; nome: string; whatsapp: string }): Promise<Motorista> {
+  /** Cadastra um motorista novo (documentos e placa cavalo/reboque 1 obrigatórios). */
+  async criarMotorista(input: {
+    transportadora_id: string
+    nome:              string
+    whatsapp:          string
+    cpf:               string
+    rg:                string
+    cnh:               string
+    placa_cavalo:      string
+    placa_1:           string
+    placa_2?:          string
+    placa_3?:          string
+    placa_4?:          string
+  }): Promise<Motorista> {
     const nome = input.nome.trim()
     const whatsapp = input.whatsapp.trim()
+    const cpf = input.cpf.trim()
+    const rg = input.rg.trim()
+    const cnh = input.cnh.trim()
+    const placaCavalo = input.placa_cavalo.trim().toUpperCase()
+    const placa1 = input.placa_1.trim().toUpperCase()
+
     if (!nome) throw new Error('Informe o nome do motorista.')
     if (whatsapp.replace(/\D/g, '').length < 10) throw new Error('Informe o WhatsApp do motorista com DDD (obrigatório).')
+    if (cpf.replace(/\D/g, '').length !== 11) throw new Error('Informe um CPF válido (11 dígitos).')
+    if (!rg) throw new Error('Informe o RG do motorista.')
+    if (!cnh) throw new Error('Informe o número da CNH do motorista.')
+    if (!placaCavalo) throw new Error('Informe a placa do cavalo.')
+    if (!placa1) throw new Error('Informe a placa do reboque (placa 1).')
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (this.supabase as any)
       .from('motoristas')
-      .insert({ transportadora_id: input.transportadora_id, nome, whatsapp })
+      .insert({
+        transportadora_id: input.transportadora_id,
+        nome, whatsapp, cpf, rg, cnh,
+        placa_cavalo: placaCavalo,
+        placa_1: placa1,
+        placa_2: input.placa_2?.trim().toUpperCase() || null,
+        placa_3: input.placa_3?.trim().toUpperCase() || null,
+        placa_4: input.placa_4?.trim().toUpperCase() || null,
+      })
       .select('*')
       .single()
 

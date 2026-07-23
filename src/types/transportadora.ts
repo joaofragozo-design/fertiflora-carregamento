@@ -16,6 +16,14 @@ export interface Motorista {
   transportadora_id: string
   nome:              string
   whatsapp:          string // obrigatório: recebe a mensagem de liberação
+  cpf:               string
+  rg:                string
+  cnh:               string
+  placa_cavalo:      string
+  placa_1:           string
+  placa_2:           string | null
+  placa_3:           string | null
+  placa_4:           string | null
   created_at:        string
   updated_at:        string
 }

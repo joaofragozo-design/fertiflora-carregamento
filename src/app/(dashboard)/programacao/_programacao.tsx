@@ -135,19 +135,20 @@ function FormulaPicker({
 // Cria um agendamento novo (com cliente/observação) OU adiciona/edita um item
 // de um agendamento já existente.
 interface ItemFormState {
-  agendamentoId: string | null // null = criar novo agendamento
-  itemId:        string | null // null = novo item
-  data:          string
-  cliente:       string
-  clienteCodigo: number | null
-  observacao:    string
-  formula_id:    number | null
-  quantidade:    number
-  embalagem:     Embalagem
+  agendamentoId:    string | null // null = criar novo agendamento
+  itemId:           string | null // null = novo item
+  data:             string
+  cliente:          string
+  clienteCodigo:    number | null
+  observacao:       string
+  formula_id:       number | null
+  quantidade:       number
+  embalagem:        Embalagem
+  transportadoraId: string // só usado ao criar um agendamento novo
 }
 
 const ITEM_FORM_VAZIO: Omit<ItemFormState, 'data' | 'agendamentoId'> = {
-  itemId: null, cliente: '', clienteCodigo: null, observacao: '', formula_id: null, quantidade: 0, embalagem: 'SACOS',
+  itemId: null, cliente: '', clienteCodigo: null, observacao: '', formula_id: null, quantidade: 0, embalagem: 'SACOS', transportadoraId: '',
 }
 
 // ─── Formulário do AGENDAMENTO (cliente/observação) ────────────────────────
@@ -224,7 +225,7 @@ export function ProgramacaoSemana({
   }
   function abrirEdicaoItem(ag: Programacao, item: ProgramacaoItem) {
     setItemForm({
-      agendamentoId: ag.id, itemId: item.id, data: ag.data,
+      agendamentoId: ag.id, itemId: item.id, data: ag.data, transportadoraId: '',
       cliente: ag.cliente, clienteCodigo: ag.cliente_codigo, observacao: ag.observacao,
       formula_id: item.formula_id, quantidade: item.quantidade, embalagem: item.embalagem,
     })
@@ -258,7 +259,11 @@ export function ProgramacaoSemana({
         })
         setAgendamentos((prev) => prev.map((a) => (a.id === upd.id ? upd : a)))
       } else {
-        // Criar agendamento novo com o primeiro item
+        // Criar agendamento novo com o primeiro item. Fecha o modal e mostra
+        // na grade IMEDIATAMENTE após criar — antes de tentar enviar pra
+        // transportadora — pra uma falha nesse segundo passo (rede, RLS) não
+        // deixar o agendamento "invisível" e sujeito a ser duplicado se o
+        // usuário, vendo só um erro genérico, clicar Salvar de novo.
         const novo = await svc.criar({
           data: itemForm.data,
           cliente: itemForm.cliente.trim(),
@@ -269,6 +274,19 @@ export function ProgramacaoSemana({
           embalagem: itemForm.embalagem,
         })
         setAgendamentos((prev) => [...prev, novo])
+        setItemForm(null)
+
+        if (itemForm.transportadoraId) {
+          try {
+            const atualizado = await svc.enviarParaTransportadora(novo.id, itemForm.transportadoraId)
+            setAgendamentos((prev) => prev.map((a) => (a.id === atualizado.id ? atualizado : a)))
+          } catch (err) {
+            toast.error(
+              `${novo.cliente || 'Agendamento'} foi criado, mas não foi possível enviar pra transportadora: ${err instanceof Error ? err.message : 'erro desconhecido'}. Use o botão "Transportadora" no card pra tentar de novo.`,
+            )
+          }
+        }
+        return
       }
       setItemForm(null)
     } catch (err) {
@@ -747,6 +765,18 @@ export function ProgramacaoSemana({
                   <input value={itemForm.observacao} onChange={(e) => setItemForm({ ...itemForm, observacao: e.target.value })}
                     placeholder="ex.: PEDIDO 26092"
                     className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
+                </label>
+                <label className="text-xs font-medium text-industrial-400">Transportadora (opcional — já sai enviado pra ela)
+                  <select
+                    value={itemForm.transportadoraId}
+                    onChange={(e) => setItemForm({ ...itemForm, transportadoraId: e.target.value })}
+                    className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 focus:outline-none focus:border-brand-500"
+                  >
+                    <option value="">— Definir depois —</option>
+                    {transportadoras.map((t) => (
+                      <option key={t.id} value={t.id}>{t.nome}</option>
+                    ))}
+                  </select>
                 </label>
               </>
             )}

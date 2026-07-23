@@ -101,6 +101,7 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
               </p>
               <p className="text-xs text-industrial-400 mt-0.5">
                 Motorista: <span className="font-semibold text-industrial-200">{ag.motorista?.nome ?? '—'}</span>
+                {ag.motorista?.placa_cavalo && <span className="font-mono"> · {ag.motorista.placa_cavalo}</span>}
                 {ag.motorista?.whatsapp && <span className="font-mono"> · {ag.motorista.whatsapp}</span>}
                 <span className="text-industrial-500"> · {tonsDoAgendamento(ag).toFixed(2)} ton</span>
               </p>
