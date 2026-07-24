@@ -9,6 +9,7 @@ import { RecebimentosService, type RecebimentoPrevisto, STATUS_RECEBIMENTO_LABEL
 import { FornecedoresService } from '@/services/fornecedores.service'
 import { FornecedorPicker } from '@/components/fornecedores/fornecedor-picker'
 import { EstoqueConfigPainel } from '@/components/estoque/estoque-config-painel'
+import { useRecebimentosSemana } from '@/hooks/use-recebimentos-semana'
 import { ROUTES } from '@/constants/routes'
 import type { Fornecedor } from '@/types/fornecedor'
 import type { Transportadora } from '@/types/transportadora'
@@ -76,7 +77,7 @@ interface FormState {
 export function RecebimentoSemana({
   initialRecebimentos, initialFornecedores, initialTransportadoras, initialEstoqueConfig, semanaInicio, semanaFim, hoje, podeEditar, podeConfirmar, podeOperar, usuario,
 }: RecebimentoSemanaProps) {
-  const [recebimentos, setRecebimentos] = useState(initialRecebimentos)
+  const { recebimentos, setRecebimentos } = useRecebimentosSemana(initialRecebimentos, semanaInicio, semanaFim)
   const [fornecedores, setFornecedores] = useState(initialFornecedores)
   const [form, setForm] = useState<FormState | null>(null)
   const [salvando, setSalvando] = useState(false)

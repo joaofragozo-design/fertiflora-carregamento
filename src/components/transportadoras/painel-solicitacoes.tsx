@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CheckCircle2, Container, FileDown, MessageCircle, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
@@ -31,7 +31,45 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
   const [liberandoId, setLiberandoId] = useState<string | null>(null)
   const [excluindoId, setExcluindoId] = useState<string | null>(null)
   const [whatsappAbertoIds, setWhatsappAbertoIds] = useState<Set<string>>(new Set())
+  const supabase = useRef(createClient()).current
   const svc = useRef(new ProgramacaoService(createClient())).current
+
+  const refetch = useCallback(async () => {
+    try {
+      setAgendamentos(await svc.getPendentesLiberacao())
+    } catch {
+      /* silencioso: realtime e polling continuam tentando */
+    }
+  }, [svc])
+
+  // Tempo real: outra pessoa liberando/excluindo (ou uma nova solicitação
+  // chegando da transportadora) reflete aqui sem precisar recarregar a página.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null
+    const agendarRefetch = () => {
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(() => { refetch() }, 250)
+    }
+
+    const channel = supabase
+      .channel('painel_solicitacoes_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'programacao_carregamento' }, agendarRefetch)
+      .subscribe()
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') refetch()
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
+    const pollTimer = setInterval(refetch, 20_000)
+
+    return () => {
+      supabase.removeChannel(channel)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+      clearInterval(pollTimer)
+      if (timer) clearTimeout(timer)
+    }
+  }, [supabase, refetch])
 
   const solicitacoesPendentes = useMemo(
     () => agendamentos.filter((ag) => ag.solicitacao_status === 'SOLICITADO'),
