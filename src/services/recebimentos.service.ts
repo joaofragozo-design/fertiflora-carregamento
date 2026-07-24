@@ -42,8 +42,28 @@ export interface RecebimentoPrevisto {
   recebido:          boolean
   confirmado_em:     string | null
   confirmado_por:    string | null
+  iniciado_em:       string | null
+  iniciado_por:      string | null
+  finalizado_em:     string | null
+  finalizado_por:    string | null
   created_at:        string
   updated_at:        string
+}
+
+export type StatusRecebimento = 'AGUARDANDO_CHEGADA' | 'AGUARDANDO_FILA' | 'DESCARREGANDO' | 'FINALIZADO'
+
+export const STATUS_RECEBIMENTO_LABEL: Record<StatusRecebimento, string> = {
+  AGUARDANDO_CHEGADA: 'Aguardando chegada',
+  AGUARDANDO_FILA:     'Aguardando na fila',
+  DESCARREGANDO:       'Descarregando',
+  FINALIZADO:          'Finalizado',
+}
+
+export function getStatusRecebimento(r: Pick<RecebimentoPrevisto, 'confirmado_em' | 'iniciado_em' | 'finalizado_em'>): StatusRecebimento {
+  if (r.finalizado_em) return 'FINALIZADO'
+  if (r.iniciado_em) return 'DESCARREGANDO'
+  if (r.confirmado_em) return 'AGUARDANDO_FILA'
+  return 'AGUARDANDO_CHEGADA'
 }
 
 export interface RecebimentoInsert {
@@ -139,6 +159,34 @@ export class RecebimentosService {
     return this.normalizar([data])[0]
   }
 
+  /** Richardson marca que começou a descarregar o caminhão na fábrica. */
+  async iniciarDescarga(id: string, usuario: string): Promise<RecebimentoPrevisto> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (this.supabase as any)
+      .from('recebimentos_previstos')
+      .update({ iniciado_em: new Date().toISOString(), iniciado_por: usuario })
+      .eq('id', id)
+      .select(SELECT_COMPLETO)
+      .single()
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'iniciar a descarga'))
+    return this.normalizar([data])[0]
+  }
+
+  /** Richardson marca que terminou de descarregar o caminhão. */
+  async finalizarDescarga(id: string, usuario: string): Promise<RecebimentoPrevisto> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (this.supabase as any)
+      .from('recebimentos_previstos')
+      .update({ finalizado_em: new Date().toISOString(), finalizado_por: usuario })
+      .eq('id', id)
+      .select(SELECT_COMPLETO)
+      .single()
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'finalizar a descarga'))
+    return this.normalizar([data])[0]
+  }
+
   async deletar(id: string): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (this.supabase as any)
@@ -159,6 +207,11 @@ export class RecebimentosService {
       return 'Sem permissão para esta operação.'
     if (msg.includes('relation') && msg.includes('does not exist'))
       return 'Tabela de recebimentos não encontrada — rode as migrations 058/063 no Supabase.'
+    // Mensagens do trigger enforce_recebimento_update (068) já são amigáveis —
+    // repassa direto em vez de esconder atrás do erro genérico (ex.: clique
+    // duplo/duas abas tentando iniciar ou finalizar a mesma descarga ao mesmo tempo).
+    if (msg.includes('A descarga') || msg.includes('Só é possível'))
+      return msg
     console.error(`[RecebimentosService.${acao}]`, msg)
     return `Erro ao ${acao}. Tente novamente.`
   }

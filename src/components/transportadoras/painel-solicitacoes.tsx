@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useRef, useState } from 'react'
-import { CheckCircle2, Container, MessageCircle } from 'lucide-react'
+import { CheckCircle2, Container, FileDown, MessageCircle, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { ProgramacaoService } from '@/services/programacao.service'
@@ -29,6 +29,7 @@ function tonsDoAgendamento(ag: Programacao): number {
 export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolicitacoesProps) {
   const [agendamentos, setAgendamentos] = useState(initialSolicitacoes)
   const [liberandoId, setLiberandoId] = useState<string | null>(null)
+  const [excluindoId, setExcluindoId] = useState<string | null>(null)
   const [whatsappAbertoIds, setWhatsappAbertoIds] = useState<Set<string>>(new Set())
   const svc = useRef(new ProgramacaoService(createClient())).current
 
@@ -55,6 +56,34 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
       toast.error(err instanceof Error ? err.message : 'Erro ao liberar a solicitação.')
     } finally {
       setLiberandoId(null)
+    }
+  }
+
+  async function excluirSolicitacao(ag: Programacao) {
+    const label = `${ag.transportadora?.nome ?? 'esta solicitação'}${ag.motorista?.nome ? ' · ' + ag.motorista.nome : ''}`
+
+    // Já foi enviada pra produção (Ordens do Dia) — excluir aqui deixaria o
+    // registro em ordens_diarias órfão (perde transportadora/motorista/nº da
+    // ordem pra sempre, FK "on delete set null"). Gerencie por /programacao.
+    if (ag.enviado_em) {
+      toast.error('Esta solicitação já foi enviada para Ordens do Dia — para excluir, use a tela de Programação.')
+      return
+    }
+
+    const aviso = ag.solicitacao_status === 'LIBERADO'
+      ? `ATENÇÃO: esta solicitação já foi LIBERADA${ag.numero_ordem ? ` (ordem nº ${String(ag.numero_ordem).padStart(6, '0')})` : ''} — o PDF e/ou a mensagem de WhatsApp já podem ter sido enviados ao motorista. Excluir apaga esse número em definitivo (não poderá ser reimpresso depois).\n\nExcluir a solicitação de ${label} mesmo assim?`
+      : `Excluir a solicitação de ${label}? Essa ação não pode ser desfeita.`
+    if (!window.confirm(aviso)) return
+
+    setExcluindoId(ag.id)
+    try {
+      await svc.deletar(ag.id)
+      setAgendamentos((prev) => prev.filter((a) => a.id !== ag.id))
+      toast.success('Solicitação excluída.')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao excluir a solicitação.')
+    } finally {
+      setExcluindoId(null)
     }
   }
 
@@ -92,7 +121,9 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
         Solicitações de carregamento · {solicitacoesPendentes.length + liberadosAguardandoWhatsapp.length}
       </p>
       <div className="flex flex-col gap-2">
-        {solicitacoesPendentes.map((ag) => (
+        {solicitacoesPendentes.map((ag) => {
+          const ocupado = liberandoId === ag.id || excluindoId === ag.id
+          return (
           <div key={ag.id} className="flex items-center justify-between gap-3 flex-wrap rounded-xl bg-industrial-900 border border-industrial-700 px-3 py-2.5">
             <div className="min-w-0">
               <p className="text-sm font-bold text-industrial-100">
@@ -106,17 +137,29 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
                 <span className="text-industrial-500"> · {tonsDoAgendamento(ag).toFixed(2)} ton</span>
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => liberarSolicitacao(ag)}
-              disabled={liberandoId === ag.id}
-              className="flex items-center gap-1.5 rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50 shrink-0"
-            >
-              <CheckCircle2 className="size-4" />
-              {liberandoId === ag.id ? 'Liberando…' : 'Liberar'}
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => excluirSolicitacao(ag)}
+                disabled={ocupado}
+                title="Excluir solicitação"
+                className="flex items-center justify-center rounded-lg border border-industrial-600 text-industrial-400 hover:border-red-500 hover:text-red-600 p-2 transition-colors disabled:opacity-50"
+              >
+                <Trash2 className="size-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => liberarSolicitacao(ag)}
+                disabled={ocupado}
+                className="flex items-center gap-1.5 rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50"
+              >
+                <CheckCircle2 className="size-4" />
+                {liberandoId === ag.id ? 'Liberando…' : 'Liberar'}
+              </button>
+            </div>
           </div>
-        ))}
+          )
+        })}
         {liberadosAguardandoWhatsapp.map((ag) => (
           <div key={ag.id} className="flex items-center justify-between gap-3 flex-wrap rounded-xl bg-brand-50 border-2 border-brand-500 px-3 py-2.5">
             <div className="min-w-0">
@@ -130,13 +173,35 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
                 {ag.motorista?.whatsapp && <span className="font-mono"> · {ag.motorista.whatsapp}</span>}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => abrirWhatsapp(ag)}
-              className="flex items-center gap-1.5 rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-semibold transition-colors shrink-0"
-            >
-              <MessageCircle className="size-4" /> Abrir WhatsApp
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => excluirSolicitacao(ag)}
+                disabled={excluindoId === ag.id}
+                title="Excluir solicitação"
+                className="flex items-center justify-center rounded-lg border border-industrial-600 text-industrial-400 hover:border-red-500 hover:text-red-600 p-2 transition-colors disabled:opacity-50"
+              >
+                <Trash2 className="size-4" />
+              </button>
+              {ag.numero_ordem && (
+                <a
+                  href={`/api/programacao/${ag.id}/ordem-pdf`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Baixar ordem de carregamento em PDF"
+                  className="flex items-center gap-1.5 rounded-lg border border-brand-600 text-brand-700 hover:bg-brand-100 px-3 py-2 text-sm font-semibold transition-colors"
+                >
+                  <FileDown className="size-4" /> Nº {String(ag.numero_ordem).padStart(6, '0')}
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={() => abrirWhatsapp(ag)}
+                className="flex items-center gap-1.5 rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-semibold transition-colors"
+              >
+                <MessageCircle className="size-4" /> Abrir WhatsApp
+              </button>
+            </div>
           </div>
         ))}
       </div>

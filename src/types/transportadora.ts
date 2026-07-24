@@ -5,6 +5,8 @@
 export interface Transportadora {
   id:         string
   nome:       string
+  cnpj:       string | null
+  email:      string | null
   profile_id: string | null // login da transportadora (profiles.id)
   ativo:      boolean
   created_at: string

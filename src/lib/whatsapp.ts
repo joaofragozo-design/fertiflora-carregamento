@@ -38,6 +38,21 @@ interface MensagemLiberacaoParams {
 }
 
 /**
+ * Regras/orientações da fábrica — usadas tanto na mensagem de WhatsApp quanto
+ * no PDF da ordem de carregamento, pra nunca ficarem dessincronizadas.
+ */
+export function regrasFabrica(temSacaria: boolean): string[] {
+  return [
+    `• Este agendamento tem validade de ${VALIDADE_LIBERACAO_HORAS} horas.`,
+    ...(temSacaria ? ['• Carga em SACARIA: apresentar-se até as 10h da manhã.'] : []),
+    '• Não há horário marcado: o carregamento segue a ordem definida pela indústria (veículos com a mesma fórmula carregam em sequência).',
+    '• Aguarde dentro do caminhão até ser chamado — não circule pelas dependências da fábrica.',
+    '• O veículo deve estar limpo, sem resíduos, com lona em bom estado e cinta/cabo. Caminhão não preparado volta para o fim da fila.',
+    '• A ordem da indústria é soberana.',
+  ]
+}
+
+/**
  * Mensagem enviada ao motorista quando a Logística libera a solicitação.
  * Inclui as orientações e regras da fábrica (PDF "Orientação de Carregamento").
  */
@@ -49,14 +64,7 @@ export function montarMensagemLiberacao({ motorista, transportadora, data, itens
     .map((it) => `• ${it.quantidade} ${EMBALAGEM_LABEL[it.embalagem]} — Fórmula ${it.formulaMascarada}`)
     .join('\n')
 
-  const regras = [
-    `• Este agendamento tem validade de ${VALIDADE_LIBERACAO_HORAS} horas.`,
-    ...(temSacaria ? ['• Carga em SACARIA: apresentar-se até as 10h da manhã.'] : []),
-    '• Não há horário marcado: o carregamento segue a ordem definida pela indústria (veículos com a mesma fórmula carregam em sequência).',
-    '• Aguarde dentro do caminhão até ser chamado — não circule pelas dependências da fábrica.',
-    '• O veículo deve estar limpo, sem resíduos, com lona em bom estado e cinta/cabo. Caminhão não preparado volta para o fim da fila.',
-    '• A ordem da indústria é soberana.',
-  ].join('\n')
+  const regras = regrasFabrica(temSacaria).join('\n')
 
   return [
     `Olá, ${motorista}! Aqui é da FERTIFLORA Fertilizantes.`,

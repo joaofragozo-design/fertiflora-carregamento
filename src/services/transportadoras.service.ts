@@ -92,6 +92,20 @@ export class TransportadorasService {
     return data as Motorista
   }
 
+  /** Atualiza nome/CNPJ/e-mail de uma transportadora já cadastrada. */
+  async atualizar(id: string, input: { nome?: string; cnpj?: string | null; email?: string | null }): Promise<Transportadora> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (this.supabase as any)
+      .from('transportadoras')
+      .update(input)
+      .eq('id', id)
+      .select('*')
+      .single()
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'atualizar transportadora'))
+    return data as Transportadora
+  }
+
   private traduzirErro(msg: string, acao: string): string {
     if (msg.includes('row-level security') || msg.includes('new row violates'))
       return 'Sem permissão para esta operação.'

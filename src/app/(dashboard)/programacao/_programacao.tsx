@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Trash2, Pencil, X, ChevronLeft, ChevronRight, ChevronDown, Printer, Send, CheckCircle2, Truck, Container } from 'lucide-react'
+import { Plus, Trash2, Pencil, X, ChevronLeft, ChevronRight, ChevronDown, Printer, Send, CheckCircle2, Truck, Container, FileDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { ProgramacaoService } from '@/services/programacao.service'
@@ -530,6 +530,19 @@ export function ProgramacaoSemana({
                           {ag.solicitacao_status !== 'ENVIADO_TRANSPORTADORA' && ag.motorista?.nome ? ` · ${ag.motorista.nome}` : ''}
                         </span>
                       </p>
+                    )}
+
+                    {/* Documento pra portaria/Gean — só existe depois de liberado (numero_ordem). */}
+                    {ag.numero_ordem && (
+                      <a
+                        href={`/api/programacao/${ag.id}/ordem-pdf`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Gerar ordem de carregamento em PDF"
+                        className="flex items-center gap-1 text-[11px] font-semibold text-brand-700 hover:text-brand-800 transition-colors mt-1"
+                      >
+                        <FileDown className="size-3" /> Gerar ordem Nº {String(ag.numero_ordem).padStart(6, '0')}
+                      </a>
                     )}
 
                     {podeEditar && (

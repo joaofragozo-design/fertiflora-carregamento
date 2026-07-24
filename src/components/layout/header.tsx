@@ -37,6 +37,7 @@ const HEADER_NAV: Record<string, NavLink[]> = {
   ],
   logistica_02: [
     { href: '/ordens', label: 'Ordens do Dia', icon: CalendarDays },
+    { href: '/recebimento', label: 'Recebimento', icon: Package },
   ],
   faturamento: [
     { href: '/ordens',          label: 'Ordens',      icon: CalendarDays },

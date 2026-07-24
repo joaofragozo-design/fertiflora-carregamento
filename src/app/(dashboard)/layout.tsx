@@ -35,11 +35,12 @@ export default async function DashboardLayout({
   ) {
     redirect(ROUTES.ORDENS)
   }
-  // logística 02: /ordens e /programacao (prévia)
+  // logística 02: /ordens, /programacao (prévia) e /recebimento (inicia/finaliza descarga)
   if (
     profile.role === 'logistica_02' &&
     !pathname.startsWith(ROUTES.ORDENS) &&
-    !pathname.startsWith(ROUTES.PROGRAMACAO)
+    !pathname.startsWith(ROUTES.PROGRAMACAO) &&
+    !pathname.startsWith(ROUTES.RECEBIMENTO)
   ) {
     redirect(ROUTES.ORDENS)
   }

@@ -38,6 +38,8 @@ export interface Programacao {
   solicitado_em:             string | null
   liberado_em:               string | null
   liberado_por:              string | null
+  // Número imutável da ordem de carregamento, atribuído na liberação (migration 067).
+  numero_ordem:              number | null
   created_at:    string
   updated_at:    string
 }
@@ -47,6 +49,6 @@ export type ProgramacaoInsert = Omit<
   | 'id' | 'itens' | 'enviado_em' | 'confirmado_em' | 'confirmado_por'
   | 'transportadora_id' | 'transportadora' | 'motorista_id' | 'motorista'
   | 'solicitacao_status' | 'enviado_transportadora_em' | 'solicitado_em' | 'liberado_em' | 'liberado_por'
-  | 'created_at' | 'updated_at'
+  | 'numero_ordem' | 'created_at' | 'updated_at'
 >
 export type ProgramacaoUpdate = Partial<ProgramacaoInsert>

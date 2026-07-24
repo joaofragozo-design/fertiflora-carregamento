@@ -2,10 +2,10 @@
 
 import { useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, X, ChevronLeft, ChevronRight, Truck, CheckCircle2, Package } from 'lucide-react'
+import { Plus, X, ChevronLeft, ChevronRight, Truck, CheckCircle2, Package, PlayCircle, Flag } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-import { RecebimentosService, type RecebimentoPrevisto } from '@/services/recebimentos.service'
+import { RecebimentosService, type RecebimentoPrevisto, STATUS_RECEBIMENTO_LABEL, getStatusRecebimento } from '@/services/recebimentos.service'
 import { FornecedoresService } from '@/services/fornecedores.service'
 import { FornecedorPicker } from '@/components/fornecedores/fornecedor-picker'
 import { EstoqueConfigPainel } from '@/components/estoque/estoque-config-painel'
@@ -26,6 +26,7 @@ interface RecebimentoSemanaProps {
   hoje:                 string
   podeEditar:           boolean // admin/logistica — lança a previsão
   podeConfirmar:        boolean // admin/faturamento — confirma a chegada
+  podeOperar:           boolean // admin/logistica_02 (Richardson) — inicia/finaliza a descarga
   usuario:              string
 }
 
@@ -73,13 +74,14 @@ interface FormState {
 }
 
 export function RecebimentoSemana({
-  initialRecebimentos, initialFornecedores, initialTransportadoras, initialEstoqueConfig, semanaInicio, semanaFim, hoje, podeEditar, podeConfirmar, usuario,
+  initialRecebimentos, initialFornecedores, initialTransportadoras, initialEstoqueConfig, semanaInicio, semanaFim, hoje, podeEditar, podeConfirmar, podeOperar, usuario,
 }: RecebimentoSemanaProps) {
   const [recebimentos, setRecebimentos] = useState(initialRecebimentos)
   const [fornecedores, setFornecedores] = useState(initialFornecedores)
   const [form, setForm] = useState<FormState | null>(null)
   const [salvando, setSalvando] = useState(false)
   const [confirmandoId, setConfirmandoId] = useState<string | null>(null)
+  const [operandoId, setOperandoId] = useState<string | null>(null)
   const svc = useRef(new RecebimentosService(createClient())).current
   const fornecedoresSvc = useRef(new FornecedoresService(createClient())).current
   const router = useRouter()
@@ -129,11 +131,7 @@ export function RecebimentoSemana({
       return
     }
     if (!form.placa_cavalo.trim()) {
-      toast.error('Informe a placa do cavalo.')
-      return
-    }
-    if (!form.placa_1.trim()) {
-      toast.error('Informe a placa do reboque (placa 1).')
+      toast.error('Informe a placa do veículo.')
       return
     }
     setSalvando(true)
@@ -173,6 +171,32 @@ export function RecebimentoSemana({
       toast.error(err instanceof Error ? err.message : 'Erro ao confirmar chegada.')
     } finally {
       setConfirmandoId(null)
+    }
+  }
+
+  async function iniciarDescarga(r: RecebimentoPrevisto) {
+    setOperandoId(r.id)
+    try {
+      const upd = await svc.iniciarDescarga(r.id, usuario)
+      setRecebimentos((prev) => prev.map((x) => (x.id === upd.id ? upd : x)))
+      toast.success('Descarga iniciada.')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao iniciar a descarga.')
+    } finally {
+      setOperandoId(null)
+    }
+  }
+
+  async function finalizarDescarga(r: RecebimentoPrevisto) {
+    setOperandoId(r.id)
+    try {
+      const upd = await svc.finalizarDescarga(r.id, usuario)
+      setRecebimentos((prev) => prev.map((x) => (x.id === upd.id ? upd : x)))
+      toast.success('Descarga finalizada.')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao finalizar a descarga.')
+    } finally {
+      setOperandoId(null)
     }
   }
 
@@ -282,6 +306,42 @@ export function RecebimentoSemana({
                     )}
                     {r.numero_nota && <p className="text-xs text-industrial-400 mt-0.5">NF-e: {r.numero_nota}</p>}
                     {r.observacao && <p className="text-xs text-industrial-400 italic mt-1">{r.observacao}</p>}
+
+                    {r.confirmado_em && (
+                      <p className={cn(
+                        'text-[11px] font-semibold mt-1',
+                        getStatusRecebimento(r) === 'FINALIZADO' ? 'text-brand-700' : 'text-amber-700',
+                      )}>
+                        {STATUS_RECEBIMENTO_LABEL[getStatusRecebimento(r)]}
+                      </p>
+                    )}
+
+                    {podeOperar && r.confirmado_em && (
+                      <div className="mt-1">
+                        {getStatusRecebimento(r) === 'AGUARDANDO_FILA' && (
+                          <button
+                            type="button"
+                            onClick={() => iniciarDescarga(r)}
+                            disabled={operandoId === r.id}
+                            className="flex items-center gap-1 text-[11px] font-semibold text-brand-700 hover:text-brand-800 transition-colors disabled:opacity-50"
+                          >
+                            <PlayCircle className="size-3" />
+                            {operandoId === r.id ? 'Iniciando…' : 'Iniciar descarga'}
+                          </button>
+                        )}
+                        {getStatusRecebimento(r) === 'DESCARREGANDO' && (
+                          <button
+                            type="button"
+                            onClick={() => finalizarDescarga(r)}
+                            disabled={operandoId === r.id}
+                            className="flex items-center gap-1 text-[11px] font-semibold text-brand-700 hover:text-brand-800 transition-colors disabled:opacity-50"
+                          >
+                            <Flag className="size-3" />
+                            {operandoId === r.id ? 'Finalizando…' : 'Finalizar descarga'}
+                          </button>
+                        )}
+                      </div>
+                    )}
 
                     {podeConfirmar && (
                       <div className="mt-1.5">
@@ -401,9 +461,9 @@ export function RecebimentoSemana({
                     placeholder="ABC1D23"
                     className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
                 </label>
-                <label className="text-xs font-medium text-industrial-400">Placa 1
+                <label className="text-xs font-medium text-industrial-400">Placa 1 (opcional)
                   <input value={form.placa_1} onChange={(e) => setForm({ ...form, placa_1: e.target.value.toUpperCase() })}
-                    placeholder="ABC1D23"
+                    placeholder="se articulado"
                     className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
                 </label>
               </div>
@@ -437,7 +497,7 @@ export function RecebimentoSemana({
               <button
                 type="button"
                 onClick={lancar}
-                disabled={salvando || !form.materia_prima_key || !form.fornecedor_id || !form.placa_cavalo.trim() || !form.placa_1.trim()}
+                disabled={salvando || !form.materia_prima_key || !form.fornecedor_id || !form.placa_cavalo.trim()}
                 className="rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-medium disabled:opacity-50"
               >
                 {salvando ? 'Lançando…' : 'Lançar'}

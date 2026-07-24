@@ -15,8 +15,8 @@ const SELECT_COM_ITENS = `
     *,
     formula:formulas ( ${SELECT_ITEM_FORMULA} )
   ),
-  transportadora:transportadoras ( id, nome, profile_id, ativo, created_at, updated_at ),
-  motorista:motoristas ( id, transportadora_id, nome, whatsapp, created_at, updated_at )
+  transportadora:transportadoras ( id, nome, cnpj, email, profile_id, ativo, created_at, updated_at ),
+  motorista:motoristas ( id, transportadora_id, nome, whatsapp, cpf, rg, cnh, placa_cavalo, placa_1, placa_2, placa_3, placa_4, created_at, updated_at )
 `.trim()
 
 export class ProgramacaoService {
@@ -255,12 +255,16 @@ export class ProgramacaoService {
 
   async deletar(id: string): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (this.supabase as any)
+    const { data, error } = await (this.supabase as any)
       .from('programacao_carregamento')
       .delete()
       .eq('id', id)
+      .select('id')
 
     if (error) throw new Error(this.traduzirErro(error.message, 'remover'))
+    // Um DELETE que não casa nenhuma linha (ex.: outra aba já apagou) não vem
+    // com erro — sem essa checagem a UI mostraria "excluído" mesmo sem ação real.
+    if (!data || data.length === 0) throw new Error('Este registro já havia sido removido (por outra sessão).')
   }
 
   private traduzirErro(msg: string, acao: string): string {

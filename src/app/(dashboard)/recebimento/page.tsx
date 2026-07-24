@@ -40,7 +40,9 @@ export default async function RecebimentoPage({
   const { sessionUser, profile } = await getAuthContext()
   if (!sessionUser || !profile) redirect(ROUTES.LOGIN)
 
-  const podeVer = profile.role === 'admin' || profile.role === 'logistica' || profile.role === 'faturamento'
+  const podeVer =
+    profile.role === 'admin' || profile.role === 'logistica' ||
+    profile.role === 'faturamento' || profile.role === 'logistica_02'
   if (!podeVer) redirect(ROLE_DEFAULT_ROUTES[profile.role] ?? ROUTES.HOME)
 
   const sp = await searchParams
@@ -105,6 +107,7 @@ export default async function RecebimentoPage({
       hoje={iso(new Date())}
       podeEditar={podeEditar}
       podeConfirmar={profile.role === 'admin' || profile.role === 'faturamento'}
+      podeOperar={profile.role === 'admin' || profile.role === 'logistica_02'}
       usuario={profile.username}
     />
   )

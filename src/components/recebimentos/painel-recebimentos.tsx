@@ -32,13 +32,13 @@ export function RecebimentosTv({ recebimentos }: { recebimentos: RecebimentoPrev
       <div className="flex flex-wrap gap-3">
         {ordenados.map((r) => (
           <div key={r.id} className={cn('rounded-xl border px-4 py-2.5', 'border-amber-500 bg-amber-100')}>
-            <p className="text-lg font-bold text-industrial-950">
+            <p className="text-lg font-bold text-industrial-50">
               {labelMateriaPrima(r)}
               {r.quantidade_ton > 0 && (
                 <span className="font-mono text-amber-800"> · {r.quantidade_ton.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} ton</span>
               )}
             </p>
-            <p className="text-sm text-industrial-700 capitalize">
+            <p className="text-sm text-industrial-400 capitalize">
               {fmtData(r.data_prevista)}
               {labelFornecedor(r) && <span> · {labelFornecedor(r)}</span>}
               {r.placa && <span className="font-mono uppercase"> · {r.placa}</span>}

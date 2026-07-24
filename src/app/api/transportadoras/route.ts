@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
   }
 
-  let body: { nome?: string; username?: string; senha?: string }
+  let body: { nome?: string; username?: string; senha?: string; cnpj?: string; email?: string }
   try {
     body = await req.json()
   } catch {
@@ -22,6 +22,8 @@ export async function POST(req: NextRequest) {
   const nome = (body.nome ?? '').trim()
   const username = (body.username ?? '').trim().toLowerCase()
   const senha = body.senha ?? ''
+  const cnpj = (body.cnpj ?? '').trim() || null
+  const email = (body.email ?? '').trim() || null
 
   if (!nome) {
     return NextResponse.json({ error: 'Informe o nome da transportadora.' }, { status: 400 })
@@ -70,7 +72,7 @@ export async function POST(req: NextRequest) {
 
   const { data: transportadora, error: dbError } = await supabaseAdmin
     .from('transportadoras')
-    .insert({ nome, profile_id: created.user.id })
+    .insert({ nome, cnpj, email, profile_id: created.user.id })
     .select('*')
     .single()
 

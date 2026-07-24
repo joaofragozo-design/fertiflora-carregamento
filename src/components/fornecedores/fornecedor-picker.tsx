@@ -136,18 +136,24 @@ export function FornecedorPicker({ value, fornecedores, onChange, onCriar, place
             />
           </div>
           <ul className="overflow-y-auto py-1">
-            {query.trim() && !existeExato && (
-              <li>
-                <button
-                  type="button"
-                  onClick={cadastrarNovo}
-                  disabled={criando}
-                  className="w-full text-left text-sm px-3 py-2 flex items-center gap-1.5 text-brand-700 font-semibold hover:bg-industrial-800 disabled:opacity-50"
-                >
-                  <Plus className="size-3.5" /> {criando ? 'Cadastrando…' : `Cadastrar "${query.trim()}"`}
-                </button>
-              </li>
-            )}
+            {/* Sempre visível (não só depois de digitar) — senão fica escondido
+             *  atrás de "digite um nome que ainda não existe", o que parecia
+             *  "não deixa cadastrar" pra quem não percebia que precisava digitar. */}
+            <li className="border-b border-industrial-800">
+              <button
+                type="button"
+                onClick={cadastrarNovo}
+                disabled={criando || !query.trim() || existeExato}
+                className="w-full text-left text-sm px-3 py-2 flex items-center gap-1.5 text-brand-700 font-semibold hover:bg-industrial-800 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Plus className="size-3.5" />
+                {criando
+                  ? 'Cadastrando…'
+                  : query.trim()
+                    ? (existeExato ? 'Fornecedor já cadastrado' : `Cadastrar "${query.trim()}"`)
+                    : 'Digite o nome acima pra cadastrar um fornecedor novo'}
+              </button>
+            </li>
             {filtered.map((f) => (
               <li key={f.id}>
                 <button
