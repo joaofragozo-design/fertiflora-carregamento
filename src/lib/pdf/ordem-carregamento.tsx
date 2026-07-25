@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { Document, Page, Text, View, Image, StyleSheet, renderToBuffer } from '@react-pdf/renderer'
 import { EMBALAGEM_LABEL, type Embalagem } from '@/types/formula'
+import { regrasFabrica } from '@/lib/whatsapp'
 
 // Timbre/rodapé — igual ao modelo real de "Ordem de Carregamento" que a
 // Logística já usa e encaminha aos clientes/transportadoras pra preencher.
@@ -96,6 +97,7 @@ function OrdemCarregamentoDocument({ input }: { input: OrdemCarregamentoInput })
   const dataFormatada = new Date(input.data + 'T12:00:00').toLocaleDateString('pt-BR')
   const liberadoEmFormatado = new Date(input.liberadoEm).toLocaleDateString('pt-BR')
   const totalTons = input.itens.reduce((s, it) => s + it.tons, 0)
+  const temSacaria = input.itens.some((it) => it.embalagem === 'SACOS')
 
   return (
     <Document>
@@ -195,6 +197,16 @@ function OrdemCarregamentoDocument({ input }: { input: OrdemCarregamentoInput })
             <Text style={styles.regraItem}>- Item 01: Preencher todos os campos;</Text>
             <Text style={styles.regraItem}>- Item 02: Preencher todos os campos somente quando for Autônomo;</Text>
             <Text style={styles.regraItem}>- Item 03: Preencher todos os campos somente quando for Transportadora.</Text>
+          </View>
+
+          {/* Orientações da fábrica — mesmo texto enviado por WhatsApp na
+           *  liberação (regrasFabrica em @/lib/whatsapp), impresso aqui
+           *  também pra ninguém alegar que não sabia das regras. */}
+          <Text style={styles.secaoTitulo}>Orientações da Fábrica:</Text>
+          <View style={styles.obsBox}>
+            {regrasFabrica(temSacaria).map((r, i) => (
+              <Text key={i} style={styles.regraItem}>{r}</Text>
+            ))}
           </View>
 
           <Text style={styles.rodape}>{EMPRESA.nome}</Text>
