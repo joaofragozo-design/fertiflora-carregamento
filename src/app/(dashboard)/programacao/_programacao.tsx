@@ -236,10 +236,6 @@ export function ProgramacaoSemana({
 
   async function salvarItem() {
     if (!itemForm) return
-    if (!itemForm.formula_id) {
-      toast.error('Selecione uma fórmula antes de salvar o item.')
-      return
-    }
     if (!itemForm.quantidade || itemForm.quantidade <= 0) {
       toast.error('Informe uma quantidade maior que zero.')
       return
@@ -794,7 +790,7 @@ export function ProgramacaoSemana({
               </>
             )}
 
-            <div className="text-xs font-medium text-industrial-400">Fórmula
+            <div className="text-xs font-medium text-industrial-400">Fórmula (opcional — deixe em branco se for fórmula química fora da planilha)
               <div className="mt-1"><FormulaPicker value={itemForm.formula_id} formulas={formulas} onChange={(id) => setItemForm({ ...itemForm, formula_id: id })} /></div>
             </div>
 
@@ -816,8 +812,8 @@ export function ProgramacaoSemana({
               <div className="flex gap-2">
                 <button type="button" onClick={() => setItemForm(null)}
                   className="rounded-lg border border-industrial-600 px-4 py-2 text-sm font-medium text-industrial-300 hover:bg-industrial-800">Cancelar</button>
-                <button type="button" onClick={salvarItem} disabled={salvando || !itemForm.formula_id || itemForm.quantidade <= 0}
-                  title={!itemForm.formula_id ? 'Selecione uma fórmula antes de salvar' : itemForm.quantidade <= 0 ? 'Informe uma quantidade maior que zero' : undefined}
+                <button type="button" onClick={salvarItem} disabled={salvando || itemForm.quantidade <= 0}
+                  title={itemForm.quantidade <= 0 ? 'Informe uma quantidade maior que zero' : undefined}
                   className="rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-medium disabled:opacity-50">
                   {salvando ? 'Salvando…' : 'Salvar'}
                 </button>
