@@ -23,8 +23,8 @@ export function OrderList({
 }: OrderListProps) {
   if (ordens.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-industrial-700 py-10 text-center">
-        <InboxIcon className="h-7 w-7 text-industrial-600" />
+      <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-industrial-300 py-10 text-center">
+        <InboxIcon className="h-7 w-7 text-industrial-400" />
         <p className="text-sm text-industrial-500">{emptyLabel}</p>
       </div>
     )

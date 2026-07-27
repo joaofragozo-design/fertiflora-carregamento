@@ -124,21 +124,21 @@ export function EstoqueConfigPainel({ initialConfig, usuario }: EstoqueConfigPai
   }
 
   return (
-    <div className="rounded-xl border border-industrial-800">
+    <div className="rounded-xl border border-industrial-200">
       <button
         type="button"
         onClick={() => setAberto((o) => !o)}
-        className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-industrial-200 hover:text-industrial-100"
+        className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-industrial-800 hover:text-industrial-900"
       >
         <span className="flex items-center gap-2"><Gauge className="size-4 text-brand-600" /> Configurar estoque de matéria-prima</span>
         {aberto ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
       </button>
 
       {aberto && (
-        <div className="px-4 pb-4 flex flex-col gap-5 border-t border-industrial-800 pt-4">
+        <div className="px-4 pb-4 flex flex-col gap-5 border-t border-industrial-200 pt-4">
           {/* Limites do termômetro */}
           <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-industrial-400 mb-2">
+            <p className="text-xs font-bold uppercase tracking-wide text-industrial-600 mb-2">
               Limites do termômetro (toneladas) — abaixo de "perigo" acende vermelho, abaixo de "cuidado" acende amarelo, acima de "confortável" fica bem tranquilo.
             </p>
             <div className="overflow-x-auto">
@@ -156,8 +156,8 @@ export function EstoqueConfigPainel({ initialConfig, usuario }: EstoqueConfigPai
                     const c = configPorChave.get(mp.key)
                     if (!c) return null
                     return (
-                      <tr key={mp.key} className={cn('border-t border-industrial-800', salvandoKey === mp.key && 'opacity-50')}>
-                        <td className="py-1.5 pr-2 font-medium text-industrial-200">{mp.label}</td>
+                      <tr key={mp.key} className={cn('border-t border-industrial-200', salvandoKey === mp.key && 'opacity-50')}>
+                        <td className="py-1.5 pr-2 font-medium text-industrial-800">{mp.label}</td>
                         {(['limite_perigo', 'limite_cuidado', 'limite_confortavel'] as const).map((campo) => (
                           <td key={campo} className="py-1.5 px-2">
                             <input
@@ -167,7 +167,7 @@ export function EstoqueConfigPainel({ initialConfig, usuario }: EstoqueConfigPai
                                 if (Number(e.target.value) !== c[campo]) salvarLimites(mp.key, campo, e.target.value)
                               }}
                               disabled={salvandoKey === mp.key}
-                              className="w-20 bg-industrial-950 border border-industrial-600 rounded px-1.5 py-1 text-industrial-100 font-mono focus:outline-none focus:border-brand-500"
+                              className="w-20 bg-industrial-50 border border-industrial-400 rounded px-1.5 py-1 text-industrial-900 font-mono focus:outline-none focus:border-brand-500"
                             />
                           </td>
                         ))}
@@ -181,7 +181,7 @@ export function EstoqueConfigPainel({ initialConfig, usuario }: EstoqueConfigPai
 
           {/* Importação de CSV */}
           <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-industrial-400 mb-2">
+            <p className="text-xs font-bold uppercase tracking-wide text-industrial-600 mb-2">
               Importar CSV de estoque (soma ao saldo atual — duas colunas: matéria-prima, quantidade em toneladas)
             </p>
             <div className="flex items-center gap-2 mb-2">
@@ -189,7 +189,7 @@ export function EstoqueConfigPainel({ initialConfig, usuario }: EstoqueConfigPai
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-1.5 rounded-lg border border-industrial-600 px-3 py-2 text-xs font-medium text-industrial-300 hover:border-brand-500 hover:text-brand-700 transition-colors"
+                className="flex items-center gap-1.5 rounded-lg border border-industrial-400 px-3 py-2 text-xs font-medium text-industrial-700 hover:border-brand-500 hover:text-brand-700 transition-colors"
               >
                 <Upload className="size-3.5" /> Escolher arquivo CSV
               </button>
@@ -199,7 +199,7 @@ export function EstoqueConfigPainel({ initialConfig, usuario }: EstoqueConfigPai
               onChange={(e) => setCsvTexto(e.target.value)}
               placeholder={'ou cole aqui, ex.:\nMAP,120\nUREIA,80'}
               rows={4}
-              className="w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-xs font-mono text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+              className="w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-xs font-mono text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
             />
             {csvTexto.trim() && (
               <div className="mt-2 text-xs">

@@ -126,9 +126,9 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
     return (
       <div className="flex flex-col gap-0.5 mt-1.5">
         {(ag.itens ?? []).map((item) => (
-          <p key={item.id} className="text-xs text-industrial-400">
+          <p key={item.id} className="text-xs text-industrial-600">
             {item.quantidade} {EMBALAGEM_LABEL[item.embalagem]}
-            {item.formula?.nome && <> — Fórmula <span className="font-mono font-semibold text-industrial-200">{mascararNomeFormula(item.formula.nome)}</span></>}
+            {item.formula?.nome && <> — Fórmula <span className="font-mono font-semibold text-industrial-800">{mascararNomeFormula(item.formula.nome)}</span></>}
             <span className="text-industrial-500"> · {(item.tons ?? 0).toFixed(2)} ton</span>
           </p>
         ))}
@@ -142,10 +142,10 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
   return (
     <div className="flex flex-col gap-5 max-w-4xl">
       <div>
-        <h1 className="text-lg font-semibold text-industrial-100 flex items-center gap-2">
+        <h1 className="text-lg font-semibold text-industrial-900 flex items-center gap-2">
           <Truck className="size-5 text-brand-600" /> {transportadora.nome}
         </h1>
-        <p className="text-xs text-industrial-400 mt-1">
+        <p className="text-xs text-industrial-600 mt-1">
           Carregamentos enviados pela Fertiflora. Selecione o motorista, envie a solicitação e aguarde a liberação.
         </p>
       </div>
@@ -167,7 +167,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
       {/* PENDENTES — precisa escolher motorista e enviar */}
       {pendentes.length > 0 && (
         <div>
-          <h2 className="text-sm font-bold uppercase tracking-wide text-industrial-300 mb-2">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-industrial-700 mb-2">
             Aguardando você · {pendentes.length}
           </h2>
           <div className="flex flex-col gap-2">
@@ -175,7 +175,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
               <div key={ag.id} className="rounded-xl border-2 border-brand-500 bg-brand-50 p-4">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div>
-                    <p className="font-bold text-industrial-100">{ag.cliente || 'Cliente a definir'}</p>
+                    <p className="font-bold text-industrial-900">{ag.cliente || 'Cliente a definir'}</p>
                     <p className="text-xs text-industrial-500 capitalize">{fmtData(ag.data)}</p>
                   </div>
                   {temSacaria(ag) && (
@@ -187,11 +187,11 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                 <CardItens ag={ag} />
 
                 <div className="flex items-end gap-2 mt-3 flex-wrap">
-                  <label className="text-xs font-medium text-industrial-400 flex-1 min-w-[200px]">Motorista
+                  <label className="text-xs font-medium text-industrial-600 flex-1 min-w-[200px]">Motorista
                     <select
                       value={motoristaSel[ag.id] ?? ''}
                       onChange={(e) => setMotoristaSel((prev) => ({ ...prev, [ag.id]: e.target.value }))}
-                      className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 focus:outline-none focus:border-brand-500"
+                      className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 focus:outline-none focus:border-brand-500"
                     >
                       <option value="">Selecionar motorista…</option>
                       {motoristas.map((m) => (
@@ -202,7 +202,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                   <button
                     type="button"
                     onClick={() => setFormMotorista({ ...FORM_MOTORISTA_VAZIO })}
-                    className="flex items-center gap-1 rounded-lg border border-industrial-600 px-3 py-2 text-xs font-medium text-industrial-300 hover:border-brand-500 hover:text-brand-700 transition-colors"
+                    className="flex items-center gap-1 rounded-lg border border-industrial-400 px-3 py-2 text-xs font-medium text-industrial-700 hover:border-brand-500 hover:text-brand-700 transition-colors"
                   >
                     <Plus className="size-3.5" /> Novo motorista
                   </button>
@@ -224,15 +224,15 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
       {/* AGUARDANDO LIBERAÇÃO */}
       {aguardando.length > 0 && (
         <div>
-          <h2 className="text-sm font-bold uppercase tracking-wide text-industrial-300 mb-2">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-industrial-700 mb-2">
             Aguardando liberação da Fertiflora · {aguardando.length}
           </h2>
           <div className="flex flex-col gap-2">
             {aguardando.map((ag) => (
-              <div key={ag.id} className="rounded-xl border border-industrial-700 bg-industrial-900 p-4">
+              <div key={ag.id} className="rounded-xl border border-industrial-300 bg-industrial-100 p-4">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div>
-                    <p className="font-bold text-industrial-100">{ag.cliente || 'Cliente a definir'}</p>
+                    <p className="font-bold text-industrial-900">{ag.cliente || 'Cliente a definir'}</p>
                     <p className="text-xs text-industrial-500 capitalize">{fmtData(ag.data)} · Motorista: {ag.motorista?.nome ?? '—'} {ag.motorista?.placa_cavalo && `(${ag.motorista.placa_cavalo})`}</p>
                   </div>
                   <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-700">
@@ -249,7 +249,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
       {/* LIBERADOS */}
       {liberados.length > 0 && (
         <div>
-          <h2 className="text-sm font-bold uppercase tracking-wide text-industrial-300 mb-2">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-industrial-700 mb-2">
             Liberados · {liberados.length}
           </h2>
           <div className="flex flex-col gap-2">
@@ -263,12 +263,12 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                   key={ag.id}
                   className={cn(
                     'rounded-xl border p-4',
-                    expirado ? 'border-industrial-700 bg-industrial-900 opacity-70' : 'border-brand-500 bg-brand-100',
+                    expirado ? 'border-industrial-300 bg-industrial-100 opacity-70' : 'border-brand-500 bg-brand-100',
                   )}
                 >
                   <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div>
-                      <p className="font-bold text-industrial-100">{ag.cliente || 'Cliente a definir'}</p>
+                      <p className="font-bold text-industrial-900">{ag.cliente || 'Cliente a definir'}</p>
                       <p className="text-xs text-industrial-500 capitalize">
                         {fmtData(ag.data)} · Motorista: {ag.motorista?.nome ?? '—'} {ag.motorista?.placa_cavalo && `— ${ag.motorista.placa_cavalo}`} ({ag.motorista?.whatsapp ?? '—'})
                       </p>
@@ -303,99 +303,99 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
       {/* Modal novo motorista */}
       {formMotorista && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={() => setFormMotorista(null)}>
-          <div className="w-full max-w-md rounded-xl bg-industrial-900 border border-industrial-700 p-5 flex flex-col gap-3 my-4" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-xl bg-industrial-100 border border-industrial-300 p-5 flex flex-col gap-3 my-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-industrial-100">Novo motorista</h2>
-              <button type="button" onClick={() => setFormMotorista(null)} className="text-industrial-400 hover:text-industrial-100"><X className="size-5" /></button>
+              <h2 className="text-base font-semibold text-industrial-900">Novo motorista</h2>
+              <button type="button" onClick={() => setFormMotorista(null)} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
             </div>
 
-            <label className="text-xs font-medium text-industrial-400">Nome do motorista
+            <label className="text-xs font-medium text-industrial-600">Nome do motorista
               <input
                 autoFocus
                 value={formMotorista.nome}
                 onChange={(e) => setFormMotorista({ ...formMotorista, nome: e.target.value })}
                 placeholder="ex.: José da Silva"
-                className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
               />
             </label>
-            <label className="text-xs font-medium text-industrial-400">WhatsApp com DDD (obrigatório — recebe o aviso de liberação)
+            <label className="text-xs font-medium text-industrial-600">WhatsApp com DDD (obrigatório — recebe o aviso de liberação)
               <input
                 value={formMotorista.whatsapp}
                 onChange={(e) => setFormMotorista({ ...formMotorista, whatsapp: e.target.value })}
                 placeholder="ex.: (45) 99999-9999"
-                className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
               />
             </label>
 
             <div className="grid grid-cols-2 gap-3">
-              <label className="text-xs font-medium text-industrial-400">CPF
+              <label className="text-xs font-medium text-industrial-600">CPF
                 <input
                   value={formMotorista.cpf}
                   onChange={(e) => setFormMotorista({ ...formMotorista, cpf: e.target.value })}
                   placeholder="000.000.000-00"
-                  className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
                 />
               </label>
-              <label className="text-xs font-medium text-industrial-400">RG
+              <label className="text-xs font-medium text-industrial-600">RG
                 <input
                   value={formMotorista.rg}
                   onChange={(e) => setFormMotorista({ ...formMotorista, rg: e.target.value })}
-                  className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono text-industrial-100 focus:outline-none focus:border-brand-500"
+                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 focus:outline-none focus:border-brand-500"
                 />
               </label>
             </div>
 
-            <label className="text-xs font-medium text-industrial-400">Número da CNH
+            <label className="text-xs font-medium text-industrial-600">Número da CNH
               <input
                 value={formMotorista.cnh}
                 onChange={(e) => setFormMotorista({ ...formMotorista, cnh: e.target.value })}
-                className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono text-industrial-100 focus:outline-none focus:border-brand-500"
+                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 focus:outline-none focus:border-brand-500"
               />
             </label>
 
-            <div className="border-t border-industrial-700 pt-3 mt-1">
-              <p className="text-xs font-semibold text-industrial-300 mb-2">Placas do veículo</p>
+            <div className="border-t border-industrial-300 pt-3 mt-1">
+              <p className="text-xs font-semibold text-industrial-700 mb-2">Placas do veículo</p>
               <div className="grid grid-cols-2 gap-3">
-                <label className="text-xs font-medium text-industrial-400">Placa cavalo
+                <label className="text-xs font-medium text-industrial-600">Placa cavalo
                   <input
                     value={formMotorista.placa_cavalo}
                     onChange={(e) => setFormMotorista({ ...formMotorista, placa_cavalo: e.target.value.toUpperCase() })}
                     placeholder="ABC1D23"
-                    className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
                   />
                 </label>
-                <label className="text-xs font-medium text-industrial-400">Placa 1
+                <label className="text-xs font-medium text-industrial-600">Placa 1
                   <input
                     value={formMotorista.placa_1}
                     onChange={(e) => setFormMotorista({ ...formMotorista, placa_1: e.target.value.toUpperCase() })}
                     placeholder="ABC1D23"
-                    className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
                   />
                 </label>
               </div>
               <div className="grid grid-cols-3 gap-3 mt-3">
-                <label className="text-xs font-medium text-industrial-400">Placa 2
+                <label className="text-xs font-medium text-industrial-600">Placa 2
                   <input
                     value={formMotorista.placa_2}
                     onChange={(e) => setFormMotorista({ ...formMotorista, placa_2: e.target.value.toUpperCase() })}
                     placeholder="opcional"
-                    className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
                   />
                 </label>
-                <label className="text-xs font-medium text-industrial-400">Placa 3
+                <label className="text-xs font-medium text-industrial-600">Placa 3
                   <input
                     value={formMotorista.placa_3}
                     onChange={(e) => setFormMotorista({ ...formMotorista, placa_3: e.target.value.toUpperCase() })}
                     placeholder="opcional"
-                    className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
                   />
                 </label>
-                <label className="text-xs font-medium text-industrial-400">Placa 4
+                <label className="text-xs font-medium text-industrial-600">Placa 4
                   <input
                     value={formMotorista.placa_4}
                     onChange={(e) => setFormMotorista({ ...formMotorista, placa_4: e.target.value.toUpperCase() })}
                     placeholder="opcional"
-                    className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
                   />
                 </label>
               </div>
@@ -403,7 +403,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
 
             <div className="flex justify-end gap-2 pt-1">
               <button type="button" onClick={() => setFormMotorista(null)}
-                className="rounded-lg border border-industrial-600 px-4 py-2 text-sm font-medium text-industrial-300 hover:bg-industrial-800">Cancelar</button>
+                className="rounded-lg border border-industrial-400 px-4 py-2 text-sm font-medium text-industrial-700 hover:bg-industrial-200">Cancelar</button>
               <button
                 type="button"
                 onClick={cadastrarMotorista}

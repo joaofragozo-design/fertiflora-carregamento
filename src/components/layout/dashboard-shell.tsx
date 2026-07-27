@@ -14,33 +14,37 @@ interface DashboardShellProps {
 }
 
 export function DashboardShell({ user, children }: DashboardShellProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  // Overlay da sidebar em telas pequenas (some ao navegar/clicar fora)
+  const [mobileOpen, setMobileOpen] = useState(false)
+  // Recolher/expandir a sidebar em telas grandes (persiste até o usuário clicar de novo)
+  const [collapsed, setCollapsed] = useState(false)
   const { user: authUser, signOut } = useAuth()
   const { connectionStatus } = useRealtimeContext()
   // Prefer live auth context (from profiles table) over SSR prop
   const displayUser = authUser ?? user
 
-  // Logística usa navegação no cabeçalho (sem sidebar) e largura total da tela.
-  const semSidebar = user.role === 'logistica' || user.role === 'logistica_02' || user.role === 'faturamento'
+  function toggleSidebar() {
+    setMobileOpen((prev) => !prev)
+    setCollapsed((prev) => !prev)
+  }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex h-screen flex-col overflow-hidden">
       <Header
         user={displayUser}
         connectionStatus={connectionStatus}
         onSignOut={signOut}
-        onMenuToggle={semSidebar ? undefined : () => setSidebarOpen((prev) => !prev)}
+        onMenuToggle={toggleSidebar}
       />
       <div className="flex flex-1 overflow-hidden">
-        {!semSidebar && (
-          <Sidebar
-            user={user}
-            isOpen={sidebarOpen}
-            onClose={() => setSidebarOpen(false)}
-          />
-        )}
+        <Sidebar
+          user={user}
+          isOpen={mobileOpen}
+          collapsed={collapsed}
+          onClose={() => setMobileOpen(false)}
+        />
         <main className="flex-1 overflow-y-auto">
-          <div className={semSidebar ? 'w-full px-3 py-4 md:px-5' : 'app-container py-6'}>
+          <div className="app-container py-6">
             {children}
           </div>
         </main>

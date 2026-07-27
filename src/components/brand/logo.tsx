@@ -1,16 +1,19 @@
 import Image from 'next/image'
 
+const LOGO_ASPECT_RATIO = 1528 / 463
+const MARK_ASPECT_RATIO = 330 / 463
+
 interface LogoMarkProps {
   size?: number
   className?: string
 }
 
-/** Ícone isolado — usa a logo completa em proporção quadrada */
+/** Ícone isolado — folha da marca, recortada do lockup completo */
 export function LogoMark({ size = 32, className }: LogoMarkProps) {
-  const width = Math.round(size * 3.3)
+  const width = Math.round(size * MARK_ASPECT_RATIO)
   return (
     <Image
-      src="/fertiflora-logo.png"
+      src="/fertiflora-mark.png"
       alt="Fertiflora"
       width={width}
       height={size}
@@ -28,13 +31,16 @@ interface LogoFullProps {
 
 /** Logo completo */
 export function LogoFull({ className, showTagline: _showTagline = true }: LogoFullProps) {
+  const height = 60
   return (
     <div className={`flex items-center ${className ?? ''}`}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <Image
         src="/fertiflora-logo.png"
         alt="Fertiflora"
-        style={{ height: 60, width: 'auto', objectFit: 'contain' }}
+        width={Math.round(height * LOGO_ASPECT_RATIO)}
+        height={height}
+        style={{ height, width: 'auto', objectFit: 'contain' }}
+        priority
       />
     </div>
   )

@@ -28,12 +28,12 @@ export function OrderCard({
   return (
     <div
       className={cn(
-        'rounded-lg bg-industrial-900 border-2 transition-colors',
+        'rounded-lg bg-industrial-100 border-2 transition-colors',
         isActive
           ? 'border-info-500/80'
           : order.status === 'SOLICITADO'
           ? 'border-warning-500/70'
-          : 'border-industrial-700',
+          : 'border-industrial-300',
         compact ? 'p-3' : 'p-4'
       )}
     >
@@ -42,13 +42,13 @@ export function OrderCard({
           <OrderStatusBadge status={order.status} />
 
           <div className="mt-2 flex items-center gap-2">
-            <Package className="h-4 w-4 shrink-0 text-industrial-400" />
-            <span className="truncate text-sm font-semibold text-industrial-100">
+            <Package className="h-4 w-4 shrink-0 text-industrial-600" />
+            <span className="truncate text-sm font-semibold text-industrial-900">
               {order.insumo}
             </span>
           </div>
 
-          <p className="mt-1 text-xl font-bold text-industrial-100">
+          <p className="mt-1 text-xl font-bold text-industrial-900">
             {formatarQtd(order.quantidade)} conchas
           </p>
         </div>

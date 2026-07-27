@@ -137,15 +137,15 @@ export function ImportarFormulasClient() {
   return (
     <div className="max-w-4xl mx-auto p-6 flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold text-industrial-100">Importar Fórmulas</h1>
-        <p className="text-sm text-industrial-400 mt-1">
+        <h1 className="text-xl font-semibold text-industrial-900">Importar Fórmulas</h1>
+        <p className="text-sm text-industrial-600 mt-1">
           Exporte a planilha de fórmulas como CSV e faça upload aqui. Fórmulas com o mesmo nome serão atualizadas.
         </p>
       </div>
 
       {/* Template info */}
-      <div className="rounded-lg bg-industrial-900 border border-industrial-700 p-4">
-        <p className="text-xs text-industrial-300 font-medium mb-2">Formato esperado (cabeçalho opcional):</p>
+      <div className="rounded-lg bg-industrial-100 border border-industrial-300 p-4">
+        <p className="text-xs text-industrial-700 font-medium mb-2">Formato esperado (cabeçalho opcional):</p>
         <code className="text-[10px] text-brand-400 break-all">
           nome; mo; map; calcario_concha; sulfato_amonia; carbonato_ca_mg; ureia; cloreto_potassio; boro; enxofre_pastilhado; fte_br_12; oxmag_s; tsp; caltimag; hiphos_25
         </code>
@@ -159,12 +159,12 @@ export function ImportarFormulasClient() {
         className={cn(
           'flex flex-col items-center justify-center gap-3 p-10 rounded-xl border-2 border-dashed',
           'cursor-pointer transition-colors',
-          'border-industrial-600 hover:border-brand-600 bg-industrial-900/50 hover:bg-industrial-900',
+          'border-industrial-400 hover:border-brand-600 bg-industrial-100/50 hover:bg-industrial-100',
         )}
       >
-        <Upload className="size-8 text-industrial-400" />
+        <Upload className="size-8 text-industrial-600" />
         <div className="text-center">
-          <p className="text-sm text-industrial-200 font-medium">Clique para selecionar o arquivo CSV</p>
+          <p className="text-sm text-industrial-800 font-medium">Clique para selecionar o arquivo CSV</p>
           <p className="text-xs text-industrial-500 mt-0.5">ou arraste e solte aqui</p>
         </div>
         {file && (
@@ -197,15 +197,15 @@ export function ImportarFormulasClient() {
       {/* Preview */}
       {preview.length > 0 && (
         <div className="flex flex-col gap-3">
-          <p className="text-sm text-industrial-300">
+          <p className="text-sm text-industrial-700">
             <span className="font-semibold text-brand-400">{preview.length}</span> fórmulas prontas para importar
           </p>
-          <div className="overflow-x-auto rounded-lg border border-industrial-700 max-h-64">
+          <div className="overflow-x-auto rounded-lg border border-industrial-300 max-h-64">
             <table className="w-full text-[11px]">
               <thead>
                 <tr>
                   {CSV_COLUMNS.map((col) => (
-                    <th key={col} className="px-2 py-1.5 text-left text-industrial-400 bg-industrial-900 border-b border-industrial-700 whitespace-nowrap">
+                    <th key={col} className="px-2 py-1.5 text-left text-industrial-600 bg-industrial-100 border-b border-industrial-300 whitespace-nowrap">
                       {col}
                     </th>
                   ))}
@@ -213,10 +213,10 @@ export function ImportarFormulasClient() {
               </thead>
               <tbody>
                 {preview.slice(0, 20).map((row, i) => (
-                  <tr key={i} className="hover:bg-industrial-800/40">
-                    <td className="px-2 py-1 text-industrial-100 whitespace-nowrap">{row.nome}</td>
+                  <tr key={i} className="hover:bg-industrial-200/40">
+                    <td className="px-2 py-1 text-industrial-900 whitespace-nowrap">{row.nome}</td>
                     {CSV_COLUMNS.slice(1).map((col) => (
-                      <td key={col} className="px-2 py-1 text-right font-mono text-industrial-300">
+                      <td key={col} className="px-2 py-1 text-right font-mono text-industrial-700">
                         {(row as Record<string, unknown>)[col] as number}
                       </td>
                     ))}
@@ -259,18 +259,18 @@ export function ImportarFormulasClient() {
       )}
 
       {/* Google Sheets auto-sync guide */}
-      <details className="rounded-lg border border-industrial-700 bg-industrial-900/30">
-        <summary className="px-4 py-3 text-sm font-medium text-industrial-300 cursor-pointer select-none">
+      <details className="rounded-lg border border-industrial-300 bg-industrial-100/30">
+        <summary className="px-4 py-3 text-sm font-medium text-industrial-700 cursor-pointer select-none">
           Como configurar sincronização automática com Google Sheets
         </summary>
-        <div className="px-4 pb-4 pt-2 text-xs text-industrial-400 space-y-3">
+        <div className="px-4 pb-4 pt-2 text-xs text-industrial-600 space-y-3">
           <p>Para sincronizar automaticamente ao salvar a planilha, crie um Apps Script no Google Sheets:</p>
-          <ol className="list-decimal list-inside space-y-1.5 text-industrial-300">
+          <ol className="list-decimal list-inside space-y-1.5 text-industrial-700">
             <li>Abra o Google Sheets → Extensões → Apps Script</li>
             <li>Cole o código abaixo e substitua a URL pelo endpoint de importação</li>
             <li>Configure um gatilho: Editar → Gatilhos do projeto → Ao editar</li>
           </ol>
-          <pre className="bg-industrial-900 border border-industrial-700 rounded p-3 text-[10px] text-brand-300 overflow-x-auto whitespace-pre">{`function sincronizarFormulas() {
+          <pre className="bg-industrial-100 border border-industrial-300 rounded p-3 text-[10px] text-brand-300 overflow-x-auto whitespace-pre">{`function sincronizarFormulas() {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   const data = sheet.getDataRange().getValues();
   const headers = data[0];
@@ -290,7 +290,7 @@ export function ImportarFormulasClient() {
   });
 }`}</pre>
           <p className="text-industrial-500">
-            O endpoint <code className="text-industrial-300">/api/formulas/sync</code> ainda não foi implementado.
+            O endpoint <code className="text-industrial-700">/api/formulas/sync</code> ainda não foi implementado.
             Por ora, use o upload CSV acima.
           </p>
         </div>

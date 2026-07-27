@@ -3,22 +3,22 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-industrial-900 disabled:pointer-events-none disabled:opacity-40 active:scale-[0.98]',
+  'inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-industrial-100 disabled:pointer-events-none disabled:opacity-40 active:scale-[0.98]',
   {
     variants: {
       variant: {
         primary:
           'bg-brand-600 text-white hover:bg-brand-500 shadow-sm',
         secondary:
-          'bg-industrial-700 text-industrial-100 hover:bg-industrial-600 border border-industrial-600',
+          'bg-industrial-300 text-industrial-900 hover:bg-industrial-400 border border-industrial-400',
         danger:
           'bg-danger-600 text-white hover:bg-danger-500 shadow-sm',
         warning:
           'bg-warning-500 text-white hover:bg-warning-400 shadow-sm',
         ghost:
-          'text-industrial-300 hover:bg-industrial-800 hover:text-industrial-100',
+          'text-industrial-700 hover:bg-industrial-200 hover:text-industrial-900',
         outline:
-          'border border-industrial-600 text-industrial-200 hover:bg-industrial-800 hover:border-industrial-500',
+          'border border-industrial-400 text-industrial-800 hover:bg-industrial-200 hover:border-industrial-500',
       },
       size: {
         sm:   'h-8  px-3   text-xs',

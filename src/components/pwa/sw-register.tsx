@@ -24,7 +24,20 @@ function recarregarUmaVez() {
 export function SwRegister() {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {})
+      if (process.env.NODE_ENV === 'production') {
+        navigator.serviceWorker.register('/sw.js').catch(() => {})
+      } else {
+        // Em dev, um SW registrado numa sessão anterior serviria CSS/JS
+        // desatualizado via cache-first, mostrando uma tela "congelada"
+        // no build antigo mesmo depois do código mudar. Garante que nenhum
+        // fique ativo enquanto iteramos localmente.
+        navigator.serviceWorker.getRegistrations().then((regs) => {
+          regs.forEach((r) => r.unregister())
+        })
+        if ('caches' in window) {
+          caches.keys().then((keys) => keys.forEach((k) => caches.delete(k)))
+        }
+      }
     }
 
     function onError(e: ErrorEvent) {

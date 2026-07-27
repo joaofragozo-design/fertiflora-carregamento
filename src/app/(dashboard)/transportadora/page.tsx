@@ -27,7 +27,7 @@ export default async function TransportadoraPage() {
 
   if (!transportadora) {
     return (
-      <div className="text-center py-24 text-industrial-400">
+      <div className="text-center py-24 text-industrial-600">
         Seu login ainda não está vinculado a uma transportadora. Fale com a logística da Fertiflora.
       </div>
     )

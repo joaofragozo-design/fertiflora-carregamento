@@ -48,7 +48,6 @@ export function LoginForm({ supabaseConfigured = true }: LoginFormProps) {
       // router.push + router.refresh criam corrida de condição nos cookies.
       const next        = searchParams.get('next')
       const destination = next ?? ROUTES.CARREGAMENTO
-      console.log('[LoginForm] navegando para:', destination)
       window.location.href = destination
     } catch (err) {
       console.error('[LoginForm] Falha no login:', err)
@@ -71,9 +70,10 @@ export function LoginForm({ supabaseConfigured = true }: LoginFormProps) {
           spellCheck={false}
           disabled={!supabaseConfigured}
           error={errors.username?.message}
+          className="border-paper-300 bg-paper-50 text-paper-900 placeholder:text-paper-500 hover:border-paper-400 focus:border-leaf-500 focus:ring-leaf-400/40 focus:ring-offset-paper-50"
           {...register('username')}
         />
-        <User className="pointer-events-none absolute right-3 top-[34px] h-4 w-4 text-industrial-500" />
+        <User className="pointer-events-none absolute right-3 top-[34px] h-4 w-4 text-paper-500" />
       </div>
 
       <div className="relative">
@@ -84,14 +84,14 @@ export function LoginForm({ supabaseConfigured = true }: LoginFormProps) {
           autoComplete="current-password"
           disabled={!supabaseConfigured}
           error={errors.password?.message}
+          className="border-paper-300 bg-paper-50 text-paper-900 placeholder:text-paper-500 hover:border-paper-400 focus:border-leaf-500 focus:ring-leaf-400/40 focus:ring-offset-paper-50"
           {...register('password')}
         />
         <button
           type="button"
           onClick={() => setShowPassword((v) => !v)}
-          className="absolute right-3 top-[34px] text-industrial-400 hover:text-industrial-200 transition-colors"
+          className="absolute right-3 top-[34px] text-paper-500 hover:text-paper-700 transition-colors"
           aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-          tabIndex={-1}
           disabled={!supabaseConfigured}
         >
           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -103,7 +103,7 @@ export function LoginForm({ supabaseConfigured = true }: LoginFormProps) {
         size="lg"
         loading={isSubmitting}
         disabled={!supabaseConfigured}
-        className="w-full mt-2"
+        className="w-full mt-2 bg-spruce-600 text-paper-50 shadow-[0_10px_24px_-10px_rgba(66,127,73,0.5)] hover:bg-spruce-500 focus-visible:ring-leaf-400 focus-visible:ring-offset-paper-50"
       >
         {!isSubmitting && <LogIn className="h-4 w-4" />}
         Entrar

@@ -60,12 +60,12 @@ export function CarregamentoPainel({ initialOrdens, user }: CarregamentoPainelPr
       {/* ── Cabeçalho ──────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-industrial-100">Central de Solicitações</h1>
+          <h1 className="text-lg font-bold text-industrial-900">Central de Solicitações</h1>
           <p className="text-sm text-industrial-500">Olá, {user.username}.</p>
         </div>
         <div className="flex items-center gap-2">
           {solicitados.length > 0 && (
-            <Pill label="Aguardando" value={solicitados.length} color="bg-industrial-700" />
+            <Pill label="Aguardando" value={solicitados.length} color="bg-industrial-300" />
           )}
           {liberados.length > 0 && (
             <Pill label="Liberado" value={liberados.length} color="bg-brand-500 animate-pulse" />
@@ -77,7 +77,7 @@ export function CarregamentoPainel({ initialOrdens, user }: CarregamentoPainelPr
       </div>
 
       {/* ── Formulário ─────────────────────────────────────── */}
-      <div className="rounded-xl border border-industrial-800 bg-industrial-900 p-4">
+      <div className="rounded-xl border border-industrial-200 bg-industrial-100 p-4">
         <CreateOrderForm user={user} onCreated={handleCriado} />
       </div>
 
@@ -125,7 +125,7 @@ export function CarregamentoPainel({ initialOrdens, user }: CarregamentoPainelPr
 
       {/* ── Empty state ────────────────────────────────────── */}
       {totalAtivos === 0 && concluidos.length === 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-industrial-800 py-12 text-center">
+        <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-industrial-200 py-12 text-center">
           <ClipboardList className="h-7 w-7 text-industrial-500" />
           <p className="text-sm text-industrial-500">Nenhuma solicitação ainda.</p>
           <p className="text-xs text-industrial-500">Selecione uma matéria prima acima e envie.</p>
@@ -143,9 +143,9 @@ function SolicitadoCard({ item, loading, onLiberar, onCancelar }: {
   onCancelar: (i: Carregamento) => void
 }) {
   return (
-    <div className="flex items-center justify-between rounded-xl border-2 border-industrial-700 bg-industrial-900 px-4 py-3">
+    <div className="flex items-center justify-between rounded-xl border-2 border-industrial-300 bg-industrial-100 px-4 py-3">
       <div>
-        <p className="text-sm font-bold text-industrial-100">{item.insumo}</p>
+        <p className="text-sm font-bold text-industrial-900">{item.insumo}</p>
         <p className="text-xs text-industrial-500">{item.quantidade} conchas · {tempoRelativo(item.created_at)}</p>
       </div>
       <div className="flex items-center gap-2">
@@ -182,12 +182,12 @@ function LiberadoCard({ item }: { item: Carregamento }) {
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 animate-pulse rounded-full bg-brand-500" />
-          <p className="text-sm font-bold text-industrial-100">{item.insumo}</p>
+          <p className="text-sm font-bold text-industrial-900">{item.insumo}</p>
         </div>
         <span className="text-xs font-semibold text-brand-700">{executadas}/{total} conchas</span>
       </div>
       {/* Barra de progresso */}
-      <div className="h-2 w-full rounded-full bg-industrial-800">
+      <div className="h-2 w-full rounded-full bg-industrial-200">
         <div
           className="h-2 rounded-full bg-brand-500 transition-all duration-500"
           style={{ width: `${pct}%` }}
@@ -199,11 +199,11 @@ function LiberadoCard({ item }: { item: Carregamento }) {
 
 function ConcluidoCard({ item }: { item: Carregamento }) {
   return (
-    <div className="flex items-center justify-between rounded-xl border border-industrial-800 bg-industrial-900 px-4 py-3">
+    <div className="flex items-center justify-between rounded-xl border border-industrial-200 bg-industrial-100 px-4 py-3">
       <div className="flex items-center gap-3">
         <span className="h-2 w-2 rounded-full bg-brand-500" />
-        <span className="text-sm font-semibold text-industrial-300">{item.insumo}</span>
-        <span className="text-sm font-bold text-industrial-100">{item.quantidade} conchas</span>
+        <span className="text-sm font-semibold text-industrial-700">{item.insumo}</span>
+        <span className="text-sm font-bold text-industrial-900">{item.quantidade} conchas</span>
       </div>
       <span className="text-xs text-industrial-500">
         {item.finished_at ? tempoRelativo(item.finished_at) : '—'}
@@ -214,9 +214,9 @@ function ConcluidoCard({ item }: { item: Carregamento }) {
 
 function Pill({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <div className="flex items-center gap-1.5 rounded-full border border-industrial-800 bg-industrial-900 px-3 py-1">
+    <div className="flex items-center gap-1.5 rounded-full border border-industrial-200 bg-industrial-100 px-3 py-1">
       <span className={`h-2 w-2 rounded-full ${color}`} />
-      <span className="text-xs font-semibold text-industrial-100">{value}</span>
+      <span className="text-xs font-semibold text-industrial-900">{value}</span>
       <span className="text-xs text-industrial-500">{label}</span>
     </div>
   )

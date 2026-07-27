@@ -152,7 +152,7 @@ export function ConfirmacaoChegadaListener() {
         <button
           type="button"
           onClick={ativarNotificacoes}
-          className="fixed bottom-4 right-4 z-[9998] flex items-center gap-2 rounded-full bg-industrial-900 border border-industrial-700 px-4 py-2 text-xs font-medium text-industrial-200 shadow-industrial hover:border-brand-500 hover:text-brand-400 transition-colors"
+          className="fixed bottom-4 right-4 z-[9998] flex items-center gap-2 rounded-full bg-industrial-100 border border-industrial-300 px-4 py-2 text-xs font-medium text-industrial-800 shadow-industrial hover:border-brand-500 hover:text-brand-400 transition-colors"
         >
           <Bell className="size-3.5" /> Ativar notificações de chegada
         </button>

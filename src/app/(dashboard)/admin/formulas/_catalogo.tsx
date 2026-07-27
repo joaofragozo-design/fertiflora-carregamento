@@ -21,23 +21,23 @@ export function CatalogoFormulas({ formulas }: CatalogoFormulasProps) {
   }, [formulas, query])
 
   const thCls =
-    'px-2 py-2 text-[10px] uppercase tracking-wider text-industrial-400 font-medium whitespace-nowrap border-b border-industrial-700 bg-industrial-900 sticky top-0 z-10'
-  const tdCls = 'px-2 py-1.5 border-b border-industrial-800 align-middle'
+    'px-2 py-2 text-[10px] uppercase tracking-wider text-industrial-600 font-medium whitespace-nowrap border-b border-industrial-300 bg-industrial-100 sticky top-0 z-10'
+  const tdCls = 'px-2 py-1.5 border-b border-industrial-200 align-middle'
 
   return (
     <div className="flex flex-col gap-4 p-4">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-industrial-100">Fórmulas</h1>
-          <p className="text-xs text-industrial-400 mt-0.5 flex items-center gap-1.5">
+          <h1 className="text-lg font-semibold text-industrial-900">Fórmulas</h1>
+          <p className="text-xs text-industrial-600 mt-0.5 flex items-center gap-1.5">
             <RefreshCw className="size-3" />
             Sincronizadas automaticamente da planilha do Google Sheets
           </p>
         </div>
         <div className="text-right">
           <p className="text-2xl font-bold text-brand-400">{formulas.length}</p>
-          <p className="text-xs text-industrial-400">fórmulas no sistema</p>
+          <p className="text-xs text-industrial-600">fórmulas no sistema</p>
         </div>
       </div>
 
@@ -49,16 +49,16 @@ export function CatalogoFormulas({ formulas }: CatalogoFormulasProps) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar fórmula por nome..."
-            className="w-full bg-industrial-900 border border-industrial-600 rounded-lg pl-8 pr-3 py-2 text-sm text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+            className="w-full bg-industrial-100 border border-industrial-400 rounded-lg pl-8 pr-3 py-2 text-sm text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
           />
         </div>
         <p className="text-xs text-industrial-500">
-          Mostrando <span className="text-industrial-300 font-medium">{filtradas.length}</span> de {formulas.length}
+          Mostrando <span className="text-industrial-700 font-medium">{filtradas.length}</span> de {formulas.length}
         </p>
       </div>
 
       {/* Tabela */}
-      <div className="overflow-auto rounded-lg border border-industrial-700 max-h-[70vh]">
+      <div className="overflow-auto rounded-lg border border-industrial-300 max-h-[70vh]">
         <table className="w-full text-xs border-collapse">
           <thead>
             <tr>
@@ -77,13 +77,13 @@ export function CatalogoFormulas({ formulas }: CatalogoFormulasProps) {
               const verif = +(soma * 1000).toFixed(1)
               const ok = Math.abs(verif - 1000) < 0.5
               return (
-                <tr key={f.id} className="hover:bg-industrial-800/40 transition-colors">
-                  <td className={cn(tdCls, 'text-industrial-100 font-medium')}>{f.nome}</td>
+                <tr key={f.id} className="hover:bg-industrial-200/40 transition-colors">
+                  <td className={cn(tdCls, 'text-industrial-900 font-medium')}>{f.nome}</td>
                   {INGREDIENTES.map((ing) => {
                     const kg = calcularIngrediente(f, ing.key)
                     return (
-                      <td key={ing.key} className={cn(tdCls, 'text-right font-mono text-industrial-300')}>
-                        {kg > 0 ? kg.toFixed(1) : <span className="text-industrial-700">0</span>}
+                      <td key={ing.key} className={cn(tdCls, 'text-right font-mono text-industrial-700')}>
+                        {kg > 0 ? kg.toFixed(1) : <span className="text-industrial-300">0</span>}
                       </td>
                     )
                   })}
@@ -113,12 +113,12 @@ export function CatalogoFormulas({ formulas }: CatalogoFormulasProps) {
       </div>
 
       {/* Import CSV — opção manual de emergência */}
-      <details className="rounded-lg border border-industrial-700 bg-industrial-900/30">
-        <summary className="px-4 py-3 text-sm font-medium text-industrial-300 cursor-pointer select-none flex items-center gap-2">
+      <details className="rounded-lg border border-industrial-300 bg-industrial-100/30">
+        <summary className="px-4 py-3 text-sm font-medium text-industrial-700 cursor-pointer select-none flex items-center gap-2">
           <ChevronDown className="size-4" />
           Importar fórmulas por CSV (opção manual)
         </summary>
-        <div className="border-t border-industrial-700">
+        <div className="border-t border-industrial-300">
           <ImportarFormulasClient />
         </div>
       </details>

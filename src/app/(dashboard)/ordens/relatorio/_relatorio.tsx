@@ -86,11 +86,11 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
     weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
   })
 
-  const th = 'px-2 py-1.5 text-left text-[10px] uppercase tracking-wider text-industrial-500 font-semibold border-b-2 border-industrial-700 whitespace-nowrap'
-  const td = 'px-2 py-1.5 border-b border-industrial-700 align-middle text-industrial-100'
+  const th = 'px-2 py-1.5 text-left text-[10px] uppercase tracking-wider text-industrial-500 font-semibold border-b-2 border-industrial-300 whitespace-nowrap'
+  const td = 'px-2 py-1.5 border-b border-industrial-300 align-middle text-industrial-900'
 
   return (
-    <div className="flex flex-col gap-5 text-industrial-100 print:text-black">
+    <div className="flex flex-col gap-5 text-industrial-900 print:text-black">
       {/* Regras de impressão: força cores de fundo e margem de página */}
       <style>{`@media print {
         body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -101,7 +101,7 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
       <div className="flex items-center justify-between gap-3 print:hidden">
         <Link
           href={ROUTES.ORDENS}
-          className="flex items-center gap-1.5 text-sm text-industrial-400 hover:text-industrial-100 transition-colors"
+          className="flex items-center gap-1.5 text-sm text-industrial-600 hover:text-industrial-900 transition-colors"
         >
           <ArrowLeft className="size-4" /> Voltar
         </Link>
@@ -110,7 +110,7 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
             type="button"
             onClick={enviarPorEmail}
             disabled={enviando}
-            className="flex items-center gap-2 rounded-lg border border-industrial-700 text-industrial-200 hover:border-brand-500 hover:text-brand-700 px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 rounded-lg border border-industrial-300 text-industrial-800 hover:border-brand-500 hover:text-brand-700 px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Mail className="size-4" /> {enviando ? 'Enviando…' : 'Enviar por e-mail'}
           </button>
@@ -125,16 +125,16 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
       </div>
 
       {/* Cabeçalho do relatório */}
-      <div className="border-b-2 border-industrial-700 pb-3">
-        <h1 className="text-xl font-bold text-industrial-50 print:text-black">FERTIFLORA — Relatório Diário de Carregamento</h1>
-        <p className="text-sm text-industrial-400 capitalize mt-0.5">{dataLonga}</p>
+      <div className="border-b-2 border-industrial-300 pb-3">
+        <h1 className="text-xl font-bold text-industrial-950 print:text-black">FERTIFLORA — Relatório Diário de Carregamento</h1>
+        <p className="text-sm text-industrial-600 capitalize mt-0.5">{dataLonga}</p>
         <div className="flex gap-6 mt-3 text-sm">
           <div>
-            <span className="text-industrial-400">Cargas: </span>
-            <span className="font-bold text-industrial-100 print:text-black">{ordens.length}</span>
+            <span className="text-industrial-600">Cargas: </span>
+            <span className="font-bold text-industrial-900 print:text-black">{ordens.length}</span>
           </div>
           <div>
-            <span className="text-industrial-400">Total do dia: </span>
+            <span className="text-industrial-600">Total do dia: </span>
             <span className="font-bold text-brand-700">{totalTons.toFixed(2)} ton</span>
           </div>
         </div>
@@ -177,7 +177,7 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
                     <td className={cn(td, 'font-mono uppercase')}>{o.placa || '—'}</td>
                     <td className={cn(td, 'text-center font-bold')}>{o.envelopar ? 'SIM' : 'NÃO'}</td>
                     <td className={cn(td, 'text-center')}>—</td>
-                    <td className={cn(td, 'text-center text-industrial-400')} colSpan={5}>Sem itens</td>
+                    <td className={cn(td, 'text-center text-industrial-600')} colSpan={5}>Sem itens</td>
                   </tr>
                 )
               }
@@ -200,7 +200,7 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
                         <td className={cn(td, 'text-center font-mono whitespace-nowrap')} rowSpan={rowSpan}>
                           {durMs > 0 ? (
                             <span className="inline-flex items-center justify-center gap-2">
-                              <span className="font-semibold text-industrial-100">{formatDuracao(durMs)}</span>
+                              <span className="font-semibold text-industrial-900">{formatDuracao(durMs)}</span>
                               <span className="font-bold text-brand-700">{tonPorHora(tonsCarga, durMs).toFixed(2)} t/h</span>
                             </span>
                           ) : <span className="text-industrial-500">—</span>}
@@ -215,7 +215,7 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
                       {f ? (
                         <div className="flex flex-wrap gap-1">
                           {usados.map(({ mp, label, kg }) => (
-                            <span key={mp.key} className="inline-flex items-center gap-1 rounded border border-industrial-600 px-1.5 py-0.5">
+                            <span key={mp.key} className="inline-flex items-center gap-1 rounded border border-industrial-400 px-1.5 py-0.5">
                               <span className="text-[10px] text-industrial-500">{label}</span>
                               <span className="text-[10px] font-mono font-bold">{fmtKg(kg)}</span>
                             </span>
@@ -228,13 +228,13 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
               })
             })}
             {ordens.length === 0 && (
-              <tr><td colSpan={11} className="text-center py-8 text-industrial-400">Nenhuma ordem neste dia.</td></tr>
+              <tr><td colSpan={11} className="text-center py-8 text-industrial-600">Nenhuma ordem neste dia.</td></tr>
             )}
           </tbody>
           {ordens.length > 0 && (
             <tfoot>
               <tr>
-                <td colSpan={8} className="px-2 py-2 text-right text-xs font-semibold text-industrial-300">Total do dia:</td>
+                <td colSpan={8} className="px-2 py-2 text-right text-xs font-semibold text-industrial-700">Total do dia:</td>
                 <td className="px-2 py-2 text-right font-mono font-bold text-brand-700">{totalTons.toFixed(2)}</td>
                 <td colSpan={2} />
               </tr>
@@ -246,7 +246,7 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
       {/* Consumo de matéria-prima do dia */}
       {consumo.length > 0 && (
         <div className="break-inside-avoid">
-          <h2 className="text-sm font-bold text-industrial-50 print:text-black mb-2">Consumo de matéria-prima do dia</h2>
+          <h2 className="text-sm font-bold text-industrial-950 print:text-black mb-2">Consumo de matéria-prima do dia</h2>
           <table className="w-full max-w-2xl text-xs border-collapse">
             <thead>
               <tr>
@@ -266,7 +266,7 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
             </tbody>
             <tfoot>
               <tr>
-                <td className="px-2 py-2 text-xs font-bold text-industrial-100 print:text-black">Total geral</td>
+                <td className="px-2 py-2 text-xs font-bold text-industrial-900 print:text-black">Total geral</td>
                 <td className="px-2 py-2 text-right font-mono font-bold text-brand-700">
                   {fmtNum(consumo.reduce((s, x) => s + x.kg, 0))}
                 </td>

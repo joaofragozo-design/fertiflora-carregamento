@@ -10,32 +10,33 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Tema dark industrial
+        // Verde-folha da marca (degradê da logo) — CTAs, estados ativos, acentos
         brand: {
-          50:  '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
-          800: '#166534',
-          900: '#14532d',
-          950: '#052e16',
+          50:  '#F1F8ED',
+          100: '#E4F5DC',
+          200: '#C3E8B2',
+          300: '#9FD988',
+          400: '#7FC46E',
+          500: '#5FAE5B',
+          600: '#427F49',
+          700: '#315F39',
+          800: '#24452A',
+          900: '#173420',
+          950: '#0E2415',
         },
+        // Neutro quente orgânico (era zinc/gray genérico) — fundo, texto, bordas
         industrial: {
-          50:  '#09090b',  // texto escuro máximo
-          100: '#18181b',  // texto primário
-          200: '#27272a',
-          300: '#3f3f46',  // texto secundário
-          400: '#52525b',  // texto médio
-          500: '#71717a',  // texto suave
-          600: '#a1a1aa',  // texto muito suave
-          700: '#d4d4d8',  // borda padrão
-          800: '#e4e4e7',  // borda sutil
-          900: '#ffffff',  // superfície (cards)
-          950: '#f4f4f5',  // fundo de página
+          50:  '#FCFBF6',  // fundo de página
+          100: '#F7F5E9',  // superfície (cards)
+          200: '#EFEDDF',  // borda sutil
+          300: '#DEDBC4',  // borda padrão
+          400: '#C7C3A6',  // texto muito suave
+          500: '#9B9679',  // texto suave
+          600: '#6E6B54',  // texto médio
+          700: '#4A4838',  // texto secundário
+          800: '#2E2C22',
+          900: '#1E1C15',  // texto primário
+          950: '#141209',  // texto escuro máximo
         },
         warning: {
           400: '#fb923c',
@@ -52,13 +53,50 @@ const config: Config = {
           500: '#3b82f6',
           600: '#2563eb',
         },
+        // Papel quente orgânico — superfícies de telas de marca (login, onboarding)
+        paper: {
+          50:  '#FCFBF6',
+          100: '#F7F5E9',
+          200: '#EFEDDF',
+          300: '#DEDBC4',
+          400: '#C7C3A6',
+          500: '#9B9679',
+          600: '#6E6B54',
+          700: '#4A4838',
+          800: '#2E2C22',
+          900: '#1E1C15',
+        },
+        // Verde-folha da marca (degradê da logo) — acentos orgânicos, CTAs
+        leaf: {
+          100: '#E4F5DC',
+          200: '#C3E8B2',
+          300: '#9FD988',
+          400: '#7FC46E',
+          500: '#5FAE5B',
+          600: '#427F49',
+          700: '#315F39',
+          900: '#173420',
+        },
+        // Teal do wordmark da marca — títulos, CTAs sólidos, autoridade
+        spruce: {
+          50:  '#E7F0EE',
+          200: '#9AC2BB',
+          400: '#2E7A70',
+          500: '#1D6259',
+          600: '#155048',
+          700: '#0F3E39',
+          800: '#0A2E2A',
+          900: '#071F1D',
+        },
       },
       fontFamily: {
-        sans: ['var(--font-geist-sans)', 'system-ui', 'sans-serif'],
-        mono: ['var(--font-geist-mono)', 'monospace'],
+        sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-mono)', 'monospace'],
+        display: ['var(--font-display)', 'serif'],
       },
       backgroundImage: {
         'grid-industrial': "url(\"data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E\")",
+        'grain-paper': "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E\")",
       },
       animation: {
         'pulse-slow':    'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
@@ -106,6 +144,7 @@ const config: Config = {
         'glow-green':  '0 0 12px rgba(22,163,74,0.2)',
         'glow-orange': '0 0 12px rgba(249,115,22,0.2)',
         'glow-red':    '0 0 12px rgba(239,68,68,0.2)',
+        'editorial':   '0 1px 2px rgba(30,28,21,0.05), 0 18px 40px -18px rgba(30,28,21,0.18), 0 34px 60px -32px rgba(66,127,73,0.22)',
       },
     },
   },

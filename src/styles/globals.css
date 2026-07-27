@@ -4,12 +4,12 @@
 
 @layer base {
   :root {
-    --font-geist-sans: 'Geist', system-ui, sans-serif;
-    --font-geist-mono: 'Geist Mono', monospace;
+    --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
   }
 
   * {
-    @apply border-industrial-700;
+    @apply border-industrial-300;
   }
 
   html {
@@ -17,23 +17,23 @@
   }
 
   body {
-    @apply bg-industrial-950 text-industrial-100 antialiased;
+    @apply bg-industrial-50 text-industrial-900 antialiased;
     font-feature-settings: 'rlig' 1, 'calt' 1;
   }
 
-  /* Scrollbar dark industrial */
+  /* Scrollbar industrial */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    @apply bg-industrial-950;
+    @apply bg-industrial-50;
   }
   ::-webkit-scrollbar-thumb {
-    @apply rounded-full bg-industrial-700;
+    @apply rounded-full bg-industrial-300;
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-industrial-600;
+    @apply bg-industrial-400;
   }
 
   /* Seleção de texto */
@@ -48,11 +48,6 @@
     @apply mx-auto w-full max-w-7xl px-4 md:px-6;
   }
 
-  /* Grid de cards de status */
-  .status-grid {
-    @apply grid grid-cols-2 gap-3 md:grid-cols-4;
-  }
-
   /* Indicador pulsante para itens críticos */
   .pulse-critical {
     @apply animate-pulse-slow text-danger-400;
@@ -60,23 +55,6 @@
 
   /* Fundo com textura industrial */
   .bg-industrial-texture {
-    @apply bg-industrial-950 bg-grid-industrial;
-  }
-}
-
-@layer utilities {
-  /* Glassmorphism industrial */
-  .glass-industrial {
-    @apply border border-industrial-800 bg-industrial-900/80 backdrop-blur-sm;
-  }
-
-  /* Número de série / placa */
-  .font-plate {
-    @apply font-mono text-sm font-bold uppercase tracking-wider;
-  }
-
-  /* Truncate com tooltip */
-  .truncate-tooltip {
-    @apply truncate cursor-default;
+    @apply bg-industrial-50 bg-grid-industrial;
   }
 }

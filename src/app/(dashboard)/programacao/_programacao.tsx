@@ -89,36 +89,36 @@ function FormulaPicker({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between gap-1 px-3 py-2 rounded-lg text-sm bg-industrial-950 border border-industrial-600 text-left text-industrial-100 hover:border-brand-600 focus:outline-none focus:border-brand-500"
+        className="w-full flex items-center justify-between gap-1 px-3 py-2 rounded-lg text-sm bg-industrial-50 border border-industrial-400 text-left text-industrial-900 hover:border-brand-600 focus:outline-none focus:border-brand-500"
       >
         <span className={cn('truncate', !selected && 'text-industrial-500')}>
           {selected?.nome ?? 'Selecionar fórmula…'}
         </span>
-        <ChevronDown className="size-4 shrink-0 text-industrial-400" />
+        <ChevronDown className="size-4 shrink-0 text-industrial-600" />
       </button>
       {open && (
-        <div className="absolute z-10 top-full mt-1 left-0 right-0 bg-industrial-900 border border-industrial-600 rounded-lg shadow-industrial">
-          <div className="p-1.5 border-b border-industrial-700">
+        <div className="absolute z-10 top-full mt-1 left-0 right-0 bg-industrial-100 border border-industrial-400 rounded-lg shadow-industrial">
+          <div className="p-1.5 border-b border-industrial-300">
             <input
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar fórmula..."
-              className="w-full bg-industrial-950 text-sm text-industrial-100 placeholder-industrial-500 px-2 py-1.5 rounded border border-industrial-600 focus:outline-none focus:border-brand-500"
+              className="w-full bg-industrial-50 text-sm text-industrial-900 placeholder-industrial-500 px-2 py-1.5 rounded border border-industrial-400 focus:outline-none focus:border-brand-500"
             />
           </div>
           <ul className="max-h-56 overflow-y-auto py-1">
             <li>
               <button type="button" onClick={() => { onChange(null); setOpen(false); setQuery('') }}
-                className="w-full text-left text-sm px-3 py-1.5 text-industrial-400 hover:bg-industrial-800">
+                className="w-full text-left text-sm px-3 py-1.5 text-industrial-600 hover:bg-industrial-200">
                 — Nenhuma —
               </button>
             </li>
             {filtered.map((f) => (
               <li key={f.id}>
                 <button type="button" onClick={() => { onChange(f.id); setOpen(false); setQuery('') }}
-                  className={cn('w-full text-left text-sm px-3 py-1.5 truncate hover:bg-industrial-800',
-                    f.id === value ? 'text-brand-700 font-semibold' : 'text-industrial-100')}>
+                  className={cn('w-full text-left text-sm px-3 py-1.5 truncate hover:bg-industrial-200',
+                    f.id === value ? 'text-brand-700 font-semibold' : 'text-industrial-900')}>
                   {f.nome}
                 </button>
               </li>
@@ -393,37 +393,37 @@ export function ProgramacaoSemana({
       {/* Cabeçalho + navegação de semana */}
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-industrial-100">Programação de Carregamento</h1>
+          <h1 className="text-lg font-semibold text-industrial-900">Programação de Carregamento</h1>
           <div className="flex items-center gap-1.5 mt-2">
             <button type="button" onClick={() => irParaSemana(addDiasIso(semanaInicio, -7))} aria-label="Semana anterior"
-              className="rounded-lg border border-industrial-700 p-1.5 text-industrial-400 hover:text-industrial-100 hover:border-brand-500 transition-colors">
+              className="rounded-lg border border-industrial-300 p-1.5 text-industrial-600 hover:text-industrial-900 hover:border-brand-500 transition-colors">
               <ChevronLeft className="size-4" />
             </button>
-            <span className="text-sm font-medium text-industrial-200 px-2">
+            <span className="text-sm font-medium text-industrial-800 px-2">
               Semana de {ddmm(semanaInicio)} a {ddmm(addDiasIso(semanaInicio, 4))}
             </span>
             <button type="button" onClick={() => irParaSemana(addDiasIso(semanaInicio, 7))} aria-label="Próxima semana"
-              className="rounded-lg border border-industrial-700 p-1.5 text-industrial-400 hover:text-industrial-100 hover:border-brand-500 transition-colors">
+              className="rounded-lg border border-industrial-300 p-1.5 text-industrial-600 hover:text-industrial-900 hover:border-brand-500 transition-colors">
               <ChevronRight className="size-4" />
             </button>
           </div>
           {!podeEditar && !podeConfirmar && (
-            <p className="text-xs text-industrial-400 mt-1.5">Prévia (somente leitura) — quem programa é a Logística.</p>
+            <p className="text-xs text-industrial-600 mt-1.5">Prévia (somente leitura) — quem programa é a Logística.</p>
           )}
         </div>
         <div className="flex items-center gap-3">
           {podeEditar && (
             <Link
               href={ROUTES.ORDENS_RELATORIO}
-              className="flex items-center gap-1.5 rounded-lg border border-industrial-700 px-3 py-2 text-xs font-medium text-industrial-200 hover:border-brand-500 hover:text-brand-700 transition-colors"
+              className="flex items-center gap-1.5 rounded-lg border border-industrial-300 px-3 py-2 text-xs font-medium text-industrial-800 hover:border-brand-500 hover:text-brand-700 transition-colors"
             >
               <Printer className="size-4" />
               Relatório do dia
             </Link>
           )}
           <div className="text-right">
-            <p className="text-xs text-industrial-400">Total da semana</p>
-            <p className="text-2xl font-bold text-brand-600">{totalSemana.toFixed(2)} <span className="text-sm font-normal text-industrial-400">ton</span></p>
+            <p className="text-xs text-industrial-600">Total da semana</p>
+            <p className="text-2xl font-bold text-brand-600">{totalSemana.toFixed(2)} <span className="text-sm font-normal text-industrial-600">ton</span></p>
           </div>
         </div>
       </div>
@@ -439,13 +439,13 @@ export function ProgramacaoSemana({
               key={data}
               className={cn(
                 'flex flex-col gap-2 rounded-xl border p-2.5',
-                ehAmanha ? 'border-brand-500 bg-brand-50' : ehHoje ? 'border-industrial-500' : 'border-industrial-800',
+                ehAmanha ? 'border-brand-500 bg-brand-50' : ehHoje ? 'border-industrial-500' : 'border-industrial-200',
               )}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-bold text-industrial-100">{nome}</p>
-                  <p className="text-xs text-industrial-400">
+                  <p className="text-sm font-bold text-industrial-900">{nome}</p>
+                  <p className="text-xs text-industrial-600">
                     {ddmm(data)}{ehAmanha && <span className="ml-1 text-brand-700 font-semibold">· amanhã</span>}{ehHoje && <span className="ml-1 text-industrial-500 font-semibold">· hoje</span>}
                   </p>
                 </div>
@@ -458,11 +458,11 @@ export function ProgramacaoSemana({
                     key={ag.id}
                     className={cn(
                       'rounded-lg border p-2 transition-colors',
-                      ag.confirmado_em ? 'border-brand-500 bg-brand-100' : 'border-industrial-700 bg-industrial-900',
+                      ag.confirmado_em ? 'border-brand-500 bg-brand-100' : 'border-industrial-300 bg-industrial-100',
                     )}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <span className="font-semibold text-industrial-100 text-sm leading-tight flex items-center gap-1.5">
+                      <span className="font-semibold text-industrial-900 text-sm leading-tight flex items-center gap-1.5">
                         {ag.cliente || <span className="text-industrial-500 font-normal">Sem cliente</span>}
                         {ag.cliente_codigo != null && (
                           <span className="shrink-0 text-[10px] font-normal text-industrial-500" title="Código do cliente no ERP">#{ag.cliente_codigo}</span>
@@ -479,20 +479,20 @@ export function ProgramacaoSemana({
                       {podeEditar && (
                         <div className="flex gap-1 shrink-0">
                           <button type="button" onClick={() => abrirEdicaoAgendamento(ag)} title="Editar cliente/observação"
-                            className="text-industrial-400 hover:text-brand-700"><Pencil className="size-3.5" /></button>
+                            className="text-industrial-600 hover:text-brand-700"><Pencil className="size-3.5" /></button>
                           <button type="button" onClick={() => excluirAgendamento(ag)} title="Remover agendamento"
-                            className="text-industrial-400 hover:text-red-600"><Trash2 className="size-3.5" /></button>
+                            className="text-industrial-600 hover:text-red-600"><Trash2 className="size-3.5" /></button>
                         </div>
                       )}
                     </div>
 
                     <div className="flex flex-col gap-1 mt-1">
                       {(ag.itens ?? []).map((item) => (
-                        <div key={item.id} className="flex items-start justify-between gap-2 border-t border-industrial-800 first:border-t-0 pt-1 first:pt-0">
+                        <div key={item.id} className="flex items-start justify-between gap-2 border-t border-industrial-200 first:border-t-0 pt-1 first:pt-0">
                           <div className="min-w-0">
                             {item.formula?.nome && <p className="text-xs font-medium text-brand-700 truncate">{item.formula.nome}</p>}
                             <p className="text-xs text-industrial-500">
-                              {item.quantidade} {EMBALAGEM_LABEL[item.embalagem]} · <span className="font-bold text-industrial-300">{(item.tons ?? 0).toFixed(2)} ton</span>
+                              {item.quantidade} {EMBALAGEM_LABEL[item.embalagem]} · <span className="font-bold text-industrial-700">{(item.tons ?? 0).toFixed(2)} ton</span>
                             </p>
                           </div>
                           {podeEditar && (
@@ -512,7 +512,7 @@ export function ProgramacaoSemana({
                       ))}
                     </div>
 
-                    {ag.observacao && <p className="text-xs text-industrial-400 italic mt-1">{ag.observacao}</p>}
+                    {ag.observacao && <p className="text-xs text-industrial-600 italic mt-1">{ag.observacao}</p>}
 
                     {/* Status do fluxo de transportadora */}
                     {ag.solicitacao_status && (
@@ -605,20 +605,20 @@ export function ProgramacaoSemana({
 
                 {podeEditar && (
                   <button type="button" onClick={() => abrirNovoAgendamento(data)}
-                    className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-industrial-600 py-1.5 text-xs font-medium text-industrial-400 hover:border-brand-500 hover:text-brand-700 transition-colors">
+                    className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-industrial-400 py-1.5 text-xs font-medium text-industrial-600 hover:border-brand-500 hover:text-brand-700 transition-colors">
                     <Plus className="size-3.5" /> Adicionar cliente
                   </button>
                 )}
               </div>
 
               {insumos.length > 0 && (
-                <div className="rounded-lg bg-industrial-950 border border-industrial-700 p-2 mt-auto">
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-industrial-400 mb-1.5">Matéria-prima do dia</p>
+                <div className="rounded-lg bg-industrial-50 border border-industrial-300 p-2 mt-auto">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-industrial-600 mb-1.5">Matéria-prima do dia</p>
                   <div className="flex flex-col gap-1">
                     {insumos.map((m) => (
                       <div key={m.label} className="flex items-center justify-between gap-2 text-xs">
-                        <span className="text-industrial-400 truncate">{m.label}</span>
-                        <span className="font-mono font-bold text-industrial-100 shrink-0">
+                        <span className="text-industrial-600 truncate">{m.label}</span>
+                        <span className="font-mono font-bold text-industrial-900 shrink-0">
                           {m.kg.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg
                         </span>
                       </div>
@@ -633,12 +633,12 @@ export function ProgramacaoSemana({
 
       {/* Total de matéria-prima carregado na semana inteira (todos os dias somados) */}
       {materiaPrimaDaSemana.length > 0 && (
-        <div className="rounded-xl border border-industrial-800 p-3">
-          <p className="text-xs font-bold uppercase tracking-wide text-industrial-400 mb-2">Matéria-prima da semana</p>
+        <div className="rounded-xl border border-industrial-200 p-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-industrial-600 mb-2">Matéria-prima da semana</p>
           <div className="flex flex-wrap gap-3">
             {materiaPrimaDaSemana.map((m) => (
-              <div key={m.label} className="flex flex-col rounded-lg bg-industrial-950 border border-industrial-700 px-3 py-1.5 min-w-[110px]">
-                <span className="text-[10px] text-industrial-400 truncate">{m.label}</span>
+              <div key={m.label} className="flex flex-col rounded-lg bg-industrial-50 border border-industrial-300 px-3 py-1.5 min-w-[110px]">
+                <span className="text-[10px] text-industrial-600 truncate">{m.label}</span>
                 <span className="font-mono font-bold text-brand-600">
                   {m.kg.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} <span className="text-[10px] font-normal text-industrial-500">kg</span>
                 </span>
@@ -651,24 +651,24 @@ export function ProgramacaoSemana({
       {/* Modal de envio pra transportadora */}
       {transpModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setTranspModal(null)}>
-          <div className="w-full max-w-md rounded-xl bg-industrial-900 border border-industrial-700 p-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-xl bg-industrial-100 border border-industrial-300 p-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-industrial-100">
+              <h2 className="text-base font-semibold text-industrial-900">
                 Enviar pra transportadora · {transpModal.agendamento.cliente || 'sem cliente'}
               </h2>
-              <button type="button" onClick={() => setTranspModal(null)} className="text-industrial-400 hover:text-industrial-100"><X className="size-5" /></button>
+              <button type="button" onClick={() => setTranspModal(null)} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
             </div>
 
-            <p className="text-xs text-industrial-400">
+            <p className="text-xs text-industrial-600">
               A transportadora recebe este carregamento na tela dela, indica o motorista (com WhatsApp) e envia a
               solicitação de volta — você libera na aba Transportadoras.
             </p>
 
-            <label className="text-xs font-medium text-industrial-400">Transportadora
+            <label className="text-xs font-medium text-industrial-600">Transportadora
               <select
                 value={transpModal.transportadoraId}
                 onChange={(e) => setTranspModal({ ...transpModal, transportadoraId: e.target.value })}
-                className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 focus:outline-none focus:border-brand-500"
+                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 focus:outline-none focus:border-brand-500"
               >
                 <option value="">Selecionar transportadora…</option>
                 {transportadoras.map((t) => (
@@ -692,7 +692,7 @@ export function ProgramacaoSemana({
 
             <div className="flex justify-end gap-2 pt-1">
               <button type="button" onClick={() => setTranspModal(null)}
-                className="rounded-lg border border-industrial-600 px-4 py-2 text-sm font-medium text-industrial-300 hover:bg-industrial-800">Cancelar</button>
+                className="rounded-lg border border-industrial-400 px-4 py-2 text-sm font-medium text-industrial-700 hover:bg-industrial-200">Cancelar</button>
               <button
                 type="button"
                 onClick={enviarParaTransportadora}
@@ -709,12 +709,12 @@ export function ProgramacaoSemana({
       {/* Modal de cliente/observação (nível agendamento) */}
       {agForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setAgForm(null)}>
-          <div className="w-full max-w-md rounded-xl bg-industrial-900 border border-industrial-700 p-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-xl bg-industrial-100 border border-industrial-300 p-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-industrial-100">Editar cliente</h2>
-              <button type="button" onClick={() => setAgForm(null)} className="text-industrial-400 hover:text-industrial-100"><X className="size-5" /></button>
+              <h2 className="text-base font-semibold text-industrial-900">Editar cliente</h2>
+              <button type="button" onClick={() => setAgForm(null)} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
             </div>
-            <div className="text-xs font-medium text-industrial-400">Cliente
+            <div className="text-xs font-medium text-industrial-600">Cliente
               <div className="mt-1">
                 <ClientePicker
                   value={agForm.cliente}
@@ -727,14 +727,14 @@ export function ProgramacaoSemana({
                 />
               </div>
             </div>
-            <label className="text-xs font-medium text-industrial-400">Observação / nº do pedido
+            <label className="text-xs font-medium text-industrial-600">Observação / nº do pedido
               <input value={agForm.observacao} onChange={(e) => setAgForm({ ...agForm, observacao: e.target.value })}
                 placeholder="ex.: PEDIDO 26092"
-                className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
+                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
             </label>
             <div className="flex justify-end gap-2 pt-1">
               <button type="button" onClick={() => setAgForm(null)}
-                className="rounded-lg border border-industrial-600 px-4 py-2 text-sm font-medium text-industrial-300 hover:bg-industrial-800">Cancelar</button>
+                className="rounded-lg border border-industrial-400 px-4 py-2 text-sm font-medium text-industrial-700 hover:bg-industrial-200">Cancelar</button>
               <button type="button" onClick={salvarAgendamento} disabled={salvando}
                 className="rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-medium disabled:opacity-50">
                 {salvando ? 'Salvando…' : 'Salvar'}
@@ -747,17 +747,17 @@ export function ProgramacaoSemana({
       {/* Modal de item (fórmula/quantidade/embalagem) — cria agendamento ou adiciona/edita item */}
       {itemForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setItemForm(null)}>
-          <div className="w-full max-w-md rounded-xl bg-industrial-900 border border-industrial-700 p-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-xl bg-industrial-100 border border-industrial-300 p-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-industrial-100">
+              <h2 className="text-base font-semibold text-industrial-900">
                 {itemForm.itemId ? 'Editar item' : editandoNovoAgendamento ? 'Novo cliente' : 'Novo item'} · {ddmm(itemForm.data)}
               </h2>
-              <button type="button" onClick={() => setItemForm(null)} className="text-industrial-400 hover:text-industrial-100"><X className="size-5" /></button>
+              <button type="button" onClick={() => setItemForm(null)} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
             </div>
 
             {editandoNovoAgendamento && (
               <>
-                <div className="text-xs font-medium text-industrial-400">Cliente
+                <div className="text-xs font-medium text-industrial-600">Cliente
                   <div className="mt-1">
                     <ClientePicker
                       value={itemForm.cliente}
@@ -770,16 +770,16 @@ export function ProgramacaoSemana({
                     />
                   </div>
                 </div>
-                <label className="text-xs font-medium text-industrial-400">Observação / nº do pedido
+                <label className="text-xs font-medium text-industrial-600">Observação / nº do pedido
                   <input value={itemForm.observacao} onChange={(e) => setItemForm({ ...itemForm, observacao: e.target.value })}
                     placeholder="ex.: PEDIDO 26092"
-                    className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
                 </label>
-                <label className="text-xs font-medium text-industrial-400">Transportadora (opcional — já sai enviado pra ela)
+                <label className="text-xs font-medium text-industrial-600">Transportadora (opcional — já sai enviado pra ela)
                   <select
                     value={itemForm.transportadoraId}
                     onChange={(e) => setItemForm({ ...itemForm, transportadoraId: e.target.value })}
-                    className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 focus:outline-none focus:border-brand-500"
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 focus:outline-none focus:border-brand-500"
                   >
                     <option value="">— Definir depois —</option>
                     {transportadoras.map((t) => (
@@ -790,28 +790,28 @@ export function ProgramacaoSemana({
               </>
             )}
 
-            <div className="text-xs font-medium text-industrial-400">Fórmula (opcional — deixe em branco se for fórmula química fora da planilha)
+            <div className="text-xs font-medium text-industrial-600">Fórmula (opcional — deixe em branco se for fórmula química fora da planilha)
               <div className="mt-1"><FormulaPicker value={itemForm.formula_id} formulas={formulas} onChange={(id) => setItemForm({ ...itemForm, formula_id: id })} /></div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <label className="text-xs font-medium text-industrial-400">Quantidade
+              <label className="text-xs font-medium text-industrial-600">Quantidade
                 <input type="number" min={1} value={itemForm.quantidade} onChange={(e) => setItemForm({ ...itemForm, quantidade: Number(e.target.value) || 0 })}
-                  className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 focus:outline-none focus:border-brand-500" />
+                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 focus:outline-none focus:border-brand-500" />
               </label>
-              <label className="text-xs font-medium text-industrial-400">Embalagem
+              <label className="text-xs font-medium text-industrial-600">Embalagem
                 <select value={itemForm.embalagem} onChange={(e) => setItemForm({ ...itemForm, embalagem: e.target.value as Embalagem })}
-                  className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 focus:outline-none focus:border-brand-500">
+                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 focus:outline-none focus:border-brand-500">
                   {EMBALAGEM_OPCOES.map((opt) => <option key={opt} value={opt}>{EMBALAGEM_LABEL[opt]}</option>)}
                 </select>
               </label>
             </div>
 
             <div className="flex items-center justify-between pt-1">
-              <span className="text-sm text-industrial-400">Total: <span className="font-bold text-brand-700">{tonsItemForm.toFixed(2)} ton</span></span>
+              <span className="text-sm text-industrial-600">Total: <span className="font-bold text-brand-700">{tonsItemForm.toFixed(2)} ton</span></span>
               <div className="flex gap-2">
                 <button type="button" onClick={() => setItemForm(null)}
-                  className="rounded-lg border border-industrial-600 px-4 py-2 text-sm font-medium text-industrial-300 hover:bg-industrial-800">Cancelar</button>
+                  className="rounded-lg border border-industrial-400 px-4 py-2 text-sm font-medium text-industrial-700 hover:bg-industrial-200">Cancelar</button>
                 <button type="button" onClick={salvarItem} disabled={salvando || itemForm.quantidade <= 0}
                   title={itemForm.quantidade <= 0 ? 'Informe uma quantidade maior que zero' : undefined}
                   className="rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-medium disabled:opacity-50">

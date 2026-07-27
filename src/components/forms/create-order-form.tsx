@@ -125,7 +125,7 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
             setManualSaved(null)
           }}
           title="Restaurar estado padrão de todas as matérias primas"
-          className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-industrial-600 transition-colors hover:bg-industrial-800 hover:text-industrial-400"
+          className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-industrial-400 transition-colors hover:bg-industrial-200 hover:text-industrial-600"
         >
           <RotateCcw className="h-3 w-3" />
           Restaurar padrão
@@ -171,7 +171,7 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
             'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-semibold transition-all',
             manual
               ? 'border-2 border-brand-500 text-brand-700'
-              : 'border-2 border-dashed border-industrial-600 text-industrial-500 hover:border-industrial-400 hover:text-industrial-100'
+              : 'border-2 border-dashed border-industrial-400 text-industrial-500 hover:border-industrial-600 hover:text-industrial-900'
           )}
         >
           <PenLine className="h-3.5 w-3.5" />
@@ -181,8 +181,8 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
 
       {/* ── Barra de ações (insumo do grid selecionado) ─────────── */}
       {showActions && (
-        <div className="flex items-center gap-2 rounded-lg border-2 border-industrial-700 bg-industrial-900 px-3 py-2">
-          <span className="mr-1 text-xs text-industrial-600 shrink-0">Ações:</span>
+        <div className="flex items-center gap-2 rounded-lg border-2 border-industrial-300 bg-industrial-100 px-3 py-2">
+          <span className="mr-1 text-xs text-industrial-400 shrink-0">Ações:</span>
           {isPinned ? (
             <ActionChip icon={PinOff} label="Desfixar"  onClick={() => unpin(insumo)} />
           ) : (
@@ -211,12 +211,12 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
             }}
             placeholder="Digite o nome da matéria prima..."
             autoComplete="off"
-            className="w-full rounded-lg border border-industrial-700 bg-industrial-900 px-3 py-2 text-sm text-industrial-100 placeholder:text-industrial-600 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30"
+            className="w-full rounded-lg border border-industrial-300 bg-industrial-100 px-3 py-2 text-sm text-industrial-900 placeholder:text-industrial-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/30"
           />
 
           {/* Prompt: salvar como atalho? */}
           {manualValue.trim().length >= 2 && manualSaved === null && (
-            <div className="flex items-center gap-2 rounded-lg border border-industrial-700 bg-industrial-900/50 px-3 py-2.5">
+            <div className="flex items-center gap-2 rounded-lg border border-industrial-300 bg-industrial-100/50 px-3 py-2.5">
               <span className="shrink-0 text-xs text-industrial-500">Salvar atalho?</span>
               <button
                 type="button"
@@ -228,7 +228,7 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
               <button
                 type="button"
                 onClick={handleManualSkip}
-                className="flex items-center gap-1 rounded-md border border-industrial-700 bg-industrial-900 px-2.5 py-1 text-xs font-semibold text-industrial-400 transition-colors hover:text-industrial-200"
+                className="flex items-center gap-1 rounded-md border border-industrial-300 bg-industrial-100 px-2.5 py-1 text-xs font-semibold text-industrial-600 transition-colors hover:text-industrial-800"
               >
                 ✕ Só agora
               </button>
@@ -249,7 +249,7 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
           <button
             type="button"
             onClick={() => setShowOcultos((v) => !v)}
-            className="flex items-center gap-1.5 text-xs text-industrial-600 transition-colors hover:text-industrial-400"
+            className="flex items-center gap-1.5 text-xs text-industrial-400 transition-colors hover:text-industrial-600"
           >
             {showOcultos ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
             Ocultos ({hiddenList.length})
@@ -263,7 +263,7 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
                   type="button"
                   onClick={() => restore(nome)}
                   title="Restaurar matéria prima"
-                  className="flex items-center gap-1.5 rounded-lg border border-industrial-700 bg-industrial-900 px-3 py-1.5 text-xs font-semibold text-industrial-500 transition-all hover:border-industrial-500 hover:text-industrial-200"
+                  className="flex items-center gap-1.5 rounded-lg border border-industrial-300 bg-industrial-100 px-3 py-1.5 text-xs font-semibold text-industrial-500 transition-all hover:border-industrial-500 hover:text-industrial-800"
                 >
                   {nome}
                   <span className="text-brand-500">↩</span>
@@ -293,7 +293,7 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
                 'flex h-20 items-center justify-center rounded-2xl border-2 text-4xl font-black transition-all select-none active:scale-95',
                 quantidade === qtd
                   ? 'border-2 border-brand-600 bg-brand-600 text-white'
-                  : 'border-2 border-industrial-700 bg-transparent text-industrial-400 hover:border-industrial-400 hover:text-industrial-100'
+                  : 'border-2 border-industrial-300 bg-transparent text-industrial-600 hover:border-industrial-600 hover:text-industrial-900'
               )}
             >
               {qtd}
@@ -310,7 +310,7 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
           <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-brand-700">
             Solicitação
           </p>
-          <p className="text-base font-bold text-industrial-100">
+          <p className="text-base font-bold text-industrial-900">
             {insumoFinal}
             <span className="ml-3 text-brand-600">{quantidade} conchas</span>
           </p>
@@ -326,7 +326,7 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
           'w-full flex items-center justify-center gap-3 rounded-2xl py-5 text-lg font-black uppercase tracking-wider transition-all active:scale-[0.98]',
           pronto && !loading
             ? 'border-2 border-brand-600 bg-brand-600 text-white hover:bg-brand-500 hover:border-brand-500 cursor-pointer'
-            : 'border-2 border-industrial-700 bg-transparent text-industrial-600 cursor-not-allowed'
+            : 'border-2 border-industrial-300 bg-transparent text-industrial-400 cursor-not-allowed'
         )}
       >
         {loading ? (
@@ -362,7 +362,7 @@ function InsumoChip({ nome, selected, variant, onClick }: {
           ? 'border-brand-600 bg-brand-600 text-white'
           : variant === 'pinned'
           ? 'border-yellow-400 bg-yellow-50 text-yellow-700 hover:border-yellow-500 hover:text-yellow-800'
-          : 'border-industrial-700 bg-transparent text-industrial-400 hover:border-industrial-400 hover:text-industrial-100'
+          : 'border-industrial-300 bg-transparent text-industrial-600 hover:border-industrial-600 hover:text-industrial-900'
       )}
     >
       {variant === 'pinned' && <span className="mr-1">⭐</span>}
@@ -380,7 +380,7 @@ function ActionChip({ icon: Icon, label, onClick }: {
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center gap-1.5 rounded-md border-2 border-industrial-700 px-2.5 py-1 text-xs font-semibold text-industrial-400 transition-all hover:border-industrial-400 hover:bg-industrial-900 hover:text-industrial-100"
+      className="flex items-center gap-1.5 rounded-md border-2 border-industrial-300 px-2.5 py-1 text-xs font-semibold text-industrial-600 transition-all hover:border-industrial-600 hover:bg-industrial-100 hover:text-industrial-900"
     >
       <Icon className="h-3 w-3" />
       {label}

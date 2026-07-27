@@ -8,8 +8,8 @@ export default function NotFound() {
         <AlertTriangle className="h-8 w-8 text-danger-400" />
       </div>
       <div>
-        <h1 className="text-4xl font-bold text-industrial-50">404</h1>
-        <p className="mt-2 text-industrial-400">Página não encontrada</p>
+        <h1 className="text-4xl font-bold text-industrial-950">404</h1>
+        <p className="mt-2 text-industrial-600">Página não encontrada</p>
       </div>
       <Link
         href="/"

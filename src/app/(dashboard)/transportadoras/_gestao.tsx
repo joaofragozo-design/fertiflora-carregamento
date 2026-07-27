@@ -99,8 +99,8 @@ export function GestaoTransportadoras({ initialTransportadoras }: GestaoTranspor
     <div className="flex flex-col gap-4 max-w-3xl">
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-industrial-100">Transportadoras</h1>
-          <p className="text-xs text-industrial-400 mt-1">
+          <h1 className="text-lg font-semibold text-industrial-900">Transportadoras</h1>
+          <p className="text-xs text-industrial-600 mt-1">
             Cada transportadora ganha um login próprio pra cadastrar motoristas e enviar solicitações de carregamento.
           </p>
         </div>
@@ -119,17 +119,17 @@ export function GestaoTransportadoras({ initialTransportadoras }: GestaoTranspor
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <KeyRound className="size-4 text-brand-700" />
-              <p className="text-sm font-semibold text-industrial-100">
+              <p className="text-sm font-semibold text-industrial-900">
                 Acesso criado para {credenciais.nome} — repasse agora (a senha não será mostrada de novo):
               </p>
             </div>
-            <button type="button" onClick={() => setCredenciais(null)} className="text-industrial-400 hover:text-industrial-100">
+            <button type="button" onClick={() => setCredenciais(null)} className="text-industrial-600 hover:text-industrial-900">
               <X className="size-4" />
             </button>
           </div>
           <div className="flex items-center gap-4 mt-2 flex-wrap">
-            <span className="text-sm text-industrial-300">Usuário: <span className="font-mono font-bold text-industrial-100">{credenciais.username}</span></span>
-            <span className="text-sm text-industrial-300">Senha: <span className="font-mono font-bold text-industrial-100">{credenciais.senha}</span></span>
+            <span className="text-sm text-industrial-700">Usuário: <span className="font-mono font-bold text-industrial-900">{credenciais.username}</span></span>
+            <span className="text-sm text-industrial-700">Senha: <span className="font-mono font-bold text-industrial-900">{credenciais.senha}</span></span>
             <button
               type="button"
               onClick={copiarCredenciais}
@@ -144,11 +144,11 @@ export function GestaoTransportadoras({ initialTransportadoras }: GestaoTranspor
       {/* Lista */}
       <div className="flex flex-col gap-2">
         {transportadoras.map((t) => (
-          <div key={t.id} className="flex items-center justify-between gap-3 rounded-xl border border-industrial-700 bg-industrial-900 px-4 py-3">
+          <div key={t.id} className="flex items-center justify-between gap-3 rounded-xl border border-industrial-300 bg-industrial-100 px-4 py-3">
             <div className="flex items-center gap-2.5 min-w-0">
               <Container className="size-4 text-brand-600 shrink-0" />
               <div className="min-w-0">
-                <span className="font-semibold text-industrial-100 truncate block">{t.nome}</span>
+                <span className="font-semibold text-industrial-900 truncate block">{t.nome}</span>
                 {(t.cnpj || t.email) && (
                   <span className="text-xs text-industrial-500 truncate block">
                     {[t.cnpj, t.email].filter(Boolean).join(' · ')}
@@ -164,7 +164,7 @@ export function GestaoTransportadoras({ initialTransportadoras }: GestaoTranspor
                 type="button"
                 onClick={() => setEdit({ id: t.id, nome: t.nome, cnpj: t.cnpj ?? '', email: t.email ?? '' })}
                 title="Editar nome / CNPJ / e-mail"
-                className="text-industrial-400 hover:text-brand-700"
+                className="text-industrial-600 hover:text-brand-700"
               >
                 <Pencil className="size-4" />
               </button>
@@ -179,64 +179,64 @@ export function GestaoTransportadoras({ initialTransportadoras }: GestaoTranspor
       {/* Modal de cadastro */}
       {form && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setForm(null)}>
-          <div className="w-full max-w-md rounded-xl bg-industrial-900 border border-industrial-700 p-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-xl bg-industrial-100 border border-industrial-300 p-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-industrial-100">Nova transportadora</h2>
-              <button type="button" onClick={() => setForm(null)} className="text-industrial-400 hover:text-industrial-100"><X className="size-5" /></button>
+              <h2 className="text-base font-semibold text-industrial-900">Nova transportadora</h2>
+              <button type="button" onClick={() => setForm(null)} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
             </div>
 
-            <label className="text-xs font-medium text-industrial-400">Nome da transportadora
+            <label className="text-xs font-medium text-industrial-600">Nome da transportadora
               <input
                 autoFocus
                 value={form.nome}
                 onChange={(e) => setForm({ ...form, nome: e.target.value })}
                 placeholder="ex.: Transportes Oeste Ltda"
-                className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
               />
             </label>
 
             <div className="grid grid-cols-2 gap-3">
-              <label className="text-xs font-medium text-industrial-400">Usuário (login)
+              <label className="text-xs font-medium text-industrial-600">Usuário (login)
                 <input
                   value={form.username}
                   onChange={(e) => setForm({ ...form, username: e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, '') })}
                   placeholder="ex.: toeste"
-                  className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
                 />
               </label>
-              <label className="text-xs font-medium text-industrial-400">Senha (mín. 6)
+              <label className="text-xs font-medium text-industrial-600">Senha (mín. 6)
                 <input
                   value={form.senha}
                   onChange={(e) => setForm({ ...form, senha: e.target.value })}
                   placeholder="senha de acesso"
-                  className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
                 />
               </label>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <label className="text-xs font-medium text-industrial-400">CNPJ (opcional)
+              <label className="text-xs font-medium text-industrial-600">CNPJ (opcional)
                 <input
                   value={form.cnpj}
                   onChange={(e) => setForm({ ...form, cnpj: e.target.value })}
                   placeholder="00.000.000/0000-00"
-                  className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
                 />
               </label>
-              <label className="text-xs font-medium text-industrial-400">E-mail (opcional)
+              <label className="text-xs font-medium text-industrial-600">E-mail (opcional)
                 <input
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   placeholder="contato@transportadora.com"
-                  className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
                 />
               </label>
             </div>
 
             <div className="flex justify-end gap-2 pt-1">
               <button type="button" onClick={() => setForm(null)}
-                className="rounded-lg border border-industrial-600 px-4 py-2 text-sm font-medium text-industrial-300 hover:bg-industrial-800">Cancelar</button>
+                className="rounded-lg border border-industrial-400 px-4 py-2 text-sm font-medium text-industrial-700 hover:bg-industrial-200">Cancelar</button>
               <button
                 type="button"
                 onClick={criar}
@@ -253,44 +253,44 @@ export function GestaoTransportadoras({ initialTransportadoras }: GestaoTranspor
       {/* Modal de edição (nome/CNPJ/e-mail) */}
       {edit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setEdit(null)}>
-          <div className="w-full max-w-md rounded-xl bg-industrial-900 border border-industrial-700 p-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-xl bg-industrial-100 border border-industrial-300 p-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-industrial-100">Editar transportadora</h2>
-              <button type="button" onClick={() => setEdit(null)} className="text-industrial-400 hover:text-industrial-100"><X className="size-5" /></button>
+              <h2 className="text-base font-semibold text-industrial-900">Editar transportadora</h2>
+              <button type="button" onClick={() => setEdit(null)} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
             </div>
 
-            <label className="text-xs font-medium text-industrial-400">Nome da transportadora
+            <label className="text-xs font-medium text-industrial-600">Nome da transportadora
               <input
                 autoFocus
                 value={edit.nome}
                 onChange={(e) => setEdit({ ...edit, nome: e.target.value })}
-                className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 focus:outline-none focus:border-brand-500"
+                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 focus:outline-none focus:border-brand-500"
               />
             </label>
 
             <div className="grid grid-cols-2 gap-3">
-              <label className="text-xs font-medium text-industrial-400">CNPJ (opcional)
+              <label className="text-xs font-medium text-industrial-600">CNPJ (opcional)
                 <input
                   value={edit.cnpj}
                   onChange={(e) => setEdit({ ...edit, cnpj: e.target.value })}
                   placeholder="00.000.000/0000-00"
-                  className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
                 />
               </label>
-              <label className="text-xs font-medium text-industrial-400">E-mail (opcional)
+              <label className="text-xs font-medium text-industrial-600">E-mail (opcional)
                 <input
                   type="email"
                   value={edit.email}
                   onChange={(e) => setEdit({ ...edit, email: e.target.value })}
                   placeholder="contato@transportadora.com"
-                  className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
                 />
               </label>
             </div>
 
             <div className="flex justify-end gap-2 pt-1">
               <button type="button" onClick={() => setEdit(null)}
-                className="rounded-lg border border-industrial-600 px-4 py-2 text-sm font-medium text-industrial-300 hover:bg-industrial-800">Cancelar</button>
+                className="rounded-lg border border-industrial-400 px-4 py-2 text-sm font-medium text-industrial-700 hover:bg-industrial-200">Cancelar</button>
               <button
                 type="button"
                 onClick={salvarEdicao}

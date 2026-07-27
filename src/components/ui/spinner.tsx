@@ -15,7 +15,7 @@ export function Spinner({ className, size = 'md' }: SpinnerProps) {
   return (
     <span
       className={cn(
-        'inline-block animate-spin rounded-full border-industrial-600 border-t-brand-500',
+        'inline-block animate-spin rounded-full border-industrial-400 border-t-brand-500',
         sizes[size],
         className
       )}

@@ -204,7 +204,7 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
           <div className="pointer-events-none fixed inset-0 z-50 animate-screen-flash bg-brand-400/30" />
         )}
 
-        <p className="mb-6 text-xs font-bold uppercase tracking-[0.25em] text-industrial-600">
+        <p className="mb-6 text-xs font-bold uppercase tracking-[0.25em] text-industrial-400">
           Centro Operacional
         </p>
 
@@ -212,14 +212,14 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
           <div className="flex flex-col items-center gap-8 text-center">
             <div className="text-7xl">⏳</div>
             <div>
-              <p className="text-4xl font-black uppercase tracking-widest text-industrial-300">
+              <p className="text-4xl font-black uppercase tracking-widest text-industrial-700">
                 Aguardando
               </p>
               <p className="text-4xl font-black uppercase tracking-widest text-industrial-500">
                 Solicitações
               </p>
             </div>
-            <p className="text-base text-industrial-600 max-w-xs">
+            <p className="text-base text-industrial-400 max-w-xs">
               Nenhuma solicitação no momento.
             </p>
           </div>
@@ -234,8 +234,8 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
                   Liberado — Execute
                 </span>
               ) : (
-                <span className="flex items-center gap-2 rounded-full border border-industrial-700 bg-industrial-900 px-5 py-2 text-base font-bold uppercase tracking-widest text-industrial-400">
-                  <span className="h-2.5 w-2.5 rounded-full bg-industrial-600" />
+                <span className="flex items-center gap-2 rounded-full border border-industrial-300 bg-industrial-100 px-5 py-2 text-base font-bold uppercase tracking-widest text-industrial-600">
+                  <span className="h-2.5 w-2.5 rounded-full bg-industrial-400" />
                   Aguardando liberação
                 </span>
               )}
@@ -246,23 +246,23 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
               'rounded-2xl border-2 px-6 py-8 text-center transition-all duration-300',
               tarefa.status === 'LIBERADO'
                 ? 'border-brand-500'
-                : 'border-industrial-700'
+                : 'border-industrial-300'
             )}>
               <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-industrial-500">
                 Matéria Prima
               </p>
-              <p className="text-6xl font-black tracking-tight text-industrial-100 leading-none break-words">
+              <p className="text-6xl font-black tracking-tight text-industrial-900 leading-none break-words">
                 {tarefa.insumo}
               </p>
 
-              <div className="my-5 border-t border-industrial-800" />
+              <div className="my-5 border-t border-industrial-200" />
 
               {/* Progresso de conchas */}
               <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-industrial-500">
                 Progresso
               </p>
               <p
-                className="cursor-default select-none text-9xl font-black leading-none text-industrial-100"
+                className="cursor-default select-none text-9xl font-black leading-none text-industrial-900"
                 onClick={handleBobClick}
                 title=""
               >
@@ -275,7 +275,7 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
 
               {/* Barra de progresso */}
               {tarefa.status === 'LIBERADO' && (
-                <div className="mt-5 h-3 w-full rounded-full bg-industrial-800">
+                <div className="mt-5 h-3 w-full rounded-full bg-industrial-200">
                   <div
                     className="h-3 rounded-full bg-brand-500 transition-all duration-500"
                     style={{ width: `${Math.round(((tarefa.conchas_executadas ?? 0) / tarefa.quantidade) * 100)}%` }}
@@ -293,7 +293,7 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
                 'w-full rounded-2xl py-5 text-2xl font-black uppercase tracking-wider transition-all active:scale-[0.97] min-h-[64px]',
                 tarefa.status === 'LIBERADO' && loadingId !== tarefa.id
                   ? 'border-2 border-brand-500 bg-brand-600 text-white hover:bg-brand-500'
-                  : 'border-2 border-industrial-700 text-industrial-500 cursor-not-allowed'
+                  : 'border-2 border-industrial-300 text-industrial-500 cursor-not-allowed'
               )}
             >
               {loadingId === tarefa.id
@@ -305,7 +305,7 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
 
             {/* Fila */}
             {ordens.filter((o) => o.status === 'SOLICITADO').length > 1 && (
-              <p className="text-center text-sm text-industrial-600">
+              <p className="text-center text-sm text-industrial-400">
                 +{ordens.filter((o) => o.status === 'SOLICITADO').length - 1} na fila
               </p>
             )}
@@ -326,7 +326,7 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
         <p className="text-xs font-semibold uppercase tracking-widest text-industrial-500">
           Visão Admin — Centro Operacional
         </p>
-        <p className="text-sm text-industrial-400">{user.username}</p>
+        <p className="text-sm text-industrial-600">{user.username}</p>
       </div>
 
       {liberados.map((item) => (
@@ -356,9 +356,9 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
       )}
 
       {ordens.length === 0 && (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-industrial-800 py-20 text-center">
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-industrial-200 py-20 text-center">
           <div className="text-4xl">⏳</div>
-          <p className="text-base font-semibold text-industrial-400">Nenhuma atividade</p>
+          <p className="text-base font-semibold text-industrial-600">Nenhuma atividade</p>
         </div>
       )}
     </div>
@@ -375,9 +375,9 @@ function AdminLiberadoCard({ item }: { item: Carregamento }) {
         <span className="text-xs font-bold uppercase tracking-widest text-brand-700">Em execução</span>
       </div>
       <div className="px-5 py-4 text-center">
-        <p className="text-4xl font-black text-industrial-100">{item.insumo}</p>
+        <p className="text-4xl font-black text-industrial-900">{item.insumo}</p>
         <p className="mt-1 text-2xl font-black text-brand-700">{executadas}/{item.quantidade} conchas</p>
-        <div className="mt-3 h-2 w-full rounded-full bg-industrial-800">
+        <div className="mt-3 h-2 w-full rounded-full bg-industrial-200">
           <div className="h-2 rounded-full bg-brand-500 transition-all" style={{ width: `${pct}%` }} />
         </div>
       </div>
@@ -387,9 +387,9 @@ function AdminLiberadoCard({ item }: { item: Carregamento }) {
 
 function AdminSolicitadoCard({ item }: { item: Carregamento }) {
   return (
-    <div className="flex items-center justify-between rounded-xl border border-industrial-800 bg-industrial-900 px-4 py-3">
+    <div className="flex items-center justify-between rounded-xl border border-industrial-200 bg-industrial-100 px-4 py-3">
       <div>
-        <p className="text-base font-bold text-industrial-100">{item.insumo}</p>
+        <p className="text-base font-bold text-industrial-900">{item.insumo}</p>
         <p className="text-sm text-industrial-500">{item.quantidade} conchas</p>
       </div>
       <span className="text-xs text-industrial-500">{tempoRelativo(item.created_at)}</span>
@@ -399,11 +399,11 @@ function AdminSolicitadoCard({ item }: { item: Carregamento }) {
 
 function AdminConcluidoCard({ item }: { item: Carregamento }) {
   return (
-    <div className="flex items-center justify-between rounded-xl border border-industrial-800 bg-industrial-900 px-4 py-3">
+    <div className="flex items-center justify-between rounded-xl border border-industrial-200 bg-industrial-100 px-4 py-3">
       <div className="flex items-center gap-3">
         <span className="h-2 w-2 rounded-full bg-brand-500" />
-        <span className="text-sm font-semibold text-industrial-300">{item.insumo}</span>
-        <span className="text-sm font-bold text-industrial-100">{item.quantidade} conchas</span>
+        <span className="text-sm font-semibold text-industrial-700">{item.insumo}</span>
+        <span className="text-sm font-bold text-industrial-900">{item.quantidade} conchas</span>
       </div>
       <span className="text-xs text-industrial-500">
         {item.finished_at ? tempoRelativo(item.finished_at) : '—'}

@@ -216,27 +216,27 @@ export function RecebimentoSemana({
       {/* Cabeçalho + navegação de semana */}
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-industrial-100">Programação de Recebimento</h1>
+          <h1 className="text-lg font-semibold text-industrial-900">Programação de Recebimento</h1>
           <div className="flex items-center gap-1.5 mt-2">
             <button type="button" onClick={() => irParaSemana(addDiasIso(semanaInicio, -7))} aria-label="Semana anterior"
-              className="rounded-lg border border-industrial-700 p-1.5 text-industrial-400 hover:text-industrial-100 hover:border-brand-500 transition-colors">
+              className="rounded-lg border border-industrial-300 p-1.5 text-industrial-600 hover:text-industrial-900 hover:border-brand-500 transition-colors">
               <ChevronLeft className="size-4" />
             </button>
-            <span className="text-sm font-medium text-industrial-200 px-2">
+            <span className="text-sm font-medium text-industrial-800 px-2">
               Semana de {ddmm(semanaInicio)} a {ddmm(addDiasIso(semanaInicio, 4))}
             </span>
             <button type="button" onClick={() => irParaSemana(addDiasIso(semanaInicio, 7))} aria-label="Próxima semana"
-              className="rounded-lg border border-industrial-700 p-1.5 text-industrial-400 hover:text-industrial-100 hover:border-brand-500 transition-colors">
+              className="rounded-lg border border-industrial-300 p-1.5 text-industrial-600 hover:text-industrial-900 hover:border-brand-500 transition-colors">
               <ChevronRight className="size-4" />
             </button>
           </div>
           {!podeEditar && !podeConfirmar && (
-            <p className="text-xs text-industrial-400 mt-1.5">Prévia (somente leitura).</p>
+            <p className="text-xs text-industrial-600 mt-1.5">Prévia (somente leitura).</p>
           )}
         </div>
         <div className="text-right">
-          <p className="text-xs text-industrial-400">Total da semana</p>
-          <p className="text-2xl font-bold text-brand-600">{totalSemana.toFixed(2)} <span className="text-sm font-normal text-industrial-400">ton</span></p>
+          <p className="text-xs text-industrial-600">Total da semana</p>
+          <p className="text-2xl font-bold text-brand-600">{totalSemana.toFixed(2)} <span className="text-sm font-normal text-industrial-600">ton</span></p>
         </div>
       </div>
 
@@ -250,13 +250,13 @@ export function RecebimentoSemana({
               key={data}
               className={cn(
                 'flex flex-col gap-2 rounded-xl border p-2.5',
-                ehAmanha ? 'border-brand-500 bg-brand-50' : ehHoje ? 'border-industrial-500' : 'border-industrial-800',
+                ehAmanha ? 'border-brand-500 bg-brand-50' : ehHoje ? 'border-industrial-500' : 'border-industrial-200',
               )}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-bold text-industrial-100">{nome}</p>
-                  <p className="text-xs text-industrial-400">
+                  <p className="text-sm font-bold text-industrial-900">{nome}</p>
+                  <p className="text-xs text-industrial-600">
                     {ddmm(data)}{ehAmanha && <span className="ml-1 text-brand-700 font-semibold">· amanhã</span>}{ehHoje && <span className="ml-1 text-industrial-500 font-semibold">· hoje</span>}
                   </p>
                 </div>
@@ -269,11 +269,11 @@ export function RecebimentoSemana({
                     key={r.id}
                     className={cn(
                       'rounded-lg border p-2 transition-colors',
-                      r.confirmado_em ? 'border-brand-500 bg-brand-100' : 'border-industrial-700 bg-industrial-900',
+                      r.confirmado_em ? 'border-brand-500 bg-brand-100' : 'border-industrial-300 bg-industrial-100',
                     )}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <span className="font-semibold text-industrial-100 text-sm leading-tight flex items-center gap-1.5">
+                      <span className="font-semibold text-industrial-900 text-sm leading-tight flex items-center gap-1.5">
                         {labelMateriaPrima(r)}
                         {r.confirmado_em && (
                           <span
@@ -286,27 +286,27 @@ export function RecebimentoSemana({
                       </span>
                       {podeEditar && (
                         <button type="button" onClick={() => remover(r)} title="Remover previsão"
-                          className="text-industrial-400 hover:text-red-600"><X className="size-3.5" /></button>
+                          className="text-industrial-600 hover:text-red-600"><X className="size-3.5" /></button>
                       )}
                     </div>
                     <p className="text-xs text-industrial-500 mt-1">
-                      <span className="font-bold text-industrial-300">{(r.quantidade_ton ?? 0).toFixed(2)} ton</span>
+                      <span className="font-bold text-industrial-700">{(r.quantidade_ton ?? 0).toFixed(2)} ton</span>
                       {' · '}{labelFornecedor(r)}
                     </p>
                     {(r.transportadora?.nome || r.motorista_nome) && (
-                      <p className="text-xs text-industrial-400 mt-0.5">
+                      <p className="text-xs text-industrial-600 mt-0.5">
                         {r.transportadora?.nome}{r.transportadora?.nome && r.motorista_nome && ' · '}{r.motorista_nome}
                       </p>
                     )}
                     {(r.placa_cavalo || r.placa) && (
-                      <p className="text-xs font-mono text-industrial-400 uppercase mt-0.5">
+                      <p className="text-xs font-mono text-industrial-600 uppercase mt-0.5">
                         Placa: {r.placa_cavalo || r.placa}
                         {[r.placa_1, r.placa_2, r.placa_3, r.placa_4].filter(Boolean).length > 0 &&
                           ` / ${[r.placa_1, r.placa_2, r.placa_3, r.placa_4].filter(Boolean).join(' / ')}`}
                       </p>
                     )}
-                    {r.numero_nota && <p className="text-xs text-industrial-400 mt-0.5">NF-e: {r.numero_nota}</p>}
-                    {r.observacao && <p className="text-xs text-industrial-400 italic mt-1">{r.observacao}</p>}
+                    {r.numero_nota && <p className="text-xs text-industrial-600 mt-0.5">NF-e: {r.numero_nota}</p>}
+                    {r.observacao && <p className="text-xs text-industrial-600 italic mt-1">{r.observacao}</p>}
 
                     {r.confirmado_em && (
                       <p className={cn(
@@ -372,7 +372,7 @@ export function RecebimentoSemana({
 
                 {podeEditar && (
                   <button type="button" onClick={() => abrirNovo(data)}
-                    className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-industrial-600 py-1.5 text-xs font-medium text-industrial-400 hover:border-brand-500 hover:text-brand-700 transition-colors">
+                    className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-industrial-400 py-1.5 text-xs font-medium text-industrial-600 hover:border-brand-500 hover:text-brand-700 transition-colors">
                     <Plus className="size-3.5" /> Adicionar recebimento
                   </button>
                 )}
@@ -389,19 +389,19 @@ export function RecebimentoSemana({
       {/* Modal de novo recebimento */}
       {form && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={() => setForm(null)}>
-          <div className="w-full max-w-md rounded-xl bg-industrial-900 border border-industrial-700 p-5 flex flex-col gap-3 my-4" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-xl bg-industrial-100 border border-industrial-300 p-5 flex flex-col gap-3 my-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-industrial-100 flex items-center gap-2">
+              <h2 className="text-base font-semibold text-industrial-900 flex items-center gap-2">
                 <Package className="size-4 text-brand-600" /> Novo recebimento · {ddmm(form.data)}
               </h2>
-              <button type="button" onClick={() => setForm(null)} className="text-industrial-400 hover:text-industrial-100"><X className="size-5" /></button>
+              <button type="button" onClick={() => setForm(null)} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
             </div>
 
-            <label className="text-xs font-medium text-industrial-400">Matéria-prima
+            <label className="text-xs font-medium text-industrial-600">Matéria-prima
               <select
                 value={form.materia_prima_key}
                 onChange={(e) => setForm({ ...form, materia_prima_key: e.target.value })}
-                className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 focus:outline-none focus:border-brand-500"
+                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 focus:outline-none focus:border-brand-500"
               >
                 <option value="">Selecionar…</option>
                 {MATERIAS_PRIMA.map((mp) => (
@@ -410,7 +410,7 @@ export function RecebimentoSemana({
               </select>
             </label>
 
-            <div className="text-xs font-medium text-industrial-400">Fornecedor
+            <div className="text-xs font-medium text-industrial-600">Fornecedor
               <div className="mt-1">
                 <FornecedorPicker
                   value={form.fornecedor}
@@ -422,24 +422,24 @@ export function RecebimentoSemana({
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <label className="text-xs font-medium text-industrial-400">Quantidade (ton)
+              <label className="text-xs font-medium text-industrial-600">Quantidade (ton)
                 <input value={form.quantidade_ton} onChange={(e) => setForm({ ...form, quantidade_ton: e.target.value })}
                   placeholder="ex.: 35"
-                  className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
+                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
               </label>
-              <label className="text-xs font-medium text-industrial-400">Número da nota (NF-e)
+              <label className="text-xs font-medium text-industrial-600">Número da nota (NF-e)
                 <input value={form.numero_nota} onChange={(e) => setForm({ ...form, numero_nota: e.target.value })}
                   placeholder="ex.: 116533"
-                  className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
+                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
               </label>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <label className="text-xs font-medium text-industrial-400">Transportadora (opcional)
+              <label className="text-xs font-medium text-industrial-600">Transportadora (opcional)
                 <select
                   value={form.transportadora_id}
                   onChange={(e) => setForm({ ...form, transportadora_id: e.target.value })}
-                  className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 focus:outline-none focus:border-brand-500"
+                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 focus:outline-none focus:border-brand-500"
                 >
                   <option value="">— Não informar —</option>
                   {initialTransportadoras.map((t) => (
@@ -447,54 +447,54 @@ export function RecebimentoSemana({
                   ))}
                 </select>
               </label>
-              <label className="text-xs font-medium text-industrial-400">Nome do motorista (opcional)
+              <label className="text-xs font-medium text-industrial-600">Nome do motorista (opcional)
                 <input value={form.motorista_nome} onChange={(e) => setForm({ ...form, motorista_nome: e.target.value })}
                   placeholder="ex.: José da Silva"
-                  className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
+                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
               </label>
             </div>
 
             <div>
-              <p className="text-xs font-semibold text-industrial-300 mb-1.5">Placas do veículo</p>
+              <p className="text-xs font-semibold text-industrial-700 mb-1.5">Placas do veículo</p>
               <div className="grid grid-cols-2 gap-3">
-                <label className="text-xs font-medium text-industrial-400">Placa cavalo
+                <label className="text-xs font-medium text-industrial-600">Placa cavalo
                   <input value={form.placa_cavalo} onChange={(e) => setForm({ ...form, placa_cavalo: e.target.value.toUpperCase() })}
                     placeholder="ABC1D23"
-                    className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
                 </label>
-                <label className="text-xs font-medium text-industrial-400">Placa 1 (opcional)
+                <label className="text-xs font-medium text-industrial-600">Placa 1 (opcional)
                   <input value={form.placa_1} onChange={(e) => setForm({ ...form, placa_1: e.target.value.toUpperCase() })}
                     placeholder="se articulado"
-                    className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
                 </label>
               </div>
               <div className="grid grid-cols-3 gap-3 mt-3">
-                <label className="text-xs font-medium text-industrial-400">Placa 2
+                <label className="text-xs font-medium text-industrial-600">Placa 2
                   <input value={form.placa_2} onChange={(e) => setForm({ ...form, placa_2: e.target.value.toUpperCase() })}
                     placeholder="opcional"
-                    className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
                 </label>
-                <label className="text-xs font-medium text-industrial-400">Placa 3
+                <label className="text-xs font-medium text-industrial-600">Placa 3
                   <input value={form.placa_3} onChange={(e) => setForm({ ...form, placa_3: e.target.value.toUpperCase() })}
                     placeholder="opcional"
-                    className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
                 </label>
-                <label className="text-xs font-medium text-industrial-400">Placa 4
+                <label className="text-xs font-medium text-industrial-600">Placa 4
                   <input value={form.placa_4} onChange={(e) => setForm({ ...form, placa_4: e.target.value.toUpperCase() })}
                     placeholder="opcional"
-                    className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
                 </label>
               </div>
             </div>
 
-            <label className="text-xs font-medium text-industrial-400">Observação (opcional)
+            <label className="text-xs font-medium text-industrial-600">Observação (opcional)
               <input value={form.observacao} onChange={(e) => setForm({ ...form, observacao: e.target.value })}
-                className="mt-1 w-full bg-industrial-950 border border-industrial-600 rounded-lg px-3 py-2 text-sm text-industrial-100 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
+                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500" />
             </label>
 
             <div className="flex justify-end gap-2 pt-1">
               <button type="button" onClick={() => setForm(null)}
-                className="rounded-lg border border-industrial-600 px-4 py-2 text-sm font-medium text-industrial-300 hover:bg-industrial-800">Cancelar</button>
+                className="rounded-lg border border-industrial-400 px-4 py-2 text-sm font-medium text-industrial-700 hover:bg-industrial-200">Cancelar</button>
               <button
                 type="button"
                 onClick={lancar}

@@ -103,14 +103,14 @@ export function FornecedorPicker({ value, fornecedores, onChange, onCriar, place
         onClick={() => (open ? fechar() : abrir())}
         className={cn(
           'w-full flex items-center justify-between gap-1 px-3 py-2 rounded-lg text-sm',
-          'bg-industrial-950 border border-industrial-600 text-left text-industrial-100',
+          'bg-industrial-50 border border-industrial-400 text-left text-industrial-900',
           'hover:border-brand-600 focus:outline-none focus:border-brand-500',
         )}
       >
         <span className={cn('truncate', !value && 'text-industrial-500')}>
           {value || placeholder}
         </span>
-        <ChevronDown className="size-4 shrink-0 text-industrial-400" />
+        <ChevronDown className="size-4 shrink-0 text-industrial-600" />
       </button>
 
       {open && pos && createPortal(
@@ -123,28 +123,28 @@ export function FornecedorPicker({ value, fornecedores, onChange, onCriar, place
             width: pos.width,
             maxHeight: `calc(100vh - ${pos.top}px - 12px)`,
           }}
-          className="z-[100] flex flex-col bg-industrial-900 border border-industrial-600 rounded-lg shadow-industrial overflow-hidden"
+          className="z-[100] flex flex-col bg-industrial-100 border border-industrial-400 rounded-lg shadow-industrial overflow-hidden"
         >
-          <div className="p-1.5 border-b border-industrial-700 shrink-0">
+          <div className="p-1.5 border-b border-industrial-300 shrink-0">
             <input
               ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar ou cadastrar fornecedor..."
-              className="w-full bg-industrial-950 text-sm text-industrial-100 placeholder-industrial-500
-                         px-2 py-1.5 rounded border border-industrial-600 focus:outline-none focus:border-brand-500"
+              className="w-full bg-industrial-50 text-sm text-industrial-900 placeholder-industrial-500
+                         px-2 py-1.5 rounded border border-industrial-400 focus:outline-none focus:border-brand-500"
             />
           </div>
           <ul className="overflow-y-auto py-1">
             {/* Sempre visível (não só depois de digitar) — senão fica escondido
              *  atrás de "digite um nome que ainda não existe", o que parecia
              *  "não deixa cadastrar" pra quem não percebia que precisava digitar. */}
-            <li className="border-b border-industrial-800">
+            <li className="border-b border-industrial-200">
               <button
                 type="button"
                 onClick={cadastrarNovo}
                 disabled={criando || !query.trim() || existeExato}
-                className="w-full text-left text-sm px-3 py-2 flex items-center gap-1.5 text-brand-700 font-semibold hover:bg-industrial-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-full text-left text-sm px-3 py-2 flex items-center gap-1.5 text-brand-700 font-semibold hover:bg-industrial-200 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Plus className="size-3.5" />
                 {criando
@@ -160,8 +160,8 @@ export function FornecedorPicker({ value, fornecedores, onChange, onCriar, place
                   type="button"
                   onClick={() => selecionar(f)}
                   className={cn(
-                    'w-full text-left text-sm px-3 py-1.5 truncate hover:bg-industrial-800',
-                    f.nome === value ? 'text-brand-700 font-semibold' : 'text-industrial-100',
+                    'w-full text-left text-sm px-3 py-1.5 truncate hover:bg-industrial-200',
+                    f.nome === value ? 'text-brand-700 font-semibold' : 'text-industrial-900',
                   )}
                 >
                   {f.nome}

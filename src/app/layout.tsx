@@ -1,17 +1,27 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { IBM_Plex_Sans, IBM_Plex_Mono, Petrona } from 'next/font/google'
 import { Providers } from '@/providers'
 import { getAuthUser } from '@/lib/supabase/get-user'
 import { SwRegister } from '@/components/pwa/sw-register'
 import '@/styles/globals.css'
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const plexSans = IBM_Plex_Sans({
+  variable: '--font-sans',
+  weight: ['400', '500', '600', '700'],
   subsets: ['latin'],
 })
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const plexMono = IBM_Plex_Mono({
+  variable: '--font-mono',
+  weight: ['400', '500', '600', '700'],
+  subsets: ['latin'],
+})
+
+/** Serifa editorial para títulos de telas de marca (login, onboarding) */
+const petrona = Petrona({
+  variable: '--font-display',
+  weight: ['500', '600', '700'],
+  style: ['normal', 'italic'],
   subsets: ['latin'],
 })
 
@@ -31,8 +41,8 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#0F172A',
-  colorScheme: 'dark',
+  themeColor: '#f4f4f5',
+  colorScheme: 'light',
   width: 'device-width',
   initialScale: 1,
 }
@@ -45,8 +55,8 @@ export default async function RootLayout({
   const initialUser = await getAuthUser()
 
   return (
-    <html lang="pt-BR" className="dark">
-      <body className={`${geistSans.variable} ${geistMono.variable} bg-industrial-950 min-h-screen`}>
+    <html lang="pt-BR">
+      <body className={`${plexSans.variable} ${plexMono.variable} ${petrona.variable} bg-industrial-50 min-h-screen`}>
         <Providers initialUser={initialUser}>
           {children}
         </Providers>

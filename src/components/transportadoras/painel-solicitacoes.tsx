@@ -143,8 +143,8 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
 
   if (solicitacoesPendentes.length === 0 && liberadosAguardandoWhatsapp.length === 0) {
     return (
-      <div className="rounded-xl border border-industrial-800 p-4">
-        <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-industrial-400">
+      <div className="rounded-xl border border-industrial-200 p-4">
+        <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-industrial-600">
           <Container className="size-3.5 text-brand-600" /> Solicitações de carregamento
         </p>
         <p className="text-sm text-industrial-500 mt-2">Nenhuma solicitação aguardando ação no momento.</p>
@@ -162,14 +162,14 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
         {solicitacoesPendentes.map((ag) => {
           const ocupado = liberandoId === ag.id || excluindoId === ag.id
           return (
-          <div key={ag.id} className="flex items-center justify-between gap-3 flex-wrap rounded-xl bg-industrial-900 border border-industrial-700 px-3 py-2.5">
+          <div key={ag.id} className="flex items-center justify-between gap-3 flex-wrap rounded-xl bg-industrial-100 border border-industrial-300 px-3 py-2.5">
             <div className="min-w-0">
-              <p className="text-sm font-bold text-industrial-100">
+              <p className="text-sm font-bold text-industrial-900">
                 {ag.transportadora?.nome ?? 'Transportadora'}
-                <span className="font-normal text-industrial-400"> · {ag.cliente || 'sem cliente'} · {ddmm(ag.data)}</span>
+                <span className="font-normal text-industrial-600"> · {ag.cliente || 'sem cliente'} · {ddmm(ag.data)}</span>
               </p>
-              <p className="text-xs text-industrial-400 mt-0.5">
-                Motorista: <span className="font-semibold text-industrial-200">{ag.motorista?.nome ?? '—'}</span>
+              <p className="text-xs text-industrial-600 mt-0.5">
+                Motorista: <span className="font-semibold text-industrial-800">{ag.motorista?.nome ?? '—'}</span>
                 {ag.motorista?.placa_cavalo && <span className="font-mono"> · {ag.motorista.placa_cavalo}</span>}
                 {ag.motorista?.whatsapp && <span className="font-mono"> · {ag.motorista.whatsapp}</span>}
                 <span className="text-industrial-500"> · {tonsDoAgendamento(ag).toFixed(2)} ton</span>
@@ -181,7 +181,7 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
                 onClick={() => excluirSolicitacao(ag)}
                 disabled={ocupado}
                 title="Excluir solicitação"
-                className="flex items-center justify-center rounded-lg border border-industrial-600 text-industrial-400 hover:border-red-500 hover:text-red-600 p-2 transition-colors disabled:opacity-50"
+                className="flex items-center justify-center rounded-lg border border-industrial-400 text-industrial-600 hover:border-red-500 hover:text-red-600 p-2 transition-colors disabled:opacity-50"
               >
                 <Trash2 className="size-4" />
               </button>
@@ -201,13 +201,13 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
         {liberadosAguardandoWhatsapp.map((ag) => (
           <div key={ag.id} className="flex items-center justify-between gap-3 flex-wrap rounded-xl bg-brand-50 border-2 border-brand-500 px-3 py-2.5">
             <div className="min-w-0">
-              <p className="text-sm font-bold text-industrial-100 flex items-center gap-1.5">
+              <p className="text-sm font-bold text-industrial-900 flex items-center gap-1.5">
                 <CheckCircle2 className="size-3.5 text-brand-700 shrink-0" />
                 {ag.transportadora?.nome ?? 'Transportadora'}
-                <span className="font-normal text-industrial-400"> · {ag.cliente || 'sem cliente'} · {ddmm(ag.data)}</span>
+                <span className="font-normal text-industrial-600"> · {ag.cliente || 'sem cliente'} · {ddmm(ag.data)}</span>
               </p>
-              <p className="text-xs text-industrial-400 mt-0.5">
-                Liberado — motorista: <span className="font-semibold text-industrial-200">{ag.motorista?.nome ?? '—'}</span>
+              <p className="text-xs text-industrial-600 mt-0.5">
+                Liberado — motorista: <span className="font-semibold text-industrial-800">{ag.motorista?.nome ?? '—'}</span>
                 {ag.motorista?.whatsapp && <span className="font-mono"> · {ag.motorista.whatsapp}</span>}
               </p>
             </div>
@@ -217,7 +217,7 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
                 onClick={() => excluirSolicitacao(ag)}
                 disabled={excluindoId === ag.id}
                 title="Excluir solicitação"
-                className="flex items-center justify-center rounded-lg border border-industrial-600 text-industrial-400 hover:border-red-500 hover:text-red-600 p-2 transition-colors disabled:opacity-50"
+                className="flex items-center justify-center rounded-lg border border-industrial-400 text-industrial-600 hover:border-red-500 hover:text-red-600 p-2 transition-colors disabled:opacity-50"
               >
                 <Trash2 className="size-4" />
               </button>

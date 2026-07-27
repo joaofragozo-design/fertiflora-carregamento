@@ -1,4 +1,5 @@
 import type { CarregamentoStatus } from '@/types'
+import type { BadgeVariant } from '@/components/ui/badge'
 
 export const STATUS_LABELS: Record<CarregamentoStatus, string> = {
   SOLICITADO: 'Solicitado',
@@ -8,12 +9,14 @@ export const STATUS_LABELS: Record<CarregamentoStatus, string> = {
   CANCELADO: 'Cancelado',
 }
 
-export const STATUS_COLORS: Record<CarregamentoStatus, string> = {
-  SOLICITADO: 'text-yellow-600 bg-yellow-500/10 border-yellow-500/30',
-  LIBERADO: 'text-blue-600 bg-blue-500/10 border-blue-500/30',
-  EM_EXECUCAO: 'text-info-600 bg-info-500/10 border-info-500/30',
-  CONCLUIDO: 'text-brand-700 bg-brand-500/10 border-brand-500/30',
-  CANCELADO: 'text-red-600 bg-red-500/10 border-red-500/30',
+// Mesmo sistema de cor semântica usado pelo Badge genérico — evita ter
+// duas paletas divergentes para o mesmo conceito de status.
+export const STATUS_VARIANT: Record<CarregamentoStatus, BadgeVariant> = {
+  SOLICITADO: 'warning',
+  LIBERADO: 'info',
+  EM_EXECUCAO: 'info',
+  CONCLUIDO: 'success',
+  CANCELADO: 'danger',
 }
 
 export const STATUS_PULSE: Record<CarregamentoStatus, boolean> = {
@@ -25,7 +28,6 @@ export const STATUS_PULSE: Record<CarregamentoStatus, boolean> = {
 }
 
 export const ORDER_STATUS_LABELS = STATUS_LABELS
-export const ORDER_STATUS_COLORS = STATUS_COLORS
 export const ORDER_STATUS_PULSE = STATUS_PULSE
 
 export const REALTIME_CHANNEL = 'carregamentos_changes'
