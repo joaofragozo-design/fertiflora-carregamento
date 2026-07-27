@@ -35,7 +35,8 @@ export default async function DashboardLayout({
   ) {
     redirect(ROUTES.ORDENS)
   }
-  // logística 02: /ordens, /programacao (prévia) e /recebimento (inicia/finaliza descarga)
+  // logística 02: /ordens, /programacao (prévia) e /recebimento (só leitura —
+  // confirmar chegada e iniciar/finalizar descarga são do Faturamento, migration 069)
   if (
     profile.role === 'logistica_02' &&
     !pathname.startsWith(ROUTES.ORDENS) &&

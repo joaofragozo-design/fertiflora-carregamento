@@ -107,7 +107,6 @@ export default async function RecebimentoPage({
       hoje={iso(new Date())}
       podeEditar={podeEditar}
       podeConfirmar={profile.role === 'admin' || profile.role === 'faturamento'}
-      podeOperar={profile.role === 'admin' || profile.role === 'logistica_02'}
       usuario={profile.username}
     />
   )

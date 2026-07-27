@@ -9,6 +9,7 @@ import { RecebimentosService, type RecebimentoPrevisto, STATUS_RECEBIMENTO_LABEL
 import { FornecedoresService } from '@/services/fornecedores.service'
 import { FornecedorPicker } from '@/components/fornecedores/fornecedor-picker'
 import { EstoqueConfigPainel } from '@/components/estoque/estoque-config-painel'
+import { FilaOperacao } from '@/components/recebimentos/fila-operacao'
 import { useRecebimentosSemana } from '@/hooks/use-recebimentos-semana'
 import { ROUTES } from '@/constants/routes'
 import type { Fornecedor } from '@/types/fornecedor'
@@ -26,8 +27,7 @@ interface RecebimentoSemanaProps {
   semanaFim:            string
   hoje:                 string
   podeEditar:           boolean // admin/logistica — lança a previsão
-  podeConfirmar:        boolean // admin/faturamento — confirma a chegada
-  podeOperar:           boolean // admin/logistica_02 (Richardson) — inicia/finaliza a descarga
+  podeConfirmar:        boolean // admin/faturamento — confirma chegada e inicia/finaliza a descarga
   usuario:              string
 }
 
@@ -75,14 +75,16 @@ interface FormState {
 }
 
 export function RecebimentoSemana({
-  initialRecebimentos, initialFornecedores, initialTransportadoras, initialEstoqueConfig, semanaInicio, semanaFim, hoje, podeEditar, podeConfirmar, podeOperar, usuario,
+  initialRecebimentos, initialFornecedores, initialTransportadoras, initialEstoqueConfig, semanaInicio, semanaFim, hoje, podeEditar, podeConfirmar, usuario,
 }: RecebimentoSemanaProps) {
   const { recebimentos, setRecebimentos } = useRecebimentosSemana(initialRecebimentos, semanaInicio, semanaFim)
   const [fornecedores, setFornecedores] = useState(initialFornecedores)
   const [form, setForm] = useState<FormState | null>(null)
   const [salvando, setSalvando] = useState(false)
-  const [confirmandoId, setConfirmandoId] = useState<string | null>(null)
-  const [operandoId, setOperandoId] = useState<string | null>(null)
+  // Confirmar/iniciar/finalizar nunca acontecem ao mesmo tempo na mesma linha
+  // (são 3 cliques sequenciais do Faturamento) — um único id de "processando"
+  // serve pros 3 botões, tanto na Fila de Operação quanto no card do dia.
+  const [processandoId, setProcessandoId] = useState<string | null>(null)
   const svc = useRef(new RecebimentosService(createClient())).current
   const fornecedoresSvc = useRef(new FornecedoresService(createClient())).current
   const router = useRouter()
@@ -163,7 +165,7 @@ export function RecebimentoSemana({
   }
 
   async function confirmarChegada(r: RecebimentoPrevisto) {
-    setConfirmandoId(r.id)
+    setProcessandoId(r.id)
     try {
       const upd = await svc.confirmarChegada(r.id, usuario)
       setRecebimentos((prev) => prev.map((x) => (x.id === upd.id ? upd : x)))
@@ -171,12 +173,12 @@ export function RecebimentoSemana({
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao confirmar chegada.')
     } finally {
-      setConfirmandoId(null)
+      setProcessandoId(null)
     }
   }
 
   async function iniciarDescarga(r: RecebimentoPrevisto) {
-    setOperandoId(r.id)
+    setProcessandoId(r.id)
     try {
       const upd = await svc.iniciarDescarga(r.id, usuario)
       setRecebimentos((prev) => prev.map((x) => (x.id === upd.id ? upd : x)))
@@ -184,20 +186,20 @@ export function RecebimentoSemana({
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao iniciar a descarga.')
     } finally {
-      setOperandoId(null)
+      setProcessandoId(null)
     }
   }
 
   async function finalizarDescarga(r: RecebimentoPrevisto) {
-    setOperandoId(r.id)
+    setProcessandoId(r.id)
     try {
       const upd = await svc.finalizarDescarga(r.id, usuario)
       setRecebimentos((prev) => prev.map((x) => (x.id === upd.id ? upd : x)))
-      toast.success('Descarga finalizada.')
+      toast.success('Descarga finalizada — matéria-prima somada ao estoque.')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao finalizar a descarga.')
     } finally {
-      setOperandoId(null)
+      setProcessandoId(null)
     }
   }
 
@@ -239,6 +241,16 @@ export function RecebimentoSemana({
           <p className="text-2xl font-bold text-brand-600">{totalSemana.toFixed(2)} <span className="text-sm font-normal text-industrial-600">ton</span></p>
         </div>
       </div>
+
+      {podeConfirmar && (
+        <FilaOperacao
+          recebimentos={recebimentos}
+          processandoId={processandoId}
+          onConfirmarChegada={confirmarChegada}
+          onIniciarDescarga={iniciarDescarga}
+          onFinalizarDescarga={finalizarDescarga}
+        />
+      )}
 
       {/* Grade da semana */}
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-3">
@@ -317,28 +329,28 @@ export function RecebimentoSemana({
                       </p>
                     )}
 
-                    {podeOperar && r.confirmado_em && (
+                    {podeConfirmar && r.confirmado_em && (
                       <div className="mt-1">
                         {getStatusRecebimento(r) === 'AGUARDANDO_FILA' && (
                           <button
                             type="button"
                             onClick={() => iniciarDescarga(r)}
-                            disabled={operandoId === r.id}
+                            disabled={processandoId === r.id}
                             className="flex items-center gap-1 text-[11px] font-semibold text-brand-700 hover:text-brand-800 transition-colors disabled:opacity-50"
                           >
                             <PlayCircle className="size-3" />
-                            {operandoId === r.id ? 'Iniciando…' : 'Iniciar descarga'}
+                            {processandoId === r.id ? 'Iniciando…' : 'Iniciar descarga'}
                           </button>
                         )}
                         {getStatusRecebimento(r) === 'DESCARREGANDO' && (
                           <button
                             type="button"
                             onClick={() => finalizarDescarga(r)}
-                            disabled={operandoId === r.id}
+                            disabled={processandoId === r.id}
                             className="flex items-center gap-1 text-[11px] font-semibold text-brand-700 hover:text-brand-800 transition-colors disabled:opacity-50"
                           >
                             <Flag className="size-3" />
-                            {operandoId === r.id ? 'Finalizando…' : 'Finalizar descarga'}
+                            {processandoId === r.id ? 'Finalizando…' : 'Finalizar descarga'}
                           </button>
                         )}
                       </div>
@@ -354,11 +366,11 @@ export function RecebimentoSemana({
                           <button
                             type="button"
                             onClick={() => confirmarChegada(r)}
-                            disabled={confirmandoId === r.id}
+                            disabled={processandoId === r.id}
                             className="flex items-center gap-1 text-[11px] font-semibold text-brand-700 hover:text-brand-800 transition-colors disabled:opacity-50"
                           >
                             <Truck className="size-3" />
-                            {confirmandoId === r.id ? 'Confirmando…' : 'Confirmar chegada do caminhão'}
+                            {processandoId === r.id ? 'Confirmando…' : 'Confirmar chegada do caminhão'}
                           </button>
                         )}
                       </div>

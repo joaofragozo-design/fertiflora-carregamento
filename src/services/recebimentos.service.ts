@@ -159,7 +159,7 @@ export class RecebimentosService {
     return this.normalizar([data])[0]
   }
 
-  /** Richardson marca que começou a descarregar o caminhão na fábrica. */
+  /** Faturamento marca que começou a descarregar o caminhão na fábrica. */
   async iniciarDescarga(id: string, usuario: string): Promise<RecebimentoPrevisto> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (this.supabase as any)
@@ -173,7 +173,9 @@ export class RecebimentosService {
     return this.normalizar([data])[0]
   }
 
-  /** Richardson marca que terminou de descarregar o caminhão. */
+  /** Faturamento marca que terminou de descarregar o caminhão — é esse evento
+   *  que soma a matéria-prima no estoque (trigger movimentar_estoque_recebimento,
+   *  migration 069). */
   async finalizarDescarga(id: string, usuario: string): Promise<RecebimentoPrevisto> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (this.supabase as any)
