@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Plus, X, ChevronLeft, ChevronRight, Truck, CheckCircle2, Package, PlayCircle, Flag } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-import { RecebimentosService, type RecebimentoPrevisto, STATUS_RECEBIMENTO_LABEL, getStatusRecebimento } from '@/services/recebimentos.service'
+import { RecebimentosService, type RecebimentoPrevisto, STATUS_RECEBIMENTO_LABEL, getStatusRecebimento, labelPlacaCompleta } from '@/services/recebimentos.service'
 import { FornecedoresService } from '@/services/fornecedores.service'
 import { FornecedorPicker } from '@/components/fornecedores/fornecedor-picker'
 import { EstoqueConfigPainel } from '@/components/estoque/estoque-config-painel'
@@ -109,6 +109,13 @@ export function RecebimentoSemana({
     const novo = await fornecedoresSvc.criar(nome)
     setFornecedores((prev) => (prev.some((f) => f.id === novo.id) ? prev : [...prev, novo].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))))
     return novo
+  }
+
+  async function editarFornecedor(fornecedor: Fornecedor, novoNome: string): Promise<Fornecedor> {
+    const atualizado = await fornecedoresSvc.atualizar(fornecedor.id, novoNome)
+    setFornecedores((prev) => prev.map((f) => (f.id === atualizado.id ? atualizado : f)).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')))
+    toast.success(`Fornecedor renomeado para "${atualizado.nome}".`)
+    return atualizado
   }
 
   function abrirNovo(data: string) {
@@ -311,11 +318,9 @@ export function RecebimentoSemana({
                         {r.transportadora?.nome}{r.transportadora?.nome && r.motorista_nome && ' · '}{r.motorista_nome}
                       </p>
                     )}
-                    {(r.placa_cavalo || r.placa) && (
-                      <p className="text-xs font-mono text-industrial-600 uppercase mt-0.5">
-                        Placa: {r.placa_cavalo || r.placa}
-                        {[r.placa_1, r.placa_2, r.placa_3, r.placa_4].filter(Boolean).length > 0 &&
-                          ` / ${[r.placa_1, r.placa_2, r.placa_3, r.placa_4].filter(Boolean).join(' / ')}`}
+                    {labelPlacaCompleta(r) && (
+                      <p className="text-sm font-mono font-bold text-industrial-900 uppercase mt-0.5">
+                        {labelPlacaCompleta(r)}
                       </p>
                     )}
                     {r.numero_nota && <p className="text-xs text-industrial-600 mt-0.5">NF-e: {r.numero_nota}</p>}
@@ -430,6 +435,7 @@ export function RecebimentoSemana({
                   fornecedores={fornecedores}
                   onChange={(nome, id) => setForm({ ...form, fornecedor: nome, fornecedor_id: id })}
                   onCriar={adicionarFornecedor}
+                  onEditar={editarFornecedor}
                 />
               </div>
             </div>

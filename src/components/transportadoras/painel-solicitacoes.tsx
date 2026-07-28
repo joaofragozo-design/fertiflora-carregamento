@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { ProgramacaoService } from '@/services/programacao.service'
 import type { Programacao } from '@/types/programacao'
 import { linkWhatsApp, montarMensagemLiberacao } from '@/lib/whatsapp'
+import { formatPlacaCompleta } from '@/lib/utils/format'
 import { mascararNomeFormula } from '@/types/formula'
 
 interface PainelSolicitacoesProps {
@@ -170,10 +171,14 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
               </p>
               <p className="text-xs text-industrial-600 mt-0.5">
                 Motorista: <span className="font-semibold text-industrial-800">{ag.motorista?.nome ?? '—'}</span>
-                {ag.motorista?.placa_cavalo && <span className="font-mono"> · {ag.motorista.placa_cavalo}</span>}
                 {ag.motorista?.whatsapp && <span className="font-mono"> · {ag.motorista.whatsapp}</span>}
                 <span className="text-industrial-500"> · {tonsDoAgendamento(ag).toFixed(2)} ton</span>
               </p>
+              {ag.motorista && formatPlacaCompleta(ag.motorista) && (
+                <p className="mt-0.5 font-mono text-sm font-bold uppercase text-industrial-900">
+                  {formatPlacaCompleta(ag.motorista)}
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <button
@@ -210,6 +215,11 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
                 Liberado — motorista: <span className="font-semibold text-industrial-800">{ag.motorista?.nome ?? '—'}</span>
                 {ag.motorista?.whatsapp && <span className="font-mono"> · {ag.motorista.whatsapp}</span>}
               </p>
+              {ag.motorista && formatPlacaCompleta(ag.motorista) && (
+                <p className="mt-0.5 font-mono text-sm font-bold uppercase text-industrial-900">
+                  {formatPlacaCompleta(ag.motorista)}
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <button

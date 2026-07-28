@@ -1,7 +1,7 @@
 'use client'
 
 import { Package } from 'lucide-react'
-import type { RecebimentoPrevisto } from '@/services/recebimentos.service'
+import { type RecebimentoPrevisto, labelPlacaCompleta } from '@/services/recebimentos.service'
 import { MATERIAS_PRIMA } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
@@ -41,8 +41,12 @@ export function RecebimentosTv({ recebimentos }: { recebimentos: RecebimentoPrev
             <p className="text-sm text-industrial-600 capitalize">
               {fmtData(r.data_prevista)}
               {labelFornecedor(r) && <span> · {labelFornecedor(r)}</span>}
-              {r.placa && <span className="font-mono uppercase"> · {r.placa}</span>}
             </p>
+            {labelPlacaCompleta(r) && (
+              <p className="mt-0.5 font-mono text-base font-bold uppercase text-industrial-800">
+                {labelPlacaCompleta(r)}
+              </p>
+            )}
           </div>
         ))}
       </div>

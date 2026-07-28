@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils/cn'
 import {
   type RecebimentoPrevisto,
   getStatusRecebimento,
+  labelPlacaCompleta,
 } from '@/services/recebimentos.service'
 import { MATERIAS_PRIMA } from '@/types/formula'
 
@@ -108,12 +109,12 @@ export function FilaOperacao({
                   </p>
                   <p className="mt-0.5 text-xs text-paper-600">
                     {ddmm(r.data_prevista)} · {labelFornecedor(r)}
-                    {(r.placa_cavalo || r.placa) && (
-                      <span className="ml-1 font-mono uppercase text-paper-500">
-                        · {r.placa_cavalo || r.placa}
-                      </span>
-                    )}
                   </p>
+                  {labelPlacaCompleta(r) && (
+                    <p className="mt-1 font-mono text-sm font-bold uppercase tracking-wide text-spruce-700">
+                      {labelPlacaCompleta(r)}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2">

@@ -1,6 +1,7 @@
 import type { createClient } from '@/lib/supabase/client'
 import type { Fornecedor } from '@/types/fornecedor'
 import type { Transportadora } from '@/types/transportadora'
+import { formatPlacaCompleta } from '@/lib/utils/format'
 
 type DB = ReturnType<typeof createClient>
 
@@ -65,6 +66,9 @@ export function getStatusRecebimento(r: Pick<RecebimentoPrevisto, 'confirmado_em
   if (r.confirmado_em) return 'AGUARDANDO_FILA'
   return 'AGUARDANDO_CHEGADA'
 }
+
+/** Placa completa (cavalo + reboques) — ver formatPlacaCompleta. */
+export const labelPlacaCompleta = formatPlacaCompleta
 
 export interface RecebimentoInsert {
   data_prevista:     string

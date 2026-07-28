@@ -11,6 +11,7 @@ import type { Transportadora, Motorista } from '@/types/transportadora'
 import { VALIDADE_LIBERACAO_HORAS } from '@/types/transportadora'
 import { EMBALAGEM_LABEL, mascararNomeFormula } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
+import { formatPlacaCompleta } from '@/lib/utils/format'
 
 interface PainelTransportadoraProps {
   transportadora:      Transportadora
@@ -195,7 +196,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                     >
                       <option value="">Selecionar motorista…</option>
                       {motoristas.map((m) => (
-                        <option key={m.id} value={m.id}>{m.nome} — {m.placa_cavalo} — {m.whatsapp}</option>
+                        <option key={m.id} value={m.id}>{m.nome} — {formatPlacaCompleta(m)} — {m.whatsapp}</option>
                       ))}
                     </select>
                   </label>
@@ -233,7 +234,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div>
                     <p className="font-bold text-industrial-900">{ag.cliente || 'Cliente a definir'}</p>
-                    <p className="text-xs text-industrial-500 capitalize">{fmtData(ag.data)} · Motorista: {ag.motorista?.nome ?? '—'} {ag.motorista?.placa_cavalo && `(${ag.motorista.placa_cavalo})`}</p>
+                    <p className="text-xs text-industrial-500 capitalize">{fmtData(ag.data)} · Motorista: {ag.motorista?.nome ?? '—'} {ag.motorista && formatPlacaCompleta(ag.motorista) && `(${formatPlacaCompleta(ag.motorista)})`}</p>
                   </div>
                   <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-700">
                     <Clock className="size-3.5" /> Solicitação enviada
@@ -270,7 +271,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                     <div>
                       <p className="font-bold text-industrial-900">{ag.cliente || 'Cliente a definir'}</p>
                       <p className="text-xs text-industrial-500 capitalize">
-                        {fmtData(ag.data)} · Motorista: {ag.motorista?.nome ?? '—'} {ag.motorista?.placa_cavalo && `— ${ag.motorista.placa_cavalo}`} ({ag.motorista?.whatsapp ?? '—'})
+                        {fmtData(ag.data)} · Motorista: {ag.motorista?.nome ?? '—'} {ag.motorista && formatPlacaCompleta(ag.motorista) && `— ${formatPlacaCompleta(ag.motorista)}`} ({ag.motorista?.whatsapp ?? '—'})
                       </p>
                     </div>
                     <div className="text-right">

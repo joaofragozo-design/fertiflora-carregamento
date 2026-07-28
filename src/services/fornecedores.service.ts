@@ -43,4 +43,24 @@ export class FornecedoresService {
     console.error('[FornecedoresService.criar]', error.message)
     throw new Error('Erro ao cadastrar fornecedor. Tente novamente.')
   }
+
+  /** Corrige o nome de um fornecedor já cadastrado (ex.: erro de digitação). */
+  async atualizar(id: string, nome: string): Promise<Fornecedor> {
+    const nomeLimpo = nome.trim()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (this.supabase as any)
+      .from('fornecedores')
+      .update({ nome: nomeLimpo })
+      .eq('id', id)
+      .select('*')
+      .single()
+
+    if (error) {
+      if (error.message.includes('row-level security')) throw new Error('Sem permissão para editar fornecedor.')
+      if (error.message.includes('duplicate') || error.message.includes('unique')) throw new Error('Já existe um fornecedor com esse nome.')
+      console.error('[FornecedoresService.atualizar]', error.message)
+      throw new Error('Erro ao editar fornecedor. Tente novamente.')
+    }
+    return data as Fornecedor
+  }
 }

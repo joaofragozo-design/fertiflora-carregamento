@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { ChevronDown, Plus } from 'lucide-react'
+import { ChevronDown, Plus, Pencil, Check, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils/cn'
 import type { Fornecedor } from '@/types/fornecedor'
@@ -12,6 +12,7 @@ interface FornecedorPickerProps {
   fornecedores: Fornecedor[]
   onChange:    (nome: string, id: string | null) => void
   onCriar:     (nome: string) => Promise<Fornecedor>
+  onEditar?:   (fornecedor: Fornecedor, novoNome: string) => Promise<Fornecedor>
   placeholder?: string
   className?:  string
 }
@@ -21,11 +22,14 @@ function normalizar(nome: string): string {
 }
 
 /** Combobox de fornecedores: busca entre os já cadastrados ou cadastra um novo na hora. */
-export function FornecedorPicker({ value, fornecedores, onChange, onCriar, placeholder = 'Selecionar fornecedor…', className }: FornecedorPickerProps) {
+export function FornecedorPicker({ value, fornecedores, onChange, onCriar, onEditar, placeholder = 'Selecionar fornecedor…', className }: FornecedorPickerProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [criando, setCriando] = useState(false)
   const [pos, setPos] = useState<{ left: number; top: number; width: number } | null>(null)
+  const [editandoId, setEditandoId] = useState<string | null>(null)
+  const [editValor, setEditValor] = useState('')
+  const [salvandoEdit, setSalvandoEdit] = useState(false)
   const btnRef = useRef<HTMLButtonElement>(null)
   const popRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -44,6 +48,7 @@ export function FornecedorPicker({ value, fornecedores, onChange, onCriar, place
   function fechar() {
     setOpen(false)
     setQuery('')
+    setEditandoId(null)
   }
 
   function abrir() {
@@ -92,6 +97,34 @@ export function FornecedorPicker({ value, fornecedores, onChange, onCriar, place
       toast.error(err instanceof Error ? err.message : 'Erro ao cadastrar fornecedor.')
     } finally {
       setCriando(false)
+    }
+  }
+
+  function abrirEdicao(f: Fornecedor, e: React.MouseEvent) {
+    e.stopPropagation()
+    setEditandoId(f.id)
+    setEditValor(f.nome)
+  }
+
+  async function confirmarEdicao(f: Fornecedor) {
+    const novoNome = editValor.trim()
+    if (!novoNome || !onEditar) return
+    if (novoNome === f.nome) {
+      setEditandoId(null)
+      return
+    }
+    setSalvandoEdit(true)
+    try {
+      const atualizado = await onEditar(f, novoNome)
+      // Se o fornecedor renomeado é o que está selecionado neste formulário
+      // agora, atualiza o texto exibido também — senão fica mostrando o nome
+      // antigo até o form ser reaberto.
+      if (f.nome === value) onChange(atualizado.nome, atualizado.id)
+      setEditandoId(null)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao editar fornecedor.')
+    } finally {
+      setSalvandoEdit(false)
     }
   }
 
@@ -155,17 +188,63 @@ export function FornecedorPicker({ value, fornecedores, onChange, onCriar, place
               </button>
             </li>
             {filtered.map((f) => (
-              <li key={f.id}>
-                <button
-                  type="button"
-                  onClick={() => selecionar(f)}
-                  className={cn(
-                    'w-full text-left text-sm px-3 py-1.5 truncate hover:bg-industrial-200',
-                    f.nome === value ? 'text-brand-700 font-semibold' : 'text-industrial-900',
-                  )}
-                >
-                  {f.nome}
-                </button>
+              <li key={f.id} className="flex items-center gap-1 px-1">
+                {editandoId === f.id ? (
+                  <div className="flex flex-1 items-center gap-1 py-1">
+                    <input
+                      autoFocus
+                      value={editValor}
+                      onChange={(e) => setEditValor(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') confirmarEdicao(f)
+                        if (e.key === 'Escape') setEditandoId(null)
+                      }}
+                      disabled={salvandoEdit}
+                      className="min-w-0 flex-1 bg-industrial-50 border border-brand-500 rounded px-2 py-1 text-sm text-industrial-900 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => confirmarEdicao(f)}
+                      disabled={salvandoEdit || !editValor.trim()}
+                      title="Salvar"
+                      className="shrink-0 p-1 text-brand-700 hover:text-brand-800 disabled:opacity-40"
+                    >
+                      <Check className="size-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditandoId(null)}
+                      disabled={salvandoEdit}
+                      title="Cancelar"
+                      className="shrink-0 p-1 text-industrial-500 hover:text-industrial-800"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => selecionar(f)}
+                      className={cn(
+                        'flex-1 min-w-0 text-left text-sm px-2 py-1.5 rounded truncate hover:bg-industrial-200',
+                        f.nome === value ? 'text-brand-700 font-semibold' : 'text-industrial-900',
+                      )}
+                    >
+                      {f.nome}
+                    </button>
+                    {onEditar && (
+                      <button
+                        type="button"
+                        onClick={(e) => abrirEdicao(f, e)}
+                        title="Editar nome do fornecedor"
+                        className="shrink-0 p-1.5 text-industrial-500 hover:text-brand-700"
+                      >
+                        <Pencil className="size-3.5" />
+                      </button>
+                    )}
+                  </>
+                )}
               </li>
             ))}
             {filtered.length === 0 && !query && (
