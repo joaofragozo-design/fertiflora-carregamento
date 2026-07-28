@@ -14,7 +14,7 @@ import { useRecebimentosSemana } from '@/hooks/use-recebimentos-semana'
 import { ROUTES } from '@/constants/routes'
 import type { Fornecedor } from '@/types/fornecedor'
 import type { Transportadora } from '@/types/transportadora'
-import type { EstoqueConfig } from '@/types/estoque'
+import type { EstoqueAtual, EstoqueConfig } from '@/types/estoque'
 import { MATERIAS_PRIMA } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
 
@@ -23,6 +23,7 @@ interface RecebimentoSemanaProps {
   initialFornecedores: Fornecedor[]
   initialTransportadoras: Transportadora[]
   initialEstoqueConfig: EstoqueConfig[]
+  initialEstoqueAtual:  EstoqueAtual[]
   semanaInicio:         string
   semanaFim:            string
   hoje:                 string
@@ -75,7 +76,7 @@ interface FormState {
 }
 
 export function RecebimentoSemana({
-  initialRecebimentos, initialFornecedores, initialTransportadoras, initialEstoqueConfig, semanaInicio, semanaFim, hoje, podeEditar, podeConfirmar, usuario,
+  initialRecebimentos, initialFornecedores, initialTransportadoras, initialEstoqueConfig, initialEstoqueAtual, semanaInicio, semanaFim, hoje, podeEditar, podeConfirmar, usuario,
 }: RecebimentoSemanaProps) {
   const { recebimentos, setRecebimentos } = useRecebimentosSemana(initialRecebimentos, semanaInicio, semanaFim)
   const [fornecedores, setFornecedores] = useState(initialFornecedores)
@@ -395,7 +396,7 @@ export function RecebimentoSemana({
       </div>
 
       {podeEditar && (
-        <EstoqueConfigPainel initialConfig={initialEstoqueConfig} usuario={usuario} />
+        <EstoqueConfigPainel initialConfig={initialEstoqueConfig} initialEstoqueAtual={initialEstoqueAtual} usuario={usuario} />
       )}
 
       {/* Modal de novo recebimento */}

@@ -1,17 +1,18 @@
 'use client'
 
 import { useMemo, useRef, useState } from 'react'
-import { ChevronDown, ChevronUp, Save, Upload, Gauge } from 'lucide-react'
+import { ChevronDown, ChevronUp, Save, Upload, Gauge, PenSquare } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { EstoqueService, type LinhaCsvEstoque } from '@/services/estoque.service'
 import { MATERIAS_PRIMA } from '@/types/formula'
-import type { EstoqueConfig } from '@/types/estoque'
+import type { EstoqueAtual, EstoqueConfig } from '@/types/estoque'
 import { cn } from '@/lib/utils/cn'
 
 interface EstoqueConfigPainelProps {
-  initialConfig: EstoqueConfig[]
-  usuario:       string
+  initialConfig:      EstoqueConfig[]
+  initialEstoqueAtual: EstoqueAtual[]
+  usuario:            string
 }
 
 function normalizar(s: string): string {
@@ -65,18 +66,54 @@ function parseCsvEstoque(texto: string): { linhas: LinhaCsvEstoque[]; erros: str
 
 /** Configuração dos limites do termômetro (por matéria-prima) + importação de
  *  CSV de estoque (soma ao saldo atual — não substitui). Só admin/logística. */
-export function EstoqueConfigPainel({ initialConfig, usuario }: EstoqueConfigPainelProps) {
+export function EstoqueConfigPainel({ initialConfig, initialEstoqueAtual, usuario }: EstoqueConfigPainelProps) {
   const [aberto, setAberto] = useState(false)
   const [config, setConfig] = useState(initialConfig)
+  const [estoqueAtual, setEstoqueAtual] = useState(initialEstoqueAtual)
   const [salvandoKey, setSalvandoKey] = useState<string | null>(null)
+  const [ajusteAberto, setAjusteAberto] = useState<string | null>(null)
+  const [ajusteValor, setAjusteValor] = useState('')
+  const [ajusteMotivo, setAjusteMotivo] = useState('')
+  const [ajustando, setAjustando] = useState(false)
   const [csvTexto, setCsvTexto] = useState('')
   const [importando, setImportando] = useState(false)
   const svc = useRef(new EstoqueService(createClient())).current
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const configPorChave = useMemo(() => new Map(config.map((c) => [c.materia_prima_key, c])), [config])
+  const estoquePorChave = useMemo(() => new Map(estoqueAtual.map((e) => [e.materia_prima_key, e])), [estoqueAtual])
 
   const preview = useMemo(() => parseCsvEstoque(csvTexto), [csvTexto])
+
+  function abrirAjuste(key: string) {
+    const atual = estoquePorChave.get(key)
+    setAjusteAberto(key)
+    setAjusteValor((atual?.quantidade_ton ?? 0).toFixed(3))
+    setAjusteMotivo('')
+  }
+
+  async function confirmarAjuste(key: string) {
+    const atual = estoquePorChave.get(key)
+    const quantidadeAtual = atual?.quantidade_ton ?? 0
+    const quantidadeNova = Number(ajusteValor.replace(',', '.'))
+    if (!Number.isFinite(quantidadeNova) || quantidadeNova < 0) {
+      toast.error('Informe uma quantidade válida.')
+      return
+    }
+    setAjustando(true)
+    try {
+      await svc.ajustarManual(key, quantidadeAtual, quantidadeNova, usuario, ajusteMotivo)
+      setEstoqueAtual((prev) =>
+        prev.map((e) => (e.materia_prima_key === key ? { ...e, quantidade_ton: quantidadeNova, updated_at: new Date().toISOString() } : e)),
+      )
+      toast.success(`Estoque de ${MATERIAS_PRIMA.find((m) => m.key === key)?.label} ajustado para ${quantidadeNova.toFixed(3)} ton.`)
+      setAjusteAberto(null)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao ajustar o estoque.')
+    } finally {
+      setAjustando(false)
+    }
+  }
 
   async function salvarLimites(key: string, campo: keyof Omit<EstoqueConfig, 'materia_prima_key' | 'updated_at'>, valor: string) {
     const atual = configPorChave.get(key)
@@ -139,7 +176,7 @@ export function EstoqueConfigPainel({ initialConfig, usuario }: EstoqueConfigPai
           {/* Limites do termômetro */}
           <div>
             <p className="text-xs font-bold uppercase tracking-wide text-industrial-600 mb-2">
-              Limites do termômetro (toneladas) — abaixo de "perigo" acende vermelho, abaixo de "cuidado" acende amarelo, acima de "confortável" fica bem tranquilo.
+              Limites do termômetro (toneladas) — abaixo de &ldquo;perigo&rdquo; acende vermelho, abaixo de &ldquo;cuidado&rdquo; acende amarelo, acima de &ldquo;confortável&rdquo; fica bem tranquilo.
             </p>
             <div className="overflow-x-auto">
               <table className="w-full text-xs border-collapse min-w-[560px]">
@@ -176,6 +213,80 @@ export function EstoqueConfigPainel({ initialConfig, usuario }: EstoqueConfigPai
                   })}
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          {/* Ajuste manual do saldo */}
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-industrial-600 mb-2">
+              Ajustar saldo manualmente — corrige o estoque de uma matéria-prima pra um valor exato (contagem física, erro de lançamento etc.)
+            </p>
+            <div className="flex flex-col gap-1.5">
+              {MATERIAS_PRIMA.map((mp) => {
+                const e = estoquePorChave.get(mp.key)
+                if (!e) return null
+                const emEdicao = ajusteAberto === mp.key
+                return (
+                  <div
+                    key={mp.key}
+                    className={cn(
+                      'rounded-lg border px-3 py-2',
+                      emEdicao ? 'border-warning-500/50 bg-warning-500/8' : 'border-industrial-200',
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-medium text-industrial-800">{mp.label}</span>
+                      {emEdicao ? (
+                        <div className="flex flex-1 items-center gap-2 justify-end flex-wrap">
+                          <input
+                            type="number"
+                            autoFocus
+                            value={ajusteValor}
+                            onChange={(ev) => setAjusteValor(ev.target.value)}
+                            disabled={ajustando}
+                            className="w-24 bg-industrial-50 border border-industrial-400 rounded px-1.5 py-1 text-xs text-industrial-900 font-mono focus:outline-none focus:border-warning-500"
+                          />
+                          <input
+                            type="text"
+                            value={ajusteMotivo}
+                            onChange={(ev) => setAjusteMotivo(ev.target.value)}
+                            placeholder="motivo (opcional)"
+                            disabled={ajustando}
+                            className="w-40 bg-industrial-50 border border-industrial-400 rounded px-1.5 py-1 text-xs text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-warning-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => confirmarAjuste(mp.key)}
+                            disabled={ajustando}
+                            className="flex items-center gap-1 rounded-md bg-warning-500 hover:bg-warning-400 text-white px-2.5 py-1 text-xs font-semibold disabled:opacity-50"
+                          >
+                            <Save className="size-3" /> {ajustando ? 'Salvando…' : 'Confirmar'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAjusteAberto(null)}
+                            disabled={ajustando}
+                            className="rounded-md px-2 py-1 text-xs font-medium text-industrial-600 hover:text-industrial-900"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <span className="font-mono text-xs font-bold text-industrial-900">{e.quantidade_ton.toFixed(3)} ton</span>
+                          <button
+                            type="button"
+                            onClick={() => abrirAjuste(mp.key)}
+                            className="flex items-center gap-1 text-xs font-medium text-industrial-600 hover:text-brand-700 transition-colors"
+                          >
+                            <PenSquare className="size-3.5" /> Ajustar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
 

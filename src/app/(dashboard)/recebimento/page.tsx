@@ -7,7 +7,7 @@ import { RecebimentoSemana } from './_recebimento'
 import type { RecebimentoPrevisto } from '@/services/recebimentos.service'
 import type { Fornecedor } from '@/types/fornecedor'
 import type { Transportadora } from '@/types/transportadora'
-import type { EstoqueConfig } from '@/types/estoque'
+import type { EstoqueAtual, EstoqueConfig } from '@/types/estoque'
 
 export const metadata: Metadata = {
   title: 'Programação de Recebimento',
@@ -94,6 +94,8 @@ export default async function RecebimentoPage({
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: estoqueConfig } = await (supabase as any).from('estoque_config').select('*')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: estoqueAtual } = await (supabase as any).from('estoque_atual').select('*')
 
   return (
     <RecebimentoSemana
@@ -102,6 +104,7 @@ export default async function RecebimentoPage({
       initialFornecedores={(fornecedores ?? []) as Fornecedor[]}
       initialTransportadoras={(transportadoras ?? []) as Transportadora[]}
       initialEstoqueConfig={(estoqueConfig ?? []) as EstoqueConfig[]}
+      initialEstoqueAtual={(estoqueAtual ?? []) as EstoqueAtual[]}
       semanaInicio={semanaInicio}
       semanaFim={semanaFim}
       hoje={iso(new Date())}

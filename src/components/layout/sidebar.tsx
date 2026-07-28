@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, ClipboardList, Truck, X, CalendarDays, CalendarRange, FileSpreadsheet, Container, Package, Tv } from 'lucide-react'
+import { LayoutDashboard, ClipboardList, Truck, X, CalendarDays, CalendarRange, FileSpreadsheet, Container, Package, Tv, Inbox } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { AppUser } from '@/types'
 
@@ -60,6 +60,12 @@ const NAV_ITEMS: NavItem[] = [
     href:  '/admin/formulas',
     label: 'Fórmulas',
     icon:  FileSpreadsheet,
+    roles: ['admin', 'logistica'],
+  },
+  {
+    href:  '/solicitacoes',
+    label: 'Solicitações',
+    icon:  Inbox,
     roles: ['admin', 'logistica'],
   },
   {

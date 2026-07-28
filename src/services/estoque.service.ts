@@ -44,6 +44,27 @@ export class EstoqueService {
     return data as EstoqueConfig
   }
 
+  /** Ajusta manualmente o saldo de uma matéria-prima pro valor informado.
+   *  Nunca edita `estoque_atual` direto — insere a diferença (novo - atual)
+   *  como um movimento `AJUSTE_MANUAL` no ledger, mesmo padrão de todo o
+   *  resto do estoque (auditável, nunca sobrescrito). */
+  async ajustarManual(materiaPrimaKey: string, quantidadeAtual: number, quantidadeNova: number, usuario: string, motivo: string): Promise<void> {
+    const delta = Math.round((quantidadeNova - quantidadeAtual) * 1000) / 1000
+    if (delta === 0) return
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (this.supabase as any)
+      .from('estoque_movimentos')
+      .insert({
+        materia_prima_key: materiaPrimaKey,
+        quantidade_ton: delta,
+        origem: 'AJUSTE_MANUAL',
+        observacao: motivo.trim() || `Ajuste manual: ${quantidadeAtual.toFixed(3)} → ${quantidadeNova.toFixed(3)} ton`,
+        created_por: usuario,
+      })
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'ajustar o estoque'))
+  }
+
   /** Lança um lote de recebimentos avulsos por CSV — SOMA ao estoque atual (não substitui). */
   async importarCsv(linhas: LinhaCsvEstoque[], usuario: string): Promise<void> {
     if (linhas.length === 0) return
