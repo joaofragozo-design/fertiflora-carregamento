@@ -3,7 +3,10 @@ import { type NextRequest, NextResponse } from 'next/server'
 import type { Database } from '@/types/database'
 import { ROUTES } from '@/constants/routes'
 
-const PUBLIC_ROUTES = [ROUTES.LOGIN]
+// `/chegada/[id]` é aberta pelo motorista de matéria-prima direto do link de
+// WhatsApp, sem login (ele não tem conta no sistema) — a segurança vem do
+// id ser um UUID imprevisível + a checagem de GPS na própria rota de API.
+const PUBLIC_ROUTES = [ROUTES.LOGIN, '/chegada']
 
 /** Extrai apenas a origin de uma URL, descartando qualquer path acidental. */
 function sanitizeSupabaseUrl(raw: string): string {

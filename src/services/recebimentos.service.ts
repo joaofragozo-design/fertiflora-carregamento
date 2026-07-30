@@ -47,6 +47,9 @@ export interface RecebimentoPrevisto {
   iniciado_por:      string | null
   finalizado_em:     string | null
   finalizado_por:    string | null
+  motorista_lat:              number | null
+  motorista_lng:              number | null
+  motorista_localizacao_em:   string | null
   created_at:        string
   updated_at:        string
 }
@@ -146,6 +149,39 @@ export class RecebimentosService {
       .single()
 
     if (error) throw new Error(this.traduzirErro(error.message, 'lançar recebimento'))
+    return this.normalizar([data])[0]
+  }
+
+  /** Corrige os dados de uma previsão já lançada (ex.: faltou o nome do
+   *  motorista) — evita ter que excluir e lançar de novo. Mesma checagem de
+   *  permissão da criação (admin/logistica, via RLS/trigger no banco). */
+  async atualizar(id: string, input: RecebimentoInsert): Promise<RecebimentoPrevisto> {
+    const placaCavalo = input.placa_cavalo.trim().toUpperCase()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (this.supabase as any)
+      .from('recebimentos_previstos')
+      .update({
+        data_prevista: input.data_prevista,
+        materia_prima_key: input.materia_prima_key,
+        materia_prima: input.materia_prima_key,
+        quantidade_ton: input.quantidade_ton,
+        fornecedor_id: input.fornecedor_id,
+        transportadora_id: input.transportadora_id,
+        motorista_nome: input.motorista_nome.trim(),
+        numero_nota: input.numero_nota.trim(),
+        placa_cavalo: placaCavalo,
+        placa: placaCavalo,
+        placa_1: input.placa_1.trim().toUpperCase(),
+        placa_2: input.placa_2?.trim().toUpperCase() || null,
+        placa_3: input.placa_3?.trim().toUpperCase() || null,
+        placa_4: input.placa_4?.trim().toUpperCase() || null,
+        observacao: input.observacao,
+      })
+      .eq('id', id)
+      .select(SELECT_COMPLETO)
+      .single()
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'editar recebimento'))
     return this.normalizar([data])[0]
   }
 

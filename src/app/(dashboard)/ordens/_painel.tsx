@@ -27,16 +27,19 @@ interface OrdensParneProps {
 }
 
 // Pills de status (tema claro): fundo sólido + texto escuro do mesmo tom.
+// EM_ANDAMENTO usa `info` (neutro/informativo), não `warning` — amber fica
+// reservado só pra estados que pedem atenção (ex.: estoque baixo), senão o
+// mesmo amarelo significaria coisas diferentes em telas diferentes.
 const STATUS_STYLES: Record<StatusOrdem, string> = {
   AGUARDANDO:   'bg-industrial-200 text-industrial-900',
-  EM_ANDAMENTO: 'bg-amber-400 text-amber-950',
+  EM_ANDAMENTO: 'bg-info-500 text-white',
   FINALIZADO:   'bg-brand-700 text-white',
 }
 
 // Tinta suave da linha por status (close-up do Fransua — discreto e limpo).
 const ROW_STYLES: Record<StatusOrdem, string> = {
   AGUARDANDO:   'hover:bg-industrial-200/50',
-  EM_ANDAMENTO: 'bg-amber-100',
+  EM_ANDAMENTO: 'bg-info-500/10',
   FINALIZADO:   'bg-brand-100',
 }
 

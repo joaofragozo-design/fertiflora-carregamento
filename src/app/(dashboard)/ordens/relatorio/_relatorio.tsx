@@ -21,9 +21,11 @@ const STATUS_LABEL: Record<StatusOrdem, string> = {
 }
 
 // Fundo da linha por status — claro e legível, força impressão da cor.
+// EM_ANDAMENTO usa `info` (mesmo critério do painel de ordens: amber fica
+// só pra estado de atenção, não pra "em andamento" neutro).
 const ROW_STYLES: Record<StatusOrdem, string> = {
   AGUARDANDO:   '',
-  EM_ANDAMENTO: 'bg-amber-200 print:bg-amber-200',
+  EM_ANDAMENTO: 'bg-info-500/15 print:bg-info-500/15',
   FINALIZADO:   'bg-brand-200 print:bg-brand-200',
 }
 

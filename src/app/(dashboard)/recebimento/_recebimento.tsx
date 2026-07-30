@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, X, ChevronLeft, ChevronRight, Truck, CheckCircle2, Package, PlayCircle, Flag } from 'lucide-react'
+import { Plus, X, ChevronLeft, ChevronRight, Truck, CheckCircle2, Package, PlayCircle, Flag, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { RecebimentosService, type RecebimentoPrevisto, STATUS_RECEBIMENTO_LABEL, getStatusRecebimento, labelPlacaCompleta } from '@/services/recebimentos.service'
@@ -10,6 +10,7 @@ import { FornecedoresService } from '@/services/fornecedores.service'
 import { FornecedorPicker } from '@/components/fornecedores/fornecedor-picker'
 import { EstoqueConfigPainel } from '@/components/estoque/estoque-config-painel'
 import { FilaOperacao } from '@/components/recebimentos/fila-operacao'
+import { MapaChegadas } from '@/components/recebimentos/mapa-chegadas'
 import { useRecebimentosSemana } from '@/hooks/use-recebimentos-semana'
 import { ROUTES } from '@/constants/routes'
 import type { Fornecedor } from '@/types/fornecedor'
@@ -81,6 +82,9 @@ export function RecebimentoSemana({
   const { recebimentos, setRecebimentos } = useRecebimentosSemana(initialRecebimentos, semanaInicio, semanaFim)
   const [fornecedores, setFornecedores] = useState(initialFornecedores)
   const [form, setForm] = useState<FormState | null>(null)
+  // null = criando um recebimento novo; id = editando um já existente (o
+  // mesmo formulário serve pros dois casos).
+  const [editandoId, setEditandoId] = useState<string | null>(null)
   const [salvando, setSalvando] = useState(false)
   // Confirmar/iniciar/finalizar nunca acontecem ao mesmo tempo na mesma linha
   // (são 3 cliques sequenciais do Faturamento) — um único id de "processando"
@@ -119,6 +123,7 @@ export function RecebimentoSemana({
   }
 
   function abrirNovo(data: string) {
+    setEditandoId(null)
     setForm({
       data, materia_prima_key: '', quantidade_ton: '', fornecedor: '', fornecedor_id: null,
       transportadora_id: '', motorista_nome: '', numero_nota: '',
@@ -126,7 +131,32 @@ export function RecebimentoSemana({
     })
   }
 
-  async function lancar() {
+  function fecharModal() {
+    setForm(null)
+    setEditandoId(null)
+  }
+
+  function abrirEdicao(r: RecebimentoPrevisto) {
+    setEditandoId(r.id)
+    setForm({
+      data: r.data_prevista,
+      materia_prima_key: r.materia_prima_key ?? '',
+      quantidade_ton: String(r.quantidade_ton ?? ''),
+      fornecedor: labelFornecedor(r),
+      fornecedor_id: r.fornecedor_id,
+      transportadora_id: r.transportadora_id ?? '',
+      motorista_nome: r.motorista_nome ?? '',
+      numero_nota: r.numero_nota ?? '',
+      placa_cavalo: r.placa_cavalo || r.placa || '',
+      placa_1: r.placa_1 ?? '',
+      placa_2: r.placa_2 ?? '',
+      placa_3: r.placa_3 ?? '',
+      placa_4: r.placa_4 ?? '',
+      observacao: r.observacao ?? '',
+    })
+  }
+
+  async function salvar() {
     if (!form) return
     if (!form.materia_prima_key) {
       toast.error('Selecione a matéria-prima.')
@@ -147,7 +177,7 @@ export function RecebimentoSemana({
     }
     setSalvando(true)
     try {
-      const novo = await svc.criar({
+      const dados = {
         data_prevista: form.data,
         materia_prima_key: form.materia_prima_key,
         quantidade_ton: tons,
@@ -161,12 +191,21 @@ export function RecebimentoSemana({
         placa_3: form.placa_3,
         placa_4: form.placa_4,
         observacao: form.observacao.trim(),
-      })
-      setRecebimentos((prev) => [...prev, novo])
+      }
+
+      if (editandoId) {
+        const atualizado = await svc.atualizar(editandoId, dados)
+        setRecebimentos((prev) => prev.map((x) => (x.id === atualizado.id ? atualizado : x)))
+        toast.success('Recebimento atualizado.')
+      } else {
+        const novo = await svc.criar(dados)
+        setRecebimentos((prev) => [...prev, novo])
+        toast.success('Recebimento lançado.')
+      }
       setForm(null)
-      toast.success('Recebimento lançado.')
+      setEditandoId(null)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao lançar recebimento.')
+      toast.error(err instanceof Error ? err.message : 'Erro ao salvar recebimento.')
     } finally {
       setSalvando(false)
     }
@@ -260,6 +299,8 @@ export function RecebimentoSemana({
         />
       )}
 
+      {podeConfirmar && <MapaChegadas recebimentos={recebimentos} />}
+
       {/* Grade da semana */}
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-3">
         {dias.map(({ nome, data }) => {
@@ -305,8 +346,14 @@ export function RecebimentoSemana({
                         )}
                       </span>
                       {podeEditar && (
-                        <button type="button" onClick={() => remover(r)} title="Remover previsão"
-                          className="text-industrial-600 hover:text-red-600"><X className="size-3.5" /></button>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {!r.finalizado_em && (
+                            <button type="button" onClick={() => abrirEdicao(r)} title="Editar recebimento"
+                              className="text-industrial-600 hover:text-brand-700"><Pencil className="size-3.5" /></button>
+                          )}
+                          <button type="button" onClick={() => remover(r)} title="Remover previsão"
+                            className="text-industrial-600 hover:text-red-600"><X className="size-3.5" /></button>
+                        </div>
                       )}
                     </div>
                     <p className="text-xs text-industrial-500 mt-1">
@@ -404,15 +451,15 @@ export function RecebimentoSemana({
         <EstoqueConfigPainel initialConfig={initialEstoqueConfig} initialEstoqueAtual={initialEstoqueAtual} usuario={usuario} />
       )}
 
-      {/* Modal de novo recebimento */}
+      {/* Modal de novo recebimento / edição */}
       {form && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={() => setForm(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={fecharModal}>
           <div className="w-full max-w-md rounded-xl bg-industrial-100 border border-industrial-300 p-5 flex flex-col gap-3 my-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-industrial-900 flex items-center gap-2">
-                <Package className="size-4 text-brand-600" /> Novo recebimento · {ddmm(form.data)}
+                <Package className="size-4 text-brand-600" /> {editandoId ? 'Editar recebimento' : 'Novo recebimento'} · {ddmm(form.data)}
               </h2>
-              <button type="button" onClick={() => setForm(null)} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
+              <button type="button" onClick={fecharModal} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
             </div>
 
             <label className="text-xs font-medium text-industrial-600">Matéria-prima
@@ -512,15 +559,15 @@ export function RecebimentoSemana({
             </label>
 
             <div className="flex justify-end gap-2 pt-1">
-              <button type="button" onClick={() => setForm(null)}
+              <button type="button" onClick={fecharModal}
                 className="rounded-lg border border-industrial-400 px-4 py-2 text-sm font-medium text-industrial-700 hover:bg-industrial-200">Cancelar</button>
               <button
                 type="button"
-                onClick={lancar}
+                onClick={salvar}
                 disabled={salvando || !form.materia_prima_key || !form.fornecedor_id || !form.placa_cavalo.trim()}
                 className="rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-medium disabled:opacity-50"
               >
-                {salvando ? 'Lançando…' : 'Lançar'}
+                {salvando ? 'Salvando…' : editandoId ? 'Salvar alterações' : 'Lançar'}
               </button>
             </div>
           </div>

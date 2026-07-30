@@ -1,6 +1,6 @@
 'use client'
 
-import { Wifi, WifiOff, LogOut, Menu } from 'lucide-react'
+import { Wifi, WifiOff, LogOut, Menu, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LogoFull } from '@/components/brand/logo'
 import { InstallButton } from '@/components/pwa/install-button'
@@ -11,6 +11,7 @@ interface HeaderProps {
   connectionStatus: ConnectionStatus
   onSignOut?: () => void
   onMenuToggle?: () => void
+  onOpenSearch?: () => void
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -22,7 +23,7 @@ const ROLE_LABELS: Record<string, string> = {
   faturamento:           'Faturamento',
 }
 
-export function Header({ user, connectionStatus, onSignOut, onMenuToggle }: HeaderProps) {
+export function Header({ user, connectionStatus, onSignOut, onMenuToggle, onOpenSearch }: HeaderProps) {
   const isConnected = connectionStatus === 'connected'
 
   return (
@@ -39,6 +40,20 @@ export function Header({ user, connectionStatus, onSignOut, onMenuToggle }: Head
           </button>
         )}
         <LogoFull showTagline={false} />
+
+        {onOpenSearch && (
+          <button
+            type="button"
+            onClick={onOpenSearch}
+            className="ml-2 hidden items-center gap-2 rounded-lg border border-industrial-300 bg-industrial-100 px-3 py-1.5 text-xs text-industrial-500 hover:border-industrial-400 hover:text-industrial-700 transition-colors sm:flex"
+          >
+            <Search className="h-3.5 w-3.5" />
+            <span>Buscar…</span>
+            <kbd className="ml-2 rounded border border-industrial-300 bg-industrial-50 px-1.5 py-0.5 font-mono text-[10px] text-industrial-500">
+              ⌘K
+            </kbd>
+          </button>
+        )}
       </div>
 
       <div className="flex items-center gap-2">

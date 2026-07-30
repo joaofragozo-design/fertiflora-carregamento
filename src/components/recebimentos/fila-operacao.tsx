@@ -1,6 +1,7 @@
 'use client'
 
-import { Truck, PlayCircle, Flag, PackageCheck } from 'lucide-react'
+import { Truck, PlayCircle, Flag, PackageCheck, Link2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils/cn'
 import {
   type RecebimentoPrevisto,
@@ -49,6 +50,14 @@ function labelFornecedor(r: RecebimentoPrevisto): string {
 function ddmm(iso: string): string {
   const [, m, d] = iso.split('-')
   return `${d}/${m}`
+}
+
+function copiarLinkChegada(r: RecebimentoPrevisto) {
+  const link = `${window.location.origin}/chegada/${r.id}`
+  navigator.clipboard.writeText(link).then(
+    () => toast.success('Link de chegada copiado — envie pro motorista.'),
+    () => toast.error('Não foi possível copiar o link.'),
+  )
 }
 
 export function FilaOperacao({
@@ -123,15 +132,26 @@ export function FilaOperacao({
                   </span>
 
                   {status === 'AGUARDANDO_CHEGADA' && (
-                    <button
-                      type="button"
-                      onClick={() => onConfirmarChegada(r)}
-                      disabled={processando}
-                      className="flex items-center gap-1.5 rounded-md bg-spruce-600 px-3 py-1.5 text-xs font-semibold text-paper-50 shadow-sm transition-colors hover:bg-spruce-500 disabled:opacity-50"
-                    >
-                      <Truck className="size-3.5" />
-                      {processando ? 'Confirmando…' : 'Confirmar chegada'}
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => copiarLinkChegada(r)}
+                        title="Copiar link pro motorista confirmar a chegada pelo GPS dele"
+                        className="flex items-center gap-1.5 rounded-md border border-paper-300 px-2.5 py-1.5 text-xs font-semibold text-paper-600 transition-colors hover:border-spruce-500 hover:text-spruce-700"
+                      >
+                        <Link2 className="size-3.5" />
+                        Link de chegada
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onConfirmarChegada(r)}
+                        disabled={processando}
+                        className="flex items-center gap-1.5 rounded-md bg-spruce-600 px-3 py-1.5 text-xs font-semibold text-paper-50 shadow-sm transition-colors hover:bg-spruce-500 disabled:opacity-50"
+                      >
+                        <Truck className="size-3.5" />
+                        {processando ? 'Confirmando…' : 'Confirmar manualmente'}
+                      </button>
+                    </>
                   )}
                   {status === 'AGUARDANDO_FILA' && (
                     <button

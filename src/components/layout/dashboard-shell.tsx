@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Header } from './header'
 import { Sidebar } from './sidebar'
+import { CommandPalette } from './command-palette'
 import { useAuth } from '@/hooks/use-auth'
 import { useRealtimeContext } from '@/providers/realtime-provider'
 import { ConfirmacaoChegadaListener } from '@/components/notifications/confirmacao-chegada-listener'
@@ -18,6 +19,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   // Recolher/expandir a sidebar em telas grandes (persiste até o usuário clicar de novo)
   const [collapsed, setCollapsed] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useState(false)
   const { user: authUser, signOut } = useAuth()
   const { connectionStatus } = useRealtimeContext()
   // Prefer live auth context (from profiles table) over SSR prop
@@ -35,6 +37,14 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
         connectionStatus={connectionStatus}
         onSignOut={signOut}
         onMenuToggle={toggleSidebar}
+        onOpenSearch={() => setPaletteOpen(true)}
+      />
+      <CommandPalette
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        user={displayUser}
+        onSignOut={signOut}
+        onToggleSidebar={toggleSidebar}
       />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar

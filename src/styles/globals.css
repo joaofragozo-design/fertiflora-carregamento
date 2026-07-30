@@ -40,6 +40,14 @@
   ::selection {
     @apply bg-brand-600/40 text-brand-100;
   }
+
+  /* Todo dado em font-mono no app é número/código tabular (toneladas, kg,
+   * sequência, placa) — dígitos de largura fixa por padrão evitam que
+   * colunas "dancem" horizontalmente em tabelas e no painel de TV. Não afeta
+   * texto não-numérico (placa, CNPJ), então é seguro em qualquer uso. */
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 @layer components {

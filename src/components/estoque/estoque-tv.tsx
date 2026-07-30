@@ -16,11 +16,14 @@ interface EstoqueTvProps {
   consumoHojePorChave: Record<string, number>
 }
 
+// Usa os tokens semânticos (danger/warning/brand) em vez de cor Tailwind
+// crua — mesmo critério do painel de ordens, pra "vermelho"/"amarelo"
+// significarem sempre a mesma coisa em qualquer tela do app.
 const NIVEL_STYLE: Record<NivelEstoque, { bar: string; texto: string }> = {
-  perigo:        { bar: 'border-red-500 bg-red-100',      texto: 'text-red-800' },
-  cuidado:       { bar: 'border-amber-500 bg-amber-100',  texto: 'text-amber-800' },
-  tudo_bem:      { bar: 'border-brand-500 bg-brand-50',   texto: 'text-brand-800' },
-  bem_tranquilo: { bar: 'border-brand-600 bg-brand-100',  texto: 'text-brand-800' },
+  perigo:        { bar: 'border-danger-500 bg-danger-500/10',   texto: 'text-danger-600' },
+  cuidado:       { bar: 'border-warning-500 bg-warning-500/10', texto: 'text-warning-600' },
+  tudo_bem:      { bar: 'border-brand-500 bg-brand-50',         texto: 'text-brand-800' },
+  bem_tranquilo: { bar: 'border-brand-600 bg-brand-100',        texto: 'text-brand-800' },
 }
 
 function fmtTon(n: number): string {
