@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { getAuthContext } from '@/lib/supabase/get-user'
 import { createClient } from '@/lib/supabase/server'
 import { ROUTES, ROLE_DEFAULT_ROUTES } from '@/constants/routes'
-import type { Transportadora } from '@/types/transportadora'
+import type { Transportadora, Motorista } from '@/types/transportadora'
 import { GestaoTransportadoras } from './_gestao'
 
 export const metadata: Metadata = {
@@ -24,9 +24,18 @@ export default async function TransportadorasPage() {
     .select('*')
     .order('nome', { ascending: true })
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: motoristas } = await (supabase as any)
+    .from('motoristas')
+    .select('*')
+    .order('nome', { ascending: true })
+
   return (
     <div className="flex flex-col gap-4">
-      <GestaoTransportadoras initialTransportadoras={(transportadoras ?? []) as Transportadora[]} />
+      <GestaoTransportadoras
+        initialTransportadoras={(transportadoras ?? []) as Transportadora[]}
+        initialMotoristas={(motoristas ?? []) as Motorista[]}
+      />
     </div>
   )
 }

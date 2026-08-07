@@ -1,11 +1,13 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { CheckCircle2, Container, FileDown, MessageCircle, Trash2 } from 'lucide-react'
+import { CheckCircle2, Container, FileDown, MessageCircle, Trash2, Pencil, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { ProgramacaoService } from '@/services/programacao.service'
+import { TransportadorasService } from '@/services/transportadoras.service'
 import type { Programacao } from '@/types/programacao'
+import type { Motorista } from '@/types/transportadora'
 import { linkWhatsApp, montarMensagemLiberacao } from '@/lib/whatsapp'
 import { formatPlacaCompleta } from '@/lib/utils/format'
 import { mascararNomeFormula } from '@/types/formula'
@@ -13,6 +15,20 @@ import { mascararNomeFormula } from '@/types/formula'
 interface PainelSolicitacoesProps {
   initialSolicitacoes: Programacao[]
   usuario:             string
+}
+
+interface FormMotoristaState {
+  id:           string
+  nome:         string
+  whatsapp:     string
+  cpf:          string
+  rg:           string
+  cnh:          string
+  placa_cavalo: string
+  placa_1:      string
+  placa_2:      string
+  placa_3:      string
+  placa_4:      string
 }
 
 function ddmm(iso: string): string {
@@ -31,9 +47,12 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
   const [agendamentos, setAgendamentos] = useState(initialSolicitacoes)
   const [liberandoId, setLiberandoId] = useState<string | null>(null)
   const [excluindoId, setExcluindoId] = useState<string | null>(null)
-  const [whatsappAbertoIds, setWhatsappAbertoIds] = useState<Set<string>>(new Set())
+  const [formMotorista, setFormMotorista] = useState<FormMotoristaState | null>(null)
+  const [salvandoMotorista, setSalvandoMotorista] = useState(false)
+  const [excluindoMotoristaId, setExcluindoMotoristaId] = useState<string | null>(null)
   const supabase = useRef(createClient()).current
   const svc = useRef(new ProgramacaoService(createClient())).current
+  const transpSvc = useRef(new TransportadorasService(createClient())).current
 
   const refetch = useCallback(async () => {
     try {
@@ -77,8 +96,8 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
     [agendamentos],
   )
   const liberadosAguardandoWhatsapp = useMemo(
-    () => agendamentos.filter((ag) => ag.solicitacao_status === 'LIBERADO' && !whatsappAbertoIds.has(ag.id)),
-    [agendamentos, whatsappAbertoIds],
+    () => agendamentos.filter((ag) => ag.solicitacao_status === 'LIBERADO' && !ag.whatsapp_enviado_em),
+    [agendamentos],
   )
 
   async function liberarSolicitacao(ag: Programacao) {
@@ -126,7 +145,7 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
     }
   }
 
-  function abrirWhatsapp(ag: Programacao) {
+  async function abrirWhatsapp(ag: Programacao) {
     if (!ag.motorista?.whatsapp) return
     const mensagem = montarMensagemLiberacao({
       motorista: ag.motorista.nome,
@@ -139,7 +158,61 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
       })),
     })
     window.open(linkWhatsApp(ag.motorista.whatsapp, mensagem), '_blank', 'noopener')
-    setWhatsappAbertoIds((prev) => new Set(prev).add(ag.id))
+    try {
+      const upd = await svc.marcarWhatsappEnviado(ag.id)
+      setAgendamentos((prev) => prev.map((a) => (a.id === upd.id ? upd : a)))
+    } catch (err) {
+      // O link já abriu; só avisa que a fila pode não atualizar sozinha.
+      toast.error(err instanceof Error ? err.message : 'WhatsApp aberto, mas não deu pra marcar como enviado.')
+    }
+  }
+
+  function abrirEdicaoMotorista(m: Motorista) {
+    setFormMotorista({
+      id: m.id, nome: m.nome, whatsapp: m.whatsapp, cpf: m.cpf, rg: m.rg, cnh: m.cnh,
+      placa_cavalo: m.placa_cavalo, placa_1: m.placa_1,
+      placa_2: m.placa_2 ?? '', placa_3: m.placa_3 ?? '', placa_4: m.placa_4 ?? '',
+    })
+  }
+
+  async function salvarMotorista() {
+    if (!formMotorista) return
+    setSalvandoMotorista(true)
+    try {
+      await transpSvc.atualizarMotorista(formMotorista.id, {
+        nome: formMotorista.nome,
+        whatsapp: formMotorista.whatsapp,
+        cpf: formMotorista.cpf,
+        rg: formMotorista.rg,
+        cnh: formMotorista.cnh,
+        placa_cavalo: formMotorista.placa_cavalo,
+        placa_1: formMotorista.placa_1,
+        placa_2: formMotorista.placa_2,
+        placa_3: formMotorista.placa_3,
+        placa_4: formMotorista.placa_4,
+      })
+      setFormMotorista(null)
+      toast.success('Motorista atualizado.')
+      await refetch()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao atualizar motorista.')
+    } finally {
+      setSalvandoMotorista(false)
+    }
+  }
+
+  async function excluirMotorista(m: Motorista) {
+    if (!window.confirm(`Excluir o cadastro do motorista ${m.nome}? Ele some da frota da transportadora e some das solicitações que ainda dependem dele.`)) return
+    setExcluindoMotoristaId(m.id)
+    try {
+      await transpSvc.excluirMotorista(m.id)
+      toast.success('Motorista excluído.')
+      await refetch()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao excluir motorista.')
+    } finally {
+      setExcluindoMotoristaId(null)
+    }
   }
 
   if (solicitacoesPendentes.length === 0 && liberadosAguardandoWhatsapp.length === 0) {
@@ -169,10 +242,28 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
                 {ag.transportadora?.nome ?? 'Transportadora'}
                 <span className="font-normal text-industrial-600"> · {ag.cliente || 'sem cliente'} · {ddmm(ag.data)}</span>
               </p>
-              <p className="text-xs text-industrial-600 mt-0.5">
-                Motorista: <span className="font-semibold text-industrial-800">{ag.motorista?.nome ?? '—'}</span>
-                {ag.motorista?.whatsapp && <span className="font-mono"> · {ag.motorista.whatsapp}</span>}
-                <span className="text-industrial-500"> · {tonsDoAgendamento(ag).toFixed(2)} ton</span>
+              <p className="text-xs text-industrial-600 mt-0.5 flex items-center gap-1 flex-wrap">
+                <span>
+                  Motorista: <span className="font-semibold text-industrial-800">{ag.motorista?.nome ?? '—'}</span>
+                  {ag.motorista?.whatsapp && <span className="font-mono"> · {ag.motorista.whatsapp}</span>}
+                  <span className="text-industrial-500"> · {tonsDoAgendamento(ag).toFixed(2)} ton</span>
+                </span>
+                {ag.motorista && (
+                  <span className="inline-flex items-center gap-1">
+                    <button type="button" onClick={() => abrirEdicaoMotorista(ag.motorista!)} title="Editar motorista" className="text-industrial-500 hover:text-brand-700">
+                      <Pencil className="size-3" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => excluirMotorista(ag.motorista!)}
+                      disabled={excluindoMotoristaId === ag.motorista.id}
+                      title="Excluir motorista"
+                      className="text-industrial-500 hover:text-red-600 disabled:opacity-50"
+                    >
+                      <Trash2 className="size-3" />
+                    </button>
+                  </span>
+                )}
               </p>
               {ag.motorista && formatPlacaCompleta(ag.motorista) && (
                 <p className="mt-0.5 font-mono text-sm font-bold uppercase text-industrial-900">
@@ -211,9 +302,27 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
                 {ag.transportadora?.nome ?? 'Transportadora'}
                 <span className="font-normal text-industrial-600"> · {ag.cliente || 'sem cliente'} · {ddmm(ag.data)}</span>
               </p>
-              <p className="text-xs text-industrial-600 mt-0.5">
-                Liberado — motorista: <span className="font-semibold text-industrial-800">{ag.motorista?.nome ?? '—'}</span>
-                {ag.motorista?.whatsapp && <span className="font-mono"> · {ag.motorista.whatsapp}</span>}
+              <p className="text-xs text-industrial-600 mt-0.5 flex items-center gap-1 flex-wrap">
+                <span>
+                  Liberado — motorista: <span className="font-semibold text-industrial-800">{ag.motorista?.nome ?? '—'}</span>
+                  {ag.motorista?.whatsapp && <span className="font-mono"> · {ag.motorista.whatsapp}</span>}
+                </span>
+                {ag.motorista && (
+                  <span className="inline-flex items-center gap-1">
+                    <button type="button" onClick={() => abrirEdicaoMotorista(ag.motorista!)} title="Editar motorista" className="text-industrial-500 hover:text-brand-700">
+                      <Pencil className="size-3" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => excluirMotorista(ag.motorista!)}
+                      disabled={excluindoMotoristaId === ag.motorista.id}
+                      title="Excluir motorista"
+                      className="text-industrial-500 hover:text-red-600 disabled:opacity-50"
+                    >
+                      <Trash2 className="size-3" />
+                    </button>
+                  </span>
+                )}
               </p>
               {ag.motorista && formatPlacaCompleta(ag.motorista) && (
                 <p className="mt-0.5 font-mono text-sm font-bold uppercase text-industrial-900">
@@ -253,6 +362,127 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
           </div>
         ))}
       </div>
+
+      {/* Modal de edição do motorista */}
+      {formMotorista && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={() => setFormMotorista(null)}>
+          <div className="w-full max-w-md rounded-xl bg-industrial-100 border border-industrial-300 p-5 flex flex-col gap-3 my-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold text-industrial-900">Editar motorista</h2>
+              <button type="button" onClick={() => setFormMotorista(null)} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
+            </div>
+
+            <label className="text-xs font-medium text-industrial-600">Nome do motorista
+              <input
+                autoFocus
+                value={formMotorista.nome}
+                onChange={(e) => setFormMotorista({ ...formMotorista, nome: e.target.value })}
+                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 focus:outline-none focus:border-brand-500"
+              />
+            </label>
+            <label className="text-xs font-medium text-industrial-600">WhatsApp com DDD (obrigatório — recebe o aviso de liberação)
+              <input
+                value={formMotorista.whatsapp}
+                onChange={(e) => setFormMotorista({ ...formMotorista, whatsapp: e.target.value })}
+                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 focus:outline-none focus:border-brand-500"
+              />
+            </label>
+
+            <div className="grid grid-cols-2 gap-3">
+              <label className="text-xs font-medium text-industrial-600">CPF
+                <input
+                  value={formMotorista.cpf}
+                  onChange={(e) => setFormMotorista({ ...formMotorista, cpf: e.target.value })}
+                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 focus:outline-none focus:border-brand-500"
+                />
+              </label>
+              <label className="text-xs font-medium text-industrial-600">RG
+                <input
+                  value={formMotorista.rg}
+                  onChange={(e) => setFormMotorista({ ...formMotorista, rg: e.target.value })}
+                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 focus:outline-none focus:border-brand-500"
+                />
+              </label>
+            </div>
+
+            <label className="text-xs font-medium text-industrial-600">Número da CNH
+              <input
+                value={formMotorista.cnh}
+                onChange={(e) => setFormMotorista({ ...formMotorista, cnh: e.target.value })}
+                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 focus:outline-none focus:border-brand-500"
+              />
+            </label>
+
+            <div className="border-t border-industrial-300 pt-3 mt-1">
+              <p className="text-xs font-semibold text-industrial-700 mb-2">Placas do veículo</p>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="text-xs font-medium text-industrial-600">Placa cavalo
+                  <input
+                    value={formMotorista.placa_cavalo}
+                    onChange={(e) => setFormMotorista({ ...formMotorista, placa_cavalo: e.target.value.toUpperCase() })}
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 focus:outline-none focus:border-brand-500"
+                  />
+                </label>
+                <label className="text-xs font-medium text-industrial-600">Placa 1
+                  <input
+                    value={formMotorista.placa_1}
+                    onChange={(e) => setFormMotorista({ ...formMotorista, placa_1: e.target.value.toUpperCase() })}
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 focus:outline-none focus:border-brand-500"
+                  />
+                </label>
+              </div>
+              <div className="grid grid-cols-3 gap-3 mt-3">
+                <label className="text-xs font-medium text-industrial-600">Placa 2
+                  <input
+                    value={formMotorista.placa_2}
+                    onChange={(e) => setFormMotorista({ ...formMotorista, placa_2: e.target.value.toUpperCase() })}
+                    placeholder="opcional"
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                  />
+                </label>
+                <label className="text-xs font-medium text-industrial-600">Placa 3
+                  <input
+                    value={formMotorista.placa_3}
+                    onChange={(e) => setFormMotorista({ ...formMotorista, placa_3: e.target.value.toUpperCase() })}
+                    placeholder="opcional"
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                  />
+                </label>
+                <label className="text-xs font-medium text-industrial-600">Placa 4
+                  <input
+                    value={formMotorista.placa_4}
+                    onChange={(e) => setFormMotorista({ ...formMotorista, placa_4: e.target.value.toUpperCase() })}
+                    placeholder="opcional"
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-1">
+              <button type="button" onClick={() => setFormMotorista(null)}
+                className="rounded-lg border border-industrial-400 px-4 py-2 text-sm font-medium text-industrial-700 hover:bg-industrial-200">Cancelar</button>
+              <button
+                type="button"
+                onClick={salvarMotorista}
+                disabled={
+                  salvandoMotorista ||
+                  !formMotorista.nome.trim() ||
+                  formMotorista.whatsapp.replace(/\D/g, '').length < 10 ||
+                  formMotorista.cpf.replace(/\D/g, '').length !== 11 ||
+                  !formMotorista.rg.trim() ||
+                  !formMotorista.cnh.trim() ||
+                  !formMotorista.placa_cavalo.trim() ||
+                  !formMotorista.placa_1.trim()
+                }
+                className="rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-medium disabled:opacity-50"
+              >
+                {salvandoMotorista ? 'Salvando…' : 'Salvar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

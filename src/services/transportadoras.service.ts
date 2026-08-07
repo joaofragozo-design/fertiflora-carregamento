@@ -57,6 +57,71 @@ export class TransportadorasService {
     placa_3?:          string
     placa_4?:          string
   }): Promise<Motorista> {
+    const dados = this.validarMotorista(input)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (this.supabase as any)
+      .from('motoristas')
+      .insert({ transportadora_id: input.transportadora_id, ...dados })
+      .select('*')
+      .single()
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'cadastrar motorista'))
+    return data as Motorista
+  }
+
+  /** Atualiza os dados de um motorista já cadastrado (mesmas regras do cadastro). */
+  async atualizarMotorista(id: string, input: {
+    nome:         string
+    whatsapp:     string
+    cpf:          string
+    rg:           string
+    cnh:          string
+    placa_cavalo: string
+    placa_1:      string
+    placa_2?:     string
+    placa_3?:     string
+    placa_4?:     string
+  }): Promise<Motorista> {
+    const dados = this.validarMotorista(input)
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (this.supabase as any)
+      .from('motoristas')
+      .update(dados)
+      .eq('id', id)
+      .select('*')
+      .single()
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'atualizar motorista'))
+    return data as Motorista
+  }
+
+  /** Remove o cadastro de um motorista (solicitações antigas mantêm o histórico, só perdem o vínculo). */
+  async excluirMotorista(id: string): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (this.supabase as any)
+      .from('motoristas')
+      .delete()
+      .eq('id', id)
+      .select('id')
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'excluir motorista'))
+    if (!data || data.length === 0) throw new Error('Este motorista já havia sido removido.')
+  }
+
+  private validarMotorista(input: {
+    nome:         string
+    whatsapp:     string
+    cpf:          string
+    rg:           string
+    cnh:          string
+    placa_cavalo: string
+    placa_1:      string
+    placa_2?:     string
+    placa_3?:     string
+    placa_4?:     string
+  }) {
     const nome = input.nome.trim()
     const whatsapp = input.whatsapp.trim()
     const cpf = input.cpf.trim()
@@ -73,23 +138,14 @@ export class TransportadorasService {
     if (!placaCavalo) throw new Error('Informe a placa do cavalo.')
     if (!placa1) throw new Error('Informe a placa do reboque (placa 1).')
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (this.supabase as any)
-      .from('motoristas')
-      .insert({
-        transportadora_id: input.transportadora_id,
-        nome, whatsapp, cpf, rg, cnh,
-        placa_cavalo: placaCavalo,
-        placa_1: placa1,
-        placa_2: input.placa_2?.trim().toUpperCase() || null,
-        placa_3: input.placa_3?.trim().toUpperCase() || null,
-        placa_4: input.placa_4?.trim().toUpperCase() || null,
-      })
-      .select('*')
-      .single()
-
-    if (error) throw new Error(this.traduzirErro(error.message, 'cadastrar motorista'))
-    return data as Motorista
+    return {
+      nome, whatsapp, cpf, rg, cnh,
+      placa_cavalo: placaCavalo,
+      placa_1: placa1,
+      placa_2: input.placa_2?.trim().toUpperCase() || null,
+      placa_3: input.placa_3?.trim().toUpperCase() || null,
+      placa_4: input.placa_4?.trim().toUpperCase() || null,
+    }
   }
 
   /** Atualiza nome/CNPJ/e-mail de uma transportadora já cadastrada. */

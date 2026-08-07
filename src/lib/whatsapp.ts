@@ -44,13 +44,18 @@ interface MensagemLiberacaoParams {
 export function regrasFabrica(temSacaria: boolean): string[] {
   return [
     `• Este agendamento tem validade de ${VALIDADE_LIBERACAO_HORAS} horas.`,
-    ...(temSacaria ? ['• Carga em SACARIA: apresentar-se até as 10h da manhã.'] : []),
+    '• Horário para marcação até as 17 horas.',
+    ...(temSacaria ? ['• Carga em SACARIA: marcação até as 10h da manhã.'] : []),
     '• Não há horário marcado: o carregamento segue a ordem definida pela indústria (veículos com a mesma fórmula carregam em sequência).',
     '• Aguarde dentro do caminhão até ser chamado — não circule pelas dependências da fábrica.',
-    '• O veículo deve estar limpo, sem resíduos, com lona em bom estado e cinta/cabo. Caminhão não preparado volta para o fim da fila.',
+    '• O veículo deve estar limpo, sem resíduos, com lona em bom estado e cinta/cabo. Caso o motorista queira que a equipe faça a limpeza, tem uma taxa de R$ 50,00.',
+    '• Caminhão não preparado volta para o fim da fila.',
     '• A ordem da indústria é soberana.',
   ]
 }
+
+/** Link fixo da localização da fábrica, incluído na mensagem de liberação. */
+export const LOCALIZACAO_FABRICA_URL = 'https://maps.app.goo.gl/qquMGqfu8dotmg8g7'
 
 /**
  * Mensagem enviada ao motorista quando a Logística libera a solicitação.
@@ -78,5 +83,8 @@ export function montarMensagemLiberacao({ motorista, transportadora, data, itens
     '',
     '⚠️ ORIENTAÇÕES DA FÁBRICA:',
     regras,
+    '',
+    '📍 Localização da fábrica',
+    LOCALIZACAO_FABRICA_URL,
   ].join('\n')
 }

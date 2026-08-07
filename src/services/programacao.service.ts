@@ -217,12 +217,25 @@ export class ProgramacaoService {
       .select(SELECT_COM_ITENS)
       .in('solicitacao_status', ['SOLICITADO', 'LIBERADO'])
       .is('confirmado_em', null)
+      .is('whatsapp_enviado_em', null)
       .order('data', { ascending: true })
       .order('created_at', { ascending: true })
       .order('created_at', { foreignTable: 'programacao_itens', ascending: true })
 
     if (error) throw new Error(this.traduzirErro(error.message, 'carregar solicitações'))
     return data as Programacao[]
+  }
+
+  /** Logística abriu o WhatsApp do motorista — marca o envio pra sumir da fila de pendências. */
+  async marcarWhatsappEnviado(id: string): Promise<Programacao> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (this.supabase as any)
+      .from('programacao_carregamento')
+      .update({ whatsapp_enviado_em: new Date().toISOString() })
+      .eq('id', id)
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'marcar WhatsApp como enviado'))
+    return this.getById(id)
   }
 
   /** Agendamentos endereçados a uma transportadora (tela da transportadora). */

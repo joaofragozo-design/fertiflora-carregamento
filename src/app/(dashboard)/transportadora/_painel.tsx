@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Plus, X, Truck, Clock, CheckCircle2, Send, AlertTriangle } from 'lucide-react'
+import { Plus, X, Truck, Clock, CheckCircle2, Send, AlertTriangle, Pencil, Trash2, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { ProgramacaoService } from '@/services/programacao.service'
@@ -10,6 +10,7 @@ import type { Programacao } from '@/types/programacao'
 import type { Transportadora, Motorista } from '@/types/transportadora'
 import { VALIDADE_LIBERACAO_HORAS } from '@/types/transportadora'
 import { EMBALAGEM_LABEL, mascararNomeFormula } from '@/types/formula'
+import { regrasFabrica, LOCALIZACAO_FABRICA_URL } from '@/lib/whatsapp'
 import { cn } from '@/lib/utils/cn'
 import { formatPlacaCompleta } from '@/lib/utils/format'
 
@@ -51,7 +52,9 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
   const [motoristaSel, setMotoristaSel] = useState<Record<string, string>>({}) // agendamento.id → motorista.id
   const [enviandoId, setEnviandoId] = useState<string | null>(null)
   const [formMotorista, setFormMotorista] = useState<FormMotoristaState | null>(null)
+  const [editandoMotoristaId, setEditandoMotoristaId] = useState<string | null>(null)
   const [salvandoMotorista, setSalvandoMotorista] = useState(false)
+  const [excluindoMotoristaId, setExcluindoMotoristaId] = useState<string | null>(null)
 
   const progSvc = useRef(new ProgramacaoService(createClient())).current
   const transpSvc = useRef(new TransportadorasService(createClient())).current
@@ -77,12 +80,32 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
   const aguardando = useMemo(() => agendamentos.filter((a) => a.solicitacao_status === 'SOLICITADO'), [agendamentos])
   const liberados = useMemo(() => agendamentos.filter((a) => a.solicitacao_status === 'LIBERADO'), [agendamentos])
 
-  async function cadastrarMotorista() {
+  function abrirNovoMotorista() {
+    setEditandoMotoristaId(null)
+    setFormMotorista({ ...FORM_MOTORISTA_VAZIO })
+  }
+
+  function abrirEdicaoMotorista(m: Motorista) {
+    setEditandoMotoristaId(m.id)
+    setFormMotorista({
+      nome: m.nome,
+      whatsapp: m.whatsapp,
+      cpf: m.cpf,
+      rg: m.rg,
+      cnh: m.cnh,
+      placa_cavalo: m.placa_cavalo,
+      placa_1: m.placa_1,
+      placa_2: m.placa_2 ?? '',
+      placa_3: m.placa_3 ?? '',
+      placa_4: m.placa_4 ?? '',
+    })
+  }
+
+  async function salvarMotorista() {
     if (!formMotorista) return
     setSalvandoMotorista(true)
     try {
-      const novo = await transpSvc.criarMotorista({
-        transportadora_id: transportadora.id,
+      const dados = {
         nome: formMotorista.nome,
         whatsapp: formMotorista.whatsapp,
         cpf: formMotorista.cpf,
@@ -93,14 +116,36 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
         placa_2: formMotorista.placa_2,
         placa_3: formMotorista.placa_3,
         placa_4: formMotorista.placa_4,
-      })
-      setMotoristas((prev) => [...prev, novo].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')))
+      }
+      const salvo = editandoMotoristaId
+        ? await transpSvc.atualizarMotorista(editandoMotoristaId, dados)
+        : await transpSvc.criarMotorista({ transportadora_id: transportadora.id, ...dados })
+
+      setMotoristas((prev) =>
+        (editandoMotoristaId ? prev.map((m) => (m.id === salvo.id ? salvo : m)) : [...prev, salvo])
+          .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
+      )
       setFormMotorista(null)
-      toast.success(`Motorista ${novo.nome} cadastrado.`)
+      setEditandoMotoristaId(null)
+      toast.success(editandoMotoristaId ? `Motorista ${salvo.nome} atualizado.` : `Motorista ${salvo.nome} cadastrado.`)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao cadastrar motorista.')
+      toast.error(err instanceof Error ? err.message : 'Erro ao salvar motorista.')
     } finally {
       setSalvandoMotorista(false)
+    }
+  }
+
+  async function excluirMotorista(m: Motorista) {
+    if (!window.confirm(`Excluir o motorista ${m.nome}? Essa ação não pode ser desfeita.`)) return
+    setExcluindoMotoristaId(m.id)
+    try {
+      await transpSvc.excluirMotorista(m.id)
+      setMotoristas((prev) => prev.filter((x) => x.id !== m.id))
+      toast.success('Motorista excluído.')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao excluir motorista.')
+    } finally {
+      setExcluindoMotoristaId(null)
     }
   }
 
@@ -151,18 +196,67 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
         </p>
       </div>
 
-      {/* Regras da fábrica — o motorista precisa estar ciente */}
+      {/* Regras da fábrica — mesmo texto enviado por WhatsApp na liberação (regrasFabrica em @/lib/whatsapp),
+       *  pra nunca ficar dessincronizado do que o motorista recebe. */}
       <div className="rounded-xl border border-amber-500 bg-amber-100 p-4">
         <p className="flex items-center gap-1.5 text-sm font-bold text-amber-900 mb-1.5">
           <AlertTriangle className="size-4" /> Orientações da fábrica
         </p>
-        <ul className="text-xs text-amber-900 flex flex-col gap-0.5 list-disc pl-4">
-          <li>O agendamento tem validade de {VALIDADE_LIBERACAO_HORAS} horas após a liberação.</li>
-          <li>Carga em SACARIA: o motorista deve se apresentar até as 10h da manhã.</li>
-          <li>Não há horário marcado — o carregamento segue a ordem definida pela indústria.</li>
-          <li>Motorista aguarda no caminhão até ser chamado; não circula pelas dependências.</li>
-          <li>Veículo limpo, sem resíduos, lona em bom estado e cinta/cabo — senão volta pro fim da fila.</li>
+        <ul className="text-xs text-amber-900 flex flex-col gap-0.5 list-none">
+          {regrasFabrica(true).map((r, i) => <li key={i}>{r}</li>)}
         </ul>
+        <p className="text-xs text-amber-900 mt-1.5">
+          📍 <a href={LOCALIZACAO_FABRICA_URL} target="_blank" rel="noopener noreferrer" className="underline">Localização da fábrica</a>
+        </p>
+      </div>
+
+      {/* MOTORISTAS CADASTRADOS — gerenciar a frota independente de ter agendamento pendente */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-industrial-700 flex items-center gap-1.5">
+            <Users className="size-4 text-brand-600" /> Meus motoristas · {motoristas.length}
+          </h2>
+          <button
+            type="button"
+            onClick={abrirNovoMotorista}
+            className="flex items-center gap-1 rounded-lg border border-industrial-400 px-3 py-1.5 text-xs font-medium text-industrial-700 hover:border-brand-500 hover:text-brand-700 transition-colors"
+          >
+            <Plus className="size-3.5" /> Novo motorista
+          </button>
+        </div>
+        {motoristas.length === 0 ? (
+          <p className="text-sm text-industrial-500 py-3">Nenhum motorista cadastrado ainda.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {motoristas.map((m) => (
+              <div key={m.id} className="flex items-center justify-between gap-3 flex-wrap rounded-xl border border-industrial-300 bg-industrial-100 px-4 py-2.5">
+                <div className="min-w-0">
+                  <p className="font-semibold text-industrial-900">{m.nome}</p>
+                  <p className="text-xs text-industrial-600 font-mono">{m.whatsapp} · {formatPlacaCompleta(m)}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => abrirEdicaoMotorista(m)}
+                    title="Editar motorista"
+                    className="flex items-center justify-center rounded-lg border border-industrial-400 text-industrial-600 hover:border-brand-500 hover:text-brand-700 p-2 transition-colors"
+                  >
+                    <Pencil className="size-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => excluirMotorista(m)}
+                    disabled={excluindoMotoristaId === m.id}
+                    title="Excluir motorista"
+                    className="flex items-center justify-center rounded-lg border border-industrial-400 text-industrial-600 hover:border-red-500 hover:text-red-600 p-2 transition-colors disabled:opacity-50"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* PENDENTES — precisa escolher motorista e enviar */}
@@ -202,7 +296,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                   </label>
                   <button
                     type="button"
-                    onClick={() => setFormMotorista({ ...FORM_MOTORISTA_VAZIO })}
+                    onClick={abrirNovoMotorista}
                     className="flex items-center gap-1 rounded-lg border border-industrial-400 px-3 py-2 text-xs font-medium text-industrial-700 hover:border-brand-500 hover:text-brand-700 transition-colors"
                   >
                     <Plus className="size-3.5" /> Novo motorista
@@ -301,13 +395,13 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
         <p className="text-sm text-industrial-500 text-center py-16">Nenhum carregamento enviado pra você ainda.</p>
       )}
 
-      {/* Modal novo motorista */}
+      {/* Modal novo/editar motorista */}
       {formMotorista && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={() => setFormMotorista(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={() => { setFormMotorista(null); setEditandoMotoristaId(null) }}>
           <div className="w-full max-w-md rounded-xl bg-industrial-100 border border-industrial-300 p-5 flex flex-col gap-3 my-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-industrial-900">Novo motorista</h2>
-              <button type="button" onClick={() => setFormMotorista(null)} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
+              <h2 className="text-base font-semibold text-industrial-900">{editandoMotoristaId ? 'Editar motorista' : 'Novo motorista'}</h2>
+              <button type="button" onClick={() => { setFormMotorista(null); setEditandoMotoristaId(null) }} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
             </div>
 
             <label className="text-xs font-medium text-industrial-600">Nome do motorista
@@ -403,11 +497,11 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
             </div>
 
             <div className="flex justify-end gap-2 pt-1">
-              <button type="button" onClick={() => setFormMotorista(null)}
+              <button type="button" onClick={() => { setFormMotorista(null); setEditandoMotoristaId(null) }}
                 className="rounded-lg border border-industrial-400 px-4 py-2 text-sm font-medium text-industrial-700 hover:bg-industrial-200">Cancelar</button>
               <button
                 type="button"
-                onClick={cadastrarMotorista}
+                onClick={salvarMotorista}
                 disabled={
                   salvandoMotorista ||
                   !formMotorista.nome.trim() ||
@@ -420,7 +514,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                 }
                 className="rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-medium disabled:opacity-50"
               >
-                {salvandoMotorista ? 'Salvando…' : 'Cadastrar'}
+                {salvandoMotorista ? 'Salvando…' : editandoMotoristaId ? 'Salvar' : 'Cadastrar'}
               </button>
             </div>
           </div>
