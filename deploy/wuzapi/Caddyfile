@@ -1,0 +1,3 @@
+{$DUCKDNS_DOMAIN}.duckdns.org {
+	reverse_proxy wuzapi:8080
+}

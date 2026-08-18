@@ -2,12 +2,11 @@ import type { Embalagem } from '@/types/formula'
 import { EMBALAGEM_LABEL } from '@/types/formula'
 import { VALIDADE_LIBERACAO_HORAS } from '@/types/transportadora'
 
-// Envio de WhatsApp pro motorista. Hoje o disparo é semi-automático: ao
-// liberar a solicitação, o sistema monta a mensagem completa e abre o
-// WhatsApp já no número do motorista (link wa.me) — falta só apertar enviar.
-// Quando houver um provedor de envio 100% automático (Meta Cloud API etc.),
-// basta trocar a implementação de `linkWhatsApp` por uma chamada de API,
-// mantendo `montarMensagemLiberacao` como está.
+// Envio de WhatsApp pro motorista. O disparo é automático via WuzAPI
+// (self-hosted, ver src/lib/whatsapp-wuzapi.ts e deploy/wuzapi/) — a rota
+// /api/whatsapp/liberar/[id] monta a mensagem com `montarMensagemLiberacao`
+// e envia. `linkWhatsApp` fica como reserva: se o envio automático falhar,
+// a UI abre esse link wa.me pra mandar manualmente sem travar a fila.
 
 /** Normaliza o número pro formato do wa.me: só dígitos, com DDI 55. */
 export function normalizarWhatsapp(raw: string): string {
@@ -44,7 +43,9 @@ interface MensagemLiberacaoParams {
 export function regrasFabrica(temSacaria: boolean): string[] {
   return [
     `• Este agendamento tem validade de ${VALIDADE_LIBERACAO_HORAS} horas.`,
-    '• Horário para marcação até as 17 horas.',
+    '• Início dos carregamentos: 05h da manhã.',
+    '• Horário para marcação: das 05h às 16h.',
+    '• Carregamentos de segunda a sexta-feira, das 05h às 22h.',
     ...(temSacaria ? ['• Carga em SACARIA: marcação até as 10h da manhã.'] : []),
     '• Não há horário marcado: o carregamento segue a ordem definida pela indústria (veículos com a mesma fórmula carregam em sequência).',
     '• Aguarde dentro do caminhão até ser chamado — não circule pelas dependências da fábrica.',

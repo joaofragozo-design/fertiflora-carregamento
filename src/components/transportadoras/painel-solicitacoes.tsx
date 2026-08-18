@@ -8,9 +8,7 @@ import { ProgramacaoService } from '@/services/programacao.service'
 import { TransportadorasService } from '@/services/transportadoras.service'
 import type { Programacao } from '@/types/programacao'
 import type { Motorista } from '@/types/transportadora'
-import { linkWhatsApp, montarMensagemLiberacao } from '@/lib/whatsapp'
 import { formatPlacaCompleta } from '@/lib/utils/format'
-import { mascararNomeFormula } from '@/types/formula'
 
 interface PainelSolicitacoesProps {
   initialSolicitacoes: Programacao[]
@@ -40,12 +38,13 @@ function tonsDoAgendamento(ag: Programacao): number {
   return (ag.itens ?? []).reduce((s, it) => s + (it.tons ?? 0), 0)
 }
 
-/** Fila da Logística: liberar a solicitação (clique 1) e abrir o WhatsApp do
- *  motorista (clique 2) — separados pra evitar bloqueio de pop-up e dar
- *  chance de conferir a mensagem antes de enviar. */
+/** Fila da Logística: liberar a solicitação (clique 1) e enviar o WhatsApp pro
+ *  motorista (clique 2) — envio automático via WuzAPI (self-hosted); se falhar
+ *  (self-host fora do ar, número desconectado etc.), cai pro link wa.me manual. */
 export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolicitacoesProps) {
   const [agendamentos, setAgendamentos] = useState(initialSolicitacoes)
   const [liberandoId, setLiberandoId] = useState<string | null>(null)
+  const [enviandoId, setEnviandoId] = useState<string | null>(null)
   const [excluindoId, setExcluindoId] = useState<string | null>(null)
   const [formMotorista, setFormMotorista] = useState<FormMotoristaState | null>(null)
   const [salvandoMotorista, setSalvandoMotorista] = useState(false)
@@ -109,7 +108,7 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
     try {
       const upd = await svc.liberarSolicitacao(ag.id, usuario)
       setAgendamentos((prev) => prev.map((a) => (a.id === upd.id ? upd : a)))
-      toast.success(`Liberado — mensagem pronta pra ${ag.motorista.nome}. Clique em "Abrir WhatsApp" para enviar.`)
+      toast.success(`Liberado — clique em "Enviar WhatsApp" para avisar ${ag.motorista.nome}.`)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao liberar a solicitação.')
     } finally {
@@ -145,25 +144,25 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
     }
   }
 
-  async function abrirWhatsapp(ag: Programacao) {
+  async function enviarWhatsapp(ag: Programacao) {
     if (!ag.motorista?.whatsapp) return
-    const mensagem = montarMensagemLiberacao({
-      motorista: ag.motorista.nome,
-      transportadora: ag.transportadora?.nome ?? '',
-      data: ag.data,
-      itens: (ag.itens ?? []).map((it) => ({
-        formulaMascarada: it.formula?.nome ? mascararNomeFormula(it.formula.nome) : '—',
-        quantidade: it.quantidade,
-        embalagem: it.embalagem,
-      })),
-    })
-    window.open(linkWhatsApp(ag.motorista.whatsapp, mensagem), '_blank', 'noopener')
+    setEnviandoId(ag.id)
     try {
-      const upd = await svc.marcarWhatsappEnviado(ag.id)
-      setAgendamentos((prev) => prev.map((a) => (a.id === upd.id ? upd : a)))
+      const res = await fetch(`/api/whatsapp/liberar/${ag.id}`, { method: 'POST' })
+      const json = await res.json().catch(() => null)
+      if (!res.ok) {
+        // Envio automático falhou (WuzAPI fora do ar, número desconectado etc.)
+        // — abre o link manual pra não travar a fila.
+        if (json?.linkManual) window.open(json.linkManual, '_blank', 'noopener')
+        toast.error(json?.error ? `${json.error} Abrindo link manual.` : 'Falha no envio automático — abrindo link manual.')
+        return
+      }
+      setAgendamentos((prev) => prev.map((a) => (a.id === json.agendamento.id ? json.agendamento : a)))
+      toast.success(`WhatsApp enviado pra ${ag.motorista.nome}.`)
     } catch (err) {
-      // O link já abriu; só avisa que a fila pode não atualizar sozinha.
-      toast.error(err instanceof Error ? err.message : 'WhatsApp aberto, mas não deu pra marcar como enviado.')
+      toast.error(err instanceof Error ? err.message : 'Erro ao enviar o WhatsApp.')
+    } finally {
+      setEnviandoId(null)
     }
   }
 
@@ -353,10 +352,11 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
               )}
               <button
                 type="button"
-                onClick={() => abrirWhatsapp(ag)}
-                className="flex items-center gap-1.5 rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-semibold transition-colors"
+                onClick={() => enviarWhatsapp(ag)}
+                disabled={enviandoId === ag.id}
+                className="flex items-center gap-1.5 rounded-lg bg-brand-700 hover:bg-brand-600 text-white px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50"
               >
-                <MessageCircle className="size-4" /> Abrir WhatsApp
+                <MessageCircle className="size-4" /> {enviandoId === ag.id ? 'Enviando…' : 'Enviar WhatsApp'}
               </button>
             </div>
           </div>

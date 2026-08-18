@@ -1,0 +1,54 @@
+services:
+  wuzapi:
+    build:
+      context: ./wuzapi-src
+      dockerfile: Dockerfile
+    command: ["--datadir=/data"]
+    environment:
+      - WUZAPI_ADMIN_TOKEN=${WUZAPI_ADMIN_TOKEN}
+      - WUZAPI_GLOBAL_ENCRYPTION_KEY=${WUZAPI_GLOBAL_ENCRYPTION_KEY}
+      - TZ=America/Sao_Paulo
+      - SESSION_DEVICE_NAME=FertiFlora
+    volumes:
+      - wuzapi_data:/data
+    networks:
+      - wuzapi-network
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DUCKDNS_DOMAIN=${DUCKDNS_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - wuzapi
+    networks:
+      - wuzapi-network
+    restart: unless-stopped
+
+  duckdns:
+    image: alpine:3
+    command: >
+      sh -c "while true; do
+      wget -qO- \"https://www.duckdns.org/update?domains=$${DUCKDNS_DOMAIN}&token=$${DUCKDNS_TOKEN}&ip=\";
+      sleep 300;
+      done"
+    environment:
+      - DUCKDNS_DOMAIN=${DUCKDNS_DOMAIN}
+      - DUCKDNS_TOKEN=${DUCKDNS_TOKEN}
+    restart: unless-stopped
+
+networks:
+  wuzapi-network:
+    driver: bridge
+
+volumes:
+  wuzapi_data:
+  caddy_data:
+  caddy_config:
