@@ -674,6 +674,11 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
                                 {ordem.cliente || <span className="text-industrial-500 font-normal">—</span>}
                               </span>
                             )}
+                            {ordem.programacao?.motorista?.nome && (
+                              <div className="text-[10px] text-industrial-500 truncate" title="Motorista">
+                                {ordem.programacao.motorista.nome}
+                              </div>
+                            )}
                           </td>
 
                           <td className={cn(tdCls, 'text-center')} rowSpan={rowSpan}>

@@ -14,7 +14,8 @@ const SELECT_COM_ITENS = `
   itens:ordem_itens (
     *,
     formula:formulas ( ${SELECT_ITEM_FORMULA} )
-  )
+  ),
+  programacao:programacao_carregamento ( motorista:motoristas ( nome ) )
 `.trim()
 
 export class OrdensDiariasService {

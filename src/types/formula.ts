@@ -59,6 +59,9 @@ export interface OrdemDiaria {
   // Agendamento de origem (Programação) que gerou esta carga, quando enviada
   // por lá -- permite saber, na TV, se um agendamento de hoje já foi carregado.
   programacao_id: string | null
+  // Motorista do agendamento de origem, quando houver -- não existe pra
+  // cargas criadas direto em Ordens do Dia (sem passar pela Programação).
+  programacao?:   { motorista: { nome: string } | null } | null
   created_at:     string
   updated_at:     string
 }

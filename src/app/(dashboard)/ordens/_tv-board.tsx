@@ -320,6 +320,12 @@ export function TvBoard({ initialOrdens, programacao, recebimentos = [], estoque
                 </span>
               </div>
 
+              {o.programacao?.motorista?.nome && (
+                <div className="text-xl text-industrial-500 mt-1">
+                  Motorista: <span className="font-bold text-industrial-800">{o.programacao.motorista.nome}</span>
+                </div>
+              )}
+
               {/* Envelopar + total da carga */}
               <div className="flex items-center justify-between gap-3 flex-wrap mt-3">
                 {o.envelopar ? (
