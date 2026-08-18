@@ -226,6 +226,34 @@ export class ProgramacaoService {
     return data as Programacao[]
   }
 
+  /**
+   * Reverte uma solicitação já LIBERADA de volta pra SOLICITADO — pra quando
+   * a Logística libera por engano ou precisa corrigir algo antes de liberar
+   * de novo. Mantém transportadora/motorista/numero_ordem (não obriga a
+   * escolher tudo de novo e não gera um novo número); limpa liberado_em,
+   * liberado_por e whatsapp_enviado_em pra reaparecer na fila de liberação
+   * e permitir um novo aviso de WhatsApp quando for liberada de novo.
+   * Guard otimista: só reverte se AINDA estiver LIBERADO.
+   */
+  async reverterLiberacao(id: string): Promise<Programacao> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (this.supabase as any)
+      .from('programacao_carregamento')
+      .update({
+        solicitacao_status: 'SOLICITADO',
+        liberado_em: null,
+        liberado_por: null,
+        whatsapp_enviado_em: null,
+      })
+      .eq('id', id)
+      .eq('solicitacao_status', 'LIBERADO')
+      .select('id')
+
+    if (error) throw new Error(this.traduzirErro(error.message, 'reverter liberação'))
+    if (!data || data.length === 0) throw new Error('Esta solicitação não está mais liberada (já foi alterada).')
+    return this.getById(id)
+  }
+
   /** Logística abriu o WhatsApp do motorista — marca o envio pra sumir da fila de pendências. */
   async marcarWhatsappEnviado(id: string): Promise<Programacao> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

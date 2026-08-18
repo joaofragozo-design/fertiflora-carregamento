@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Trash2, Pencil, X, ChevronLeft, ChevronRight, ChevronDown, Printer, Send, CheckCircle2, Truck, Container, FileDown } from 'lucide-react'
+import { Plus, Trash2, Pencil, X, ChevronLeft, ChevronRight, ChevronDown, Printer, Send, CheckCircle2, Truck, Container, FileDown, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { ProgramacaoService } from '@/services/programacao.service'
@@ -151,9 +151,10 @@ const ITEM_FORM_VAZIO: Omit<ItemFormState, 'data' | 'agendamentoId'> = {
   itemId: null, cliente: '', clienteCodigo: null, observacao: '', formula_id: null, quantidade: 0, embalagem: 'SACOS', transportadoraId: '',
 }
 
-// ─── Formulário do AGENDAMENTO (cliente/observação) ────────────────────────
+// ─── Formulário do AGENDAMENTO (cliente/data/observação) ───────────────────
 interface AgendamentoFormState {
   id:            string
+  data:          string
   cliente:       string
   clienteCodigo: number | null
   observacao:    string
@@ -172,6 +173,7 @@ export function ProgramacaoSemana({
   // Fluxo transportadora: modal de escolha + estado do botão de liberar
   const [transpModal, setTranspModal] = useState<{ agendamento: Programacao; transportadoraId: string } | null>(null)
   const [enviandoTranspId, setEnviandoTranspId] = useState<string | null>(null)
+  const [revertendoId, setRevertendoId] = useState<string | null>(null)
   const svc = useMemo(() => new ProgramacaoService(createClient()), [])
   const ordensSvc = useMemo(() => new OrdensDiariasService(createClient()), [])
   const router = useRouter()
@@ -231,7 +233,7 @@ export function ProgramacaoSemana({
     })
   }
   function abrirEdicaoAgendamento(ag: Programacao) {
-    setAgForm({ id: ag.id, cliente: ag.cliente, clienteCodigo: ag.cliente_codigo, observacao: ag.observacao })
+    setAgForm({ id: ag.id, data: ag.data, cliente: ag.cliente, clienteCodigo: ag.cliente_codigo, observacao: ag.observacao })
   }
 
   async function salvarItem() {
@@ -296,7 +298,7 @@ export function ProgramacaoSemana({
     if (!agForm) return
     setSalvando(true)
     try {
-      const upd = await svc.atualizar(agForm.id, { cliente: agForm.cliente.trim(), cliente_codigo: agForm.clienteCodigo, observacao: agForm.observacao.trim() })
+      const upd = await svc.atualizar(agForm.id, { data: agForm.data, cliente: agForm.cliente.trim(), cliente_codigo: agForm.clienteCodigo, observacao: agForm.observacao.trim() })
       setAgendamentos((prev) => prev.map((a) => (a.id === upd.id ? upd : a)))
       setAgForm(null)
     } catch (err) {
@@ -337,6 +339,25 @@ export function ProgramacaoSemana({
       toast.error(err instanceof Error ? err.message : 'Erro ao enviar para Ordens do Dia.')
     } finally {
       setEnviandoId(null)
+    }
+  }
+
+  // Desfaz uma liberação feita por engano (ou que precisa de correção) sem
+  // perder transportadora/motorista/número da ordem — volta pra SOLICITADO
+  // pra reaparecer na fila de liberação e permitir liberar de novo.
+  async function reverterLiberacao(ag: Programacao) {
+    const aviso = `Reverter a liberação de ${ag.transportadora?.nome ?? 'transportadora'}${ag.motorista?.nome ? ' · ' + ag.motorista.nome : ''}${ag.numero_ordem ? ` (ordem nº ${String(ag.numero_ordem).padStart(6, '0')})` : ''}?\n\nA solicitação volta pra fila de liberação. Se o motorista já recebeu o WhatsApp de liberação, avise que o carregamento foi suspenso até nova liberação.`
+    if (!window.confirm(aviso)) return
+
+    setRevertendoId(ag.id)
+    try {
+      const upd = await svc.reverterLiberacao(ag.id)
+      setAgendamentos((prev) => prev.map((a) => (a.id === upd.id ? upd : a)))
+      toast.success('Liberação revertida — voltou pra fila de Solicitações.')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao reverter a liberação.')
+    } finally {
+      setRevertendoId(null)
     }
   }
 
@@ -478,7 +499,7 @@ export function ProgramacaoSemana({
                       </span>
                       {podeEditar && (
                         <div className="flex gap-1 shrink-0">
-                          <button type="button" onClick={() => abrirEdicaoAgendamento(ag)} title="Editar cliente/observação"
+                          <button type="button" onClick={() => abrirEdicaoAgendamento(ag)} title="Editar data/cliente/observação"
                             className="text-industrial-600 hover:text-brand-700"><Pencil className="size-3.5" /></button>
                           <button type="button" onClick={() => excluirAgendamento(ag)} title="Remover agendamento"
                             className="text-industrial-600 hover:text-red-600"><Trash2 className="size-3.5" /></button>
@@ -560,6 +581,18 @@ export function ProgramacaoSemana({
                             <Container className="size-3" />
                             {ag.solicitacao_status ? 'Transportadora ✓' : 'Transportadora'}
                           </button>
+                          {ag.solicitacao_status === 'LIBERADO' && (
+                            <button
+                              type="button"
+                              onClick={() => reverterLiberacao(ag)}
+                              disabled={revertendoId === ag.id}
+                              title="Reverter liberação — volta pra fila de Solicitações sem perder transportadora/motorista/número da ordem"
+                              className="flex items-center gap-1 text-[11px] font-semibold text-amber-700 hover:text-amber-800 transition-colors disabled:opacity-50"
+                            >
+                              <RotateCcw className="size-3" />
+                              {revertendoId === ag.id ? 'Revertendo…' : 'Reverter liberação'}
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={() => enviarParaOrdens(ag)}
@@ -706,14 +739,18 @@ export function ProgramacaoSemana({
         </div>
       )}
 
-      {/* Modal de cliente/observação (nível agendamento) */}
+      {/* Modal de data/cliente/observação (nível agendamento) */}
       {agForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setAgForm(null)}>
           <div className="w-full max-w-md rounded-xl bg-industrial-100 border border-industrial-300 p-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-industrial-900">Editar cliente</h2>
+              <h2 className="text-base font-semibold text-industrial-900">Editar agendamento</h2>
               <button type="button" onClick={() => setAgForm(null)} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
             </div>
+            <label className="text-xs font-medium text-industrial-600">Data
+              <input type="date" value={agForm.data} onChange={(e) => setAgForm({ ...agForm, data: e.target.value })}
+                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 focus:outline-none focus:border-brand-500" />
+            </label>
             <div className="text-xs font-medium text-industrial-600">Cliente
               <div className="mt-1">
                 <ClientePicker
