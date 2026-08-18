@@ -299,7 +299,9 @@ export function RecebimentoSemana({
         />
       )}
 
-      {podeConfirmar && <MapaChegadas recebimentos={recebimentos} />}
+      {/* GPS ao vivo é só acompanhamento (sem ação) — libera pra quem programa
+          o recebimento (logistica) também, não só quem confirma a chegada. */}
+      {(podeConfirmar || podeEditar) && <MapaChegadas recebimentos={recebimentos} />}
 
       {/* Grade da semana */}
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-3">
