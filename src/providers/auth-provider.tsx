@@ -97,10 +97,21 @@ export function AuthProvider({ children, initialUser = null }: AuthProviderProps
         }
 
         // SIGNED_OUT: logout local ou expiração de sessão.
+        // Incidente ativo da Supabase (ago/2026, "401 JWT rejections"): a
+        // renovação automática do token às vezes é rejeitada mesmo com a
+        // sessão ainda válida, e o SDK dispara SIGNED_OUT por engano. Confirma
+        // com um getUser() fresco (adiado com setTimeout — chamar outro método
+        // de auth direto dentro do callback do onAuthStateChange trava o SDK)
+        // antes de expulsar de verdade. Remover quando a Supabase resolver.
         if (event === 'SIGNED_OUT') {
-          setUser(null)
+          setTimeout(() => {
+            supabase.auth.getUser().then(({ data: { user: aindaValido } }) => {
+              if (aindaValido) return // falso alarme do SDK — mantém a sessão
+              setUser(null)
+              router.push(ROUTES.LOGIN)
+            })
+          }, 0)
           setIsLoading(false)
-          router.push(ROUTES.LOGIN)
           return
         }
 
