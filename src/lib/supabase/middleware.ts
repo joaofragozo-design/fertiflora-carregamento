@@ -62,14 +62,21 @@ export async function updateSession(request: NextRequest) {
   })
 
   // Nunca use getSession() no middleware — getUser() valida o JWT no servidor.
-  // Incidente ativo da Supabase (ago/2026): renovação de JWT às vezes é
-  // rejeitada pela API Gateway deles (401) mesmo com sessão válida — retry
-  // rápido evita expulsar o usuário pro login por causa de uma falha
-  // intermitente do lado deles. Remover quando o incidente for resolvido.
-  let { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    await new Promise((resolve) => setTimeout(resolve, 300))
-    ;({ data: { user } } = await supabase.auth.getUser())
+  // Incidente ativo da Supabase (desde 14/08/2026, ainda degradado em 19/08):
+  // renovação de JWT às vezes é rejeitada pela API Gateway deles (401) mesmo
+  // com sessão válida — sobretudo sob rajada (várias abas navegando ao mesmo
+  // tempo), quando a degradação dura mais que uma falha isolada. Faz até 2
+  // retries com backoff antes de aceitar o "sem usuário" como verdadeiro.
+  // Só retry se havia sessão pra validar (AuthSessionMissingError = usuário
+  // de fato anônimo, sem cookie — não vale gastar tempo tentando de novo).
+  // Remover tudo isso quando o incidente for resolvido pela Supabase.
+  const RETRY_DELAYS_MS = [300, 600]
+
+  let { data: { user }, error } = await supabase.auth.getUser()
+  for (const delayMs of RETRY_DELAYS_MS) {
+    if (user || error?.name === 'AuthSessionMissingError') break
+    await new Promise((resolve) => setTimeout(resolve, delayMs))
+    ;({ data: { user }, error } = await supabase.auth.getUser())
   }
 
   const { pathname } = request.nextUrl

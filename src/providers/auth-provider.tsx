@@ -97,19 +97,28 @@ export function AuthProvider({ children, initialUser = null }: AuthProviderProps
         }
 
         // SIGNED_OUT: logout local ou expiração de sessão.
-        // Incidente ativo da Supabase (ago/2026, "401 JWT rejections"): a
-        // renovação automática do token às vezes é rejeitada mesmo com a
-        // sessão ainda válida, e o SDK dispara SIGNED_OUT por engano. Confirma
-        // com um getUser() fresco (adiado com setTimeout — chamar outro método
-        // de auth direto dentro do callback do onAuthStateChange trava o SDK)
+        // Incidente ativo da Supabase (desde 14/08/2026, "401 JWT rejections",
+        // ainda degradado em 19/08): a renovação automática do token às vezes
+        // é rejeitada mesmo com a sessão ainda válida, e o SDK dispara
+        // SIGNED_OUT por engano — pior com várias abas abertas, cada uma
+        // tentando renovar ao mesmo tempo. Confirma com getUser() (adiado com
+        // setTimeout — chamar outro método de auth direto dentro do callback
+        // do onAuthStateChange trava o SDK), com até 2 retries com backoff
         // antes de expulsar de verdade. Remover quando a Supabase resolver.
         if (event === 'SIGNED_OUT') {
-          setTimeout(() => {
-            supabase.auth.getUser().then(({ data: { user: aindaValido } }) => {
-              if (aindaValido) return // falso alarme do SDK — mantém a sessão
-              setUser(null)
-              router.push(ROUTES.LOGIN)
-            })
+          setTimeout(async () => {
+            const RETRY_DELAYS_MS = [400, 800]
+
+            let { data: { user: aindaValido } } = await supabase.auth.getUser()
+            for (const delayMs of RETRY_DELAYS_MS) {
+              if (aindaValido) break
+              await new Promise((resolve) => setTimeout(resolve, delayMs))
+              ;({ data: { user: aindaValido } } = await supabase.auth.getUser())
+            }
+
+            if (aindaValido) return // falso alarme do SDK — mantém a sessão
+            setUser(null)
+            router.push(ROUTES.LOGIN)
           }, 0)
           setIsLoading(false)
           return
