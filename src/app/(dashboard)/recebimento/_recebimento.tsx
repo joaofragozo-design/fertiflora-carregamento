@@ -464,6 +464,11 @@ export function RecebimentoSemana({
               <button type="button" onClick={fecharModal} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
             </div>
 
+            <label className="text-xs font-medium text-industrial-600">Data
+              <input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })}
+                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 focus:outline-none focus:border-brand-500" />
+            </label>
+
             <label className="text-xs font-medium text-industrial-600">Matéria-prima
               <select
                 value={form.materia_prima_key}
