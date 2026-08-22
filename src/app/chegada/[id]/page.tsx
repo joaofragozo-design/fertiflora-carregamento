@@ -6,7 +6,7 @@ import { MATERIAS_PRIMA } from '@/types/formula'
 import { ChegadaClient } from './_chegada-client'
 
 export const metadata: Metadata = {
-  title: 'Confirmar chegada — Fertiflora',
+  title: 'Confirmar chegada',
 }
 
 function ddmm(iso: string): string {
