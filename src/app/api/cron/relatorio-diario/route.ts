@@ -17,11 +17,14 @@ export async function GET(req: NextRequest) {
 
   const data = dataAlvoCron()
   console.log('[cron/relatorio-diario] disparado', new Date().toISOString(), '→ data-alvo', data)
-  const resultado = await enviarRelatorioDiario(supabaseAdmin, data)
+  const resultado = await enviarRelatorioDiario(supabaseAdmin, data, { pularSeVazio: true })
 
   if ('error' in resultado) {
     console.error('[cron/relatorio-diario]', resultado.error)
     return NextResponse.json({ error: resultado.error }, { status: resultado.status })
   }
-  return NextResponse.json(resultado)
+  if (resultado.pulado) {
+    console.log('[cron/relatorio-diario] sem cargas em', data, '— envio pulado')
+  }
+  return NextResponse.json({ ...resultado, data })
 }

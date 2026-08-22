@@ -52,7 +52,8 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
       const json = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(json.error || 'Erro ao enviar e-mail.')
       const emCopia = Array.isArray(json.cc) && json.cc.length > 0 ? ` (cópia: ${json.cc.join(', ')})` : ''
-      toast.success(`Relatório enviado para ${json.para}.${emCopia}`)
+      const para = Array.isArray(json.para) ? json.para.join(', ') : json.para
+      toast.success(`Relatório enviado para ${para}.${emCopia}`)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao enviar e-mail.')
     } finally {

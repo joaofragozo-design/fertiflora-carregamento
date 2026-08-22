@@ -1,3 +1,4 @@
+import nodemailer from 'nodemailer'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { OrdemDiaria, Formula } from '@/types/formula'
 import {
@@ -18,7 +19,11 @@ const STATUS_LABEL: Record<string, string> = {
   FINALIZADO: 'Finalizado',
 }
 
-export const EMAIL_DESTINO = process.env.RELATORIO_EMAIL_PARA || 'comercial@fertiflora.com'
+/** Destinatários principais: lista separada por vírgula em RELATORIO_EMAIL_PARA. */
+export function emailsDestino(): string[] {
+  const lista = lerListaEmails(process.env.RELATORIO_EMAIL_PARA)
+  return lista.length > 0 ? lista : ['comercial@fertiflora.com']
+}
 
 /** Data de hoje no fuso de Brasília (nunca UTC — servidor roda em UTC e viraria o dia às 21h). */
 export function hojeBrasil(): string {
@@ -34,17 +39,19 @@ function diaAnteriorIso(data: string): string {
 
 /**
  * Data-alvo do cron das 23:59. A Vercel pode atrasar o disparo (comum no
- * plano Hobby) e rodar já depois da meia-noite em Brasília — nesse caso
- * `hojeBrasil()` já teria virado o dia seguinte, que ainda não tem nenhuma
- * carga, e o relatório sairia vazio. Se o cron rodar de madrugada (< 6h),
- * assume que o alvo era o dia anterior, que acabou de terminar.
+ * plano Hobby) e rodar horas depois, já no dia seguinte em Brasília — nesse
+ * caso `hojeBrasil()` seria o dia novo, ainda sem cargas, e o relatório
+ * sairia vazio (o corte antigo, às 6h, não cobria atrasos maiores). Como o
+ * relatório é sempre do dia que está terminando, só um disparo à noite
+ * (>= 20h) pode se referir ao dia corrente; qualquer outro horário só faz
+ * sentido como atraso do dia anterior.
  */
 export function dataAlvoCron(): string {
   const hoje = hojeBrasil()
   const hora = Number(
     new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', hour: '2-digit', hourCycle: 'h23' }).format(new Date()),
   )
-  return hora < 6 ? diaAnteriorIso(hoje) : hoje
+  return hora >= 20 ? hoje : diaAnteriorIso(hoje)
 }
 
 /** Lê uma lista de e-mails separada por vírgula de uma env var, ignorando vazios. */
@@ -188,19 +195,24 @@ function montarHtml(ordens: OrdemDiaria[], data: string): string {
 }
 
 export type ResultadoEnvioRelatorio =
-  | { ok: true; para: string; cc: string[] }
+  | { ok: true; para: string[]; cc: string[]; pulado?: boolean }
   | { error: string; status: number }
 
 /**
  * Monta e envia o relatório diário por e-mail. Usado tanto pelo botão manual
  * (sessão do usuário, RLS ativo) quanto pelo cron automático (service role,
  * sem sessão — por isso recebe o client já pronto em vez de criar um).
+ *
+ * `pularSeVazio`: usado pelo cron pra não mandar relatório zerado nos dias
+ * sem carga (fim de semana/feriado). O botão manual envia mesmo vazio,
+ * porque foi um pedido explícito do usuário.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function enviarRelatorioDiario(supabase: SupabaseClient<any>, data: string): Promise<ResultadoEnvioRelatorio> {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) {
-    return { error: 'Envio de e-mail não configurado. Peça ao administrador para configurar a RESEND_API_KEY.', status: 503 }
+export async function enviarRelatorioDiario(supabase: SupabaseClient<any>, data: string, opts?: { pularSeVazio?: boolean }): Promise<ResultadoEnvioRelatorio> {
+  const user = process.env.GMAIL_USER
+  const pass = process.env.GMAIL_APP_PASSWORD
+  if (!user || !pass) {
+    return { error: 'Envio de e-mail não configurado. Peça ao administrador para configurar GMAIL_USER e GMAIL_APP_PASSWORD.', status: 503 }
   }
 
   const { data: ordens, error: dbError } = await supabase
@@ -225,30 +237,36 @@ export async function enviarRelatorioDiario(supabase: SupabaseClient<any>, data:
     return { error: 'Erro ao carregar os dados do relatório.', status: 500 }
   }
 
-  const html = montarHtml((ordens ?? []) as OrdemDiaria[], data)
-  const dataFormatada = new Date(data + 'T12:00:00').toLocaleDateString('pt-BR')
+  const lista = (ordens ?? []) as OrdemDiaria[]
+  const para = emailsDestino()
   const cc = lerListaEmails(process.env.RELATORIO_EMAIL_CC)
 
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: process.env.RESEND_FROM || 'Fertiflora <onboarding@resend.dev>',
-      to: [EMAIL_DESTINO],
+  if (lista.length === 0 && opts?.pularSeVazio) {
+    return { ok: true, para, cc, pulado: true }
+  }
+
+  const html = montarHtml(lista, data)
+  const dataFormatada = new Date(data + 'T12:00:00').toLocaleDateString('pt-BR')
+
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: { user, pass },
+  })
+
+  try {
+    await transporter.sendMail({
+      from: `Fertiflora Carregamento <${user}>`,
+      to: para,
       ...(cc.length > 0 ? { cc } : {}),
       subject: `Relatório Diário de Carregamento — ${dataFormatada}`,
       html,
-    }),
-  })
-
-  if (!res.ok) {
-    const errText = await res.text()
-    console.error('[relatorio-email] resend', errText)
+    })
+  } catch (err) {
+    console.error('[relatorio-email] smtp', err)
     return { error: 'Erro ao enviar o e-mail. Tente novamente.', status: 502 }
   }
 
-  return { ok: true, para: EMAIL_DESTINO, cc }
+  return { ok: true, para, cc }
 }
