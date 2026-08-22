@@ -28,7 +28,9 @@ const petrona = Petrona({
 export const metadata: Metadata = {
   title: {
     default: 'FertiLog',
-    template: '%s | FertiLog',
+    // Sem %s de propósito: a aba mostra sempre só a marca, em todas as
+    // telas, mesmo nas páginas que definem `title` próprio.
+    template: 'FertiLog',
   },
   description: 'FertiLog — sistema de carregamento e logística da Fertiflora.',
   manifest: '/manifest.webmanifest',
