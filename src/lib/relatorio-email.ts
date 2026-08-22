@@ -189,7 +189,7 @@ function montarHtml(ordens: OrdemDiaria[], data: string): string {
       </table>
     ` : ''}
 
-    <p style="color:#9ca3af;font-size:11px;margin-top:24px;">Relatório gerado automaticamente pelo sistema de carregamento Fertiflora.</p>
+    <p style="color:#9ca3af;font-size:11px;margin-top:24px;">Relatório gerado automaticamente pelo FertiLog — sistema de carregamento da Fertiflora.</p>
   </div>
   `
 }

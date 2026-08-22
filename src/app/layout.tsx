@@ -27,15 +27,15 @@ const petrona = Petrona({
 
 export const metadata: Metadata = {
   title: {
-    default: 'FertiFlora Operações',
-    template: '%s | FertiFlora',
+    default: 'FertiLog',
+    template: '%s | FertiLog',
   },
-  description: 'Sistema de controle de ordens de carregamento.',
+  description: 'FertiLog — sistema de carregamento e logística da Fertiflora.',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'FertiFlora',
+    title: 'FertiLog',
   },
   robots: { index: false, follow: false },
 }

@@ -1,7 +1,7 @@
 {
-  "name": "FertiFlora Operações",
-  "short_name": "FertiFlora",
-  "description": "Sistema de controle de ordens de carregamento",
+  "name": "FertiLog",
+  "short_name": "FertiLog",
+  "description": "FertiLog — sistema de carregamento e logística da Fertiflora",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait-primary",

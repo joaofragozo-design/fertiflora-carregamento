@@ -15,7 +15,7 @@ const VALUE_PROPS = [
 ]
 
 export const metadata: Metadata = {
-  title: 'Acesso — Fertiflora',
+  title: 'Acesso — FertiLog',
 }
 
 function isSupabaseConfigured(): boolean {
