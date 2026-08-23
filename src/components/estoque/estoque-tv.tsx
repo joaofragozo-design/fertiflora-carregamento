@@ -106,12 +106,12 @@ export function EstoqueTv({ initialEstoque, initialConfig, consumoHojePorChave }
     <div className="rounded-2xl border-2 border-industrial-300 bg-industrial-100 p-4 mb-4">
       <div className="flex items-center gap-2 mb-3">
         <Gauge className="size-5 text-brand-600" />
-        <h2 className="text-lg font-bold text-industrial-950">Estoque de Matéria-Prima</h2>
+        <h2 className="font-display text-lg font-bold text-industrial-950">Estoque de Matéria-Prima</h2>
       </div>
       <div className="flex flex-wrap gap-2.5">
         {linhas.map(({ mp, qtd, nivel, razao }) => (
           <div key={mp.key} className={cn('rounded-xl border-2 px-3 py-2 min-w-[130px]', NIVEL_STYLE[nivel].bar)}>
-            <p className="text-[11px] font-bold uppercase tracking-wide text-industrial-400">{mp.label}</p>
+            <p className="font-display text-[11px] font-bold uppercase tracking-wide text-industrial-400">{mp.label}</p>
             <p className={cn('text-2xl font-black font-mono leading-none', NIVEL_STYLE[nivel].texto)}>
               {fmtTon(qtd)} <span className="text-xs font-normal">ton</span>
             </p>

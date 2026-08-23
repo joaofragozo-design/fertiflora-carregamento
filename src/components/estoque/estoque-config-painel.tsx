@@ -175,12 +175,12 @@ export function EstoqueConfigPainel({ initialConfig, initialEstoqueAtual, usuari
         <div className="px-4 pb-4 flex flex-col gap-5 border-t border-industrial-200 pt-4">
           {/* Limites do termômetro */}
           <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-industrial-600 mb-2">
+            <p className="font-display text-xs font-bold uppercase tracking-wide text-industrial-600 mb-2">
               Limites do termômetro (toneladas) — abaixo de &ldquo;perigo&rdquo; acende vermelho, abaixo de &ldquo;cuidado&rdquo; acende amarelo, acima de &ldquo;confortável&rdquo; fica bem tranquilo.
             </p>
             <div className="overflow-x-auto">
               <table className="w-full text-xs border-collapse min-w-[560px]">
-                <thead>
+                <thead className="font-display">
                   <tr className="text-left text-industrial-500">
                     <th className="py-1.5 pr-2">Matéria-prima</th>
                     <th className="py-1.5 px-2">Perigo (≤)</th>
@@ -218,7 +218,7 @@ export function EstoqueConfigPainel({ initialConfig, initialEstoqueAtual, usuari
 
           {/* Ajuste manual do saldo */}
           <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-industrial-600 mb-2">
+            <p className="font-display text-xs font-bold uppercase tracking-wide text-industrial-600 mb-2">
               Ajustar saldo manualmente — corrige o estoque de uma matéria-prima pra um valor exato (contagem física, erro de lançamento etc.)
             </p>
             <div className="flex flex-col gap-1.5">
@@ -292,7 +292,7 @@ export function EstoqueConfigPainel({ initialConfig, initialEstoqueAtual, usuari
 
           {/* Importação de CSV */}
           <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-industrial-600 mb-2">
+            <p className="font-display text-xs font-bold uppercase tracking-wide text-industrial-600 mb-2">
               Importar CSV de estoque (soma ao saldo atual — duas colunas: matéria-prima, quantidade em toneladas)
             </p>
             <div className="flex items-center gap-2 mb-2">

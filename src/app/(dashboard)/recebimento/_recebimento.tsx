@@ -265,7 +265,7 @@ export function RecebimentoSemana({
       {/* Cabeçalho + navegação de semana */}
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-industrial-900">Programação de Recebimento</h1>
+          <h1 className="font-display tracking-tight text-lg font-semibold text-industrial-900">Programação de Recebimento</h1>
           <div className="flex items-center gap-1.5 mt-2">
             <button type="button" onClick={() => irParaSemana(addDiasIso(semanaInicio, -7))} aria-label="Semana anterior"
               className="rounded-lg border border-industrial-300 p-1.5 text-industrial-600 hover:text-industrial-900 hover:border-brand-500 transition-colors">
@@ -458,7 +458,7 @@ export function RecebimentoSemana({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={fecharModal}>
           <div className="w-full max-w-md rounded-xl bg-industrial-100 border border-industrial-300 p-5 flex flex-col gap-3 my-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-industrial-900 flex items-center gap-2">
+              <h2 className="font-display text-base font-semibold text-industrial-900 flex items-center gap-2">
                 <Package className="size-4 text-brand-600" /> {editandoId ? 'Editar recebimento' : 'Novo recebimento'} · {ddmm(form.data)}
               </h2>
               <button type="button" onClick={fecharModal} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>

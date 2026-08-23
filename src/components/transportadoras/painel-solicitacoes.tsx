@@ -217,7 +217,7 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
   if (solicitacoesPendentes.length === 0 && liberadosAguardandoWhatsapp.length === 0) {
     return (
       <div className="rounded-xl border border-industrial-200 p-4">
-        <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-industrial-600">
+        <p className="font-display flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-industrial-600">
           <Container className="size-3.5 text-brand-600" /> Solicitações de carregamento
         </p>
         <p className="text-sm text-industrial-500 mt-2">Nenhuma solicitação aguardando ação no momento.</p>
@@ -368,7 +368,7 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={() => setFormMotorista(null)}>
           <div className="w-full max-w-md rounded-xl bg-industrial-100 border border-industrial-300 p-5 flex flex-col gap-3 my-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-industrial-900">Editar motorista</h2>
+              <h2 className="font-display text-base font-semibold text-industrial-900">Editar motorista</h2>
               <button type="button" onClick={() => setFormMotorista(null)} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
             </div>
 

@@ -60,7 +60,7 @@ export function CarregamentoPainel({ initialOrdens, user }: CarregamentoPainelPr
       {/* ── Cabeçalho ──────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-lg font-bold text-industrial-900">Central de Solicitações</h1>
+          <h1 className="font-display text-lg font-bold tracking-tight text-industrial-900">Central de Solicitações</h1>
           <p className="text-sm text-industrial-500">Olá, {user.username}.</p>
         </div>
         <div className="flex items-center gap-2">
@@ -224,7 +224,7 @@ function Pill({ label, value, color }: { label: string; value: number; color: st
 
 function SectionLabel({ text }: { text: string }) {
   return (
-    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-industrial-500">{text}</p>
+    <p className="font-display mb-2 text-xs font-semibold uppercase tracking-wider text-industrial-500">{text}</p>
   )
 }
 

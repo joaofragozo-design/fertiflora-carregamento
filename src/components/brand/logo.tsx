@@ -1,19 +1,19 @@
 import Image from 'next/image'
 
-const LOGO_ASPECT_RATIO = 1528 / 463
-const MARK_ASPECT_RATIO = 330 / 463
+const MARK_ASPECT_RATIO = 289 / 366
 
 interface LogoMarkProps {
   size?: number
   className?: string
 }
 
-/** Ícone isolado — folha da marca, recortada do lockup completo */
+/** Ícone isolado — folha da marca em verde-claro (mesma folha recolorida do
+ * lockup, no padrão da identidade compartilhada com o Trilho STO) */
 export function LogoMark({ size = 32, className }: LogoMarkProps) {
   const width = Math.round(size * MARK_ASPECT_RATIO)
   return (
     <Image
-      src="/fertiflora-mark.png"
+      src="/fertiflora-mark-verde.png"
       alt="Fertiflora"
       width={width}
       height={size}
@@ -29,19 +29,14 @@ interface LogoFullProps {
   showTagline?: boolean
 }
 
-/** Logo completo */
+/** Logo completo — folha + nome do app, como no shell do Trilho STO */
 export function LogoFull({ className, showTagline: _showTagline = true }: LogoFullProps) {
-  const height = 60
   return (
-    <div className={`flex items-center ${className ?? ''}`}>
-      <Image
-        src="/fertiflora-logo.png"
-        alt="Fertiflora"
-        width={Math.round(height * LOGO_ASPECT_RATIO)}
-        height={height}
-        style={{ height, width: 'auto', objectFit: 'contain' }}
-        priority
-      />
+    <div className={`flex items-center gap-2.5 ${className ?? ''}`}>
+      <LogoMark size={28} />
+      <span className="font-display text-lg font-semibold tracking-tight text-industrial-950">
+        FertiLog
+      </span>
     </div>
   )
 }

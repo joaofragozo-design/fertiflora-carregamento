@@ -188,7 +188,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
   return (
     <div className="flex flex-col gap-5 max-w-4xl">
       <div>
-        <h1 className="text-lg font-semibold text-industrial-900 flex items-center gap-2">
+        <h1 className="font-display tracking-tight text-lg font-semibold text-industrial-900 flex items-center gap-2">
           <Truck className="size-5 text-brand-600" /> {transportadora.nome}
         </h1>
         <p className="text-xs text-industrial-600 mt-1">
@@ -213,7 +213,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
       {/* MOTORISTAS CADASTRADOS — gerenciar a frota independente de ter agendamento pendente */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-industrial-700 flex items-center gap-1.5">
+          <h2 className="font-display text-sm font-bold uppercase tracking-wide text-industrial-700 flex items-center gap-1.5">
             <Users className="size-4 text-brand-600" /> Meus motoristas · {motoristas.length}
           </h2>
           <button
@@ -262,7 +262,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
       {/* PENDENTES — precisa escolher motorista e enviar */}
       {pendentes.length > 0 && (
         <div>
-          <h2 className="text-sm font-bold uppercase tracking-wide text-industrial-700 mb-2">
+          <h2 className="font-display text-sm font-bold uppercase tracking-wide text-industrial-700 mb-2">
             Aguardando você · {pendentes.length}
           </h2>
           <div className="flex flex-col gap-2">
@@ -319,7 +319,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
       {/* AGUARDANDO LIBERAÇÃO */}
       {aguardando.length > 0 && (
         <div>
-          <h2 className="text-sm font-bold uppercase tracking-wide text-industrial-700 mb-2">
+          <h2 className="font-display text-sm font-bold uppercase tracking-wide text-industrial-700 mb-2">
             Aguardando liberação da Fertiflora · {aguardando.length}
           </h2>
           <div className="flex flex-col gap-2">
@@ -344,7 +344,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
       {/* LIBERADOS */}
       {liberados.length > 0 && (
         <div>
-          <h2 className="text-sm font-bold uppercase tracking-wide text-industrial-700 mb-2">
+          <h2 className="font-display text-sm font-bold uppercase tracking-wide text-industrial-700 mb-2">
             Liberados · {liberados.length}
           </h2>
           <div className="flex flex-col gap-2">
@@ -400,7 +400,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={() => { setFormMotorista(null); setEditandoMotoristaId(null) }}>
           <div className="w-full max-w-md rounded-xl bg-industrial-100 border border-industrial-300 p-5 flex flex-col gap-3 my-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-industrial-900">{editandoMotoristaId ? 'Editar motorista' : 'Novo motorista'}</h2>
+              <h2 className="font-display text-base font-semibold text-industrial-900">{editandoMotoristaId ? 'Editar motorista' : 'Novo motorista'}</h2>
               <button type="button" onClick={() => { setFormMotorista(null); setEditandoMotoristaId(null) }} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
             </div>
 

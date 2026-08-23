@@ -245,7 +245,7 @@ export function TvBoard({ initialOrdens, programacao, recebimentos = [], estoque
             <span className="absolute inline-flex h-full w-full rounded-full bg-brand-500 opacity-60 animate-ping" />
             <span className="relative inline-flex size-3 rounded-full bg-brand-600" />
           </span>
-          <h1 className="text-2xl font-bold text-industrial-950 truncate">Carregamento · ao vivo</h1>
+          <h1 className="font-display tracking-tight text-2xl font-bold text-industrial-950 truncate">Carregamento · ao vivo</h1>
           <span className="text-sm text-industrial-600 capitalize hidden sm:inline">
             {new Date(hoje + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
           </span>
@@ -364,7 +364,7 @@ export function TvBoard({ initialOrdens, programacao, recebimentos = [], estoque
                         <div className="flex flex-wrap gap-x-12 gap-y-6 mt-4">
                           {usados.map(({ mp, label, kg }) => (
                             <div key={mp.key} className="flex flex-col items-center text-center">
-                              <span className="text-xl font-bold uppercase tracking-wide text-industrial-700">{label}</span>
+                              <span className="font-display text-xl font-bold uppercase tracking-wide text-industrial-700">{label}</span>
                               <span className="text-7xl font-black font-mono text-industrial-950 leading-none">{fmtKg(kg)}</span>
                             </div>
                           ))}
@@ -485,7 +485,7 @@ export function TvBoard({ initialOrdens, programacao, recebimentos = [], estoque
           <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
             <div className="flex items-center gap-2.5">
               <Truck className="size-6 text-brand-300" />
-              <h2 className="text-2xl font-bold text-industrial-950">Programação de Hoje</h2>
+              <h2 className="font-display text-2xl font-bold text-industrial-950">Programação de Hoje</h2>
               <span className="rounded-full bg-brand-600 text-white text-sm font-bold px-3 py-1">
                 {agendamentosHoje.length} {agendamentosHoje.length === 1 ? 'caminhão' : 'caminhões'} pra carregar
               </span>
@@ -498,7 +498,7 @@ export function TvBoard({ initialOrdens, programacao, recebimentos = [], estoque
             <div className="flex flex-wrap gap-x-10 gap-y-4 mb-5 pb-5 border-b border-brand-500/40">
               {materiaPrimaHoje.map(({ label, kg }) => (
                 <div key={label} className="flex flex-col items-center text-center">
-                  <span className="text-base font-bold uppercase tracking-wide text-industrial-500">{label}</span>
+                  <span className="font-display text-base font-bold uppercase tracking-wide text-industrial-500">{label}</span>
                   <span className="text-4xl font-black font-mono text-industrial-950 leading-none">{fmtKg(kg)}</span>
                 </div>
               ))}

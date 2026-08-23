@@ -29,7 +29,7 @@ export function CatalogoFormulas({ formulas }: CatalogoFormulasProps) {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-industrial-900">Fórmulas</h1>
+          <h1 className="font-display tracking-tight text-lg font-semibold text-industrial-900">Fórmulas</h1>
           <p className="text-xs text-industrial-600 mt-0.5 flex items-center gap-1.5">
             <RefreshCw className="size-3" />
             Sincronizadas automaticamente da planilha do Google Sheets
@@ -60,7 +60,7 @@ export function CatalogoFormulas({ formulas }: CatalogoFormulasProps) {
       {/* Tabela */}
       <div className="overflow-auto rounded-lg border border-industrial-300 max-h-[70vh]">
         <table className="w-full text-xs border-collapse">
-          <thead>
+          <thead className="font-display">
             <tr>
               <th className={cn(thCls, 'text-left min-w-[240px] left-0')}>Fórmula</th>
               {INGREDIENTES.map((ing) => (

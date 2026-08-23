@@ -137,7 +137,7 @@ export function ImportarFormulasClient() {
   return (
     <div className="max-w-4xl mx-auto p-6 flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold text-industrial-900">Importar Fórmulas</h1>
+        <h1 className="font-display tracking-tight text-xl font-semibold text-industrial-900">Importar Fórmulas</h1>
         <p className="text-sm text-industrial-600 mt-1">
           Exporte a planilha de fórmulas como CSV e faça upload aqui. Fórmulas com o mesmo nome serão atualizadas.
         </p>
@@ -202,7 +202,7 @@ export function ImportarFormulasClient() {
           </p>
           <div className="overflow-x-auto rounded-lg border border-industrial-300 max-h-64">
             <table className="w-full text-[11px]">
-              <thead>
+              <thead className="font-display">
                 <tr>
                   {CSV_COLUMNS.map((col) => (
                     <th key={col} className="px-2 py-1.5 text-left text-industrial-600 bg-industrial-100 border-b border-industrial-300 whitespace-nowrap">

@@ -509,7 +509,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
       {/* Cabeçalho */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-industrial-900">Ordens Diárias de Carregamento</h1>
+          <h1 className="font-display text-lg font-semibold tracking-tight text-industrial-900">Ordens Diárias de Carregamento</h1>
           <div className="flex items-center gap-1.5 mt-2">
             <button
               type="button" onClick={() => navegar(shiftData(hoje, -1))} aria-label="Dia anterior"
@@ -569,7 +569,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
       <div className="rounded-xl border border-industrial-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs border-collapse">
-            <thead>
+            <thead className="font-display">
               <tr>
                 <th className={cn(thCls, 'text-center', podeEditarDados ? 'w-16' : 'w-8')}>#</th>
                 <th className={cn(thCls, 'text-left min-w-[130px]')}>Cliente</th>

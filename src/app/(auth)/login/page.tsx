@@ -54,7 +54,7 @@ export default async function LoginPage() {
             </span>
           </div>
 
-          <h1 className="mt-9 max-w-[14ch] text-balance font-display text-4xl font-semibold leading-[1.12] text-paper-900 xl:text-5xl">
+          <h1 className="mt-9 max-w-[14ch] text-balance font-display tracking-tight text-4xl font-semibold leading-[1.12] text-paper-900 xl:text-5xl">
             Controle industrial com a solidez que a operação exige.
           </h1>
 

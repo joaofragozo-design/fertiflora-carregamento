@@ -191,7 +191,7 @@ export function GestaoTransportadoras({ initialTransportadoras, initialMotorista
     <div className="flex flex-col gap-4 max-w-3xl">
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-industrial-900">Transportadoras</h1>
+          <h1 className="font-display tracking-tight text-lg font-semibold text-industrial-900">Transportadoras</h1>
           <p className="text-xs text-industrial-600 mt-1">
             Cada transportadora ganha um login próprio pra cadastrar motoristas e enviar solicitações de carregamento.
           </p>
@@ -275,7 +275,7 @@ export function GestaoTransportadoras({ initialTransportadoras, initialMotorista
             {aberta && (
               <div className="border-t border-industrial-300 bg-industrial-50 px-4 py-3">
                 <div className="flex items-center justify-between mb-2">
-                  <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-industrial-600">
+                  <p className="font-display flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-industrial-600">
                     <Users className="size-3.5 text-brand-600" /> Motoristas
                   </p>
                   <button
@@ -339,7 +339,7 @@ export function GestaoTransportadoras({ initialTransportadoras, initialMotorista
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setForm(null)}>
           <div className="w-full max-w-md rounded-xl bg-industrial-100 border border-industrial-300 p-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-industrial-900">Nova transportadora</h2>
+              <h2 className="font-display text-base font-semibold text-industrial-900">Nova transportadora</h2>
               <button type="button" onClick={() => setForm(null)} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
             </div>
 
@@ -413,7 +413,7 @@ export function GestaoTransportadoras({ initialTransportadoras, initialMotorista
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setEdit(null)}>
           <div className="w-full max-w-md rounded-xl bg-industrial-100 border border-industrial-300 p-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-industrial-900">Editar transportadora</h2>
+              <h2 className="font-display text-base font-semibold text-industrial-900">Editar transportadora</h2>
               <button type="button" onClick={() => setEdit(null)} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
             </div>
 
@@ -467,7 +467,7 @@ export function GestaoTransportadoras({ initialTransportadoras, initialMotorista
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={() => setFormMotorista(null)}>
           <div className="w-full max-w-md rounded-xl bg-industrial-100 border border-industrial-300 p-5 flex flex-col gap-3 my-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-industrial-900">{formMotorista.id ? 'Editar motorista' : 'Novo motorista'}</h2>
+              <h2 className="font-display text-base font-semibold text-industrial-900">{formMotorista.id ? 'Editar motorista' : 'Novo motorista'}</h2>
               <button type="button" onClick={() => setFormMotorista(null)} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
             </div>
 

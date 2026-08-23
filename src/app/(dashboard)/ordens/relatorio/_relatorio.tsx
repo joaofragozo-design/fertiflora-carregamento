@@ -129,7 +129,7 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
 
       {/* Cabeçalho do relatório */}
       <div className="border-b-2 border-industrial-300 pb-3">
-        <h1 className="text-xl font-bold text-industrial-950 print:text-black">FERTIFLORA — Relatório Diário de Carregamento</h1>
+        <h1 className="font-display tracking-tight text-xl font-bold text-industrial-950 print:text-black">FERTIFLORA — Relatório Diário de Carregamento</h1>
         <p className="text-sm text-industrial-600 capitalize mt-0.5">{dataLonga}</p>
         <div className="flex gap-6 mt-3 text-sm">
           <div>
@@ -146,7 +146,7 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
       {/* Tabela de ordens */}
       <div className="overflow-x-auto">
         <table className="w-full text-xs border-collapse">
-          <thead>
+          <thead className="font-display">
             <tr>
               <th className={cn(th, 'text-center w-8')}>#</th>
               <th className={cn(th, 'min-w-[120px]')}>Cliente</th>
@@ -249,9 +249,9 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
       {/* Consumo de matéria-prima do dia */}
       {consumo.length > 0 && (
         <div className="break-inside-avoid">
-          <h2 className="text-sm font-bold text-industrial-950 print:text-black mb-2">Consumo de matéria-prima do dia</h2>
+          <h2 className="font-display text-sm font-bold text-industrial-950 print:text-black mb-2">Consumo de matéria-prima do dia</h2>
           <table className="w-full max-w-2xl text-xs border-collapse">
-            <thead>
+            <thead className="font-display">
               <tr>
                 <th className={cn(th)}>Matéria Prima</th>
                 <th className={cn(th, 'text-right')}>Total (kg)</th>

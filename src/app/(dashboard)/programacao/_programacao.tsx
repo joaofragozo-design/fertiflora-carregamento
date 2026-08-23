@@ -414,7 +414,7 @@ export function ProgramacaoSemana({
       {/* Cabeçalho + navegação de semana */}
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-industrial-900">Programação de Carregamento</h1>
+          <h1 className="font-display tracking-tight text-lg font-semibold text-industrial-900">Programação de Carregamento</h1>
           <div className="flex items-center gap-1.5 mt-2">
             <button type="button" onClick={() => irParaSemana(addDiasIso(semanaInicio, -7))} aria-label="Semana anterior"
               className="rounded-lg border border-industrial-300 p-1.5 text-industrial-600 hover:text-industrial-900 hover:border-brand-500 transition-colors">
@@ -646,7 +646,7 @@ export function ProgramacaoSemana({
 
               {insumos.length > 0 && (
                 <div className="rounded-lg bg-industrial-50 border border-industrial-300 p-2 mt-auto">
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-industrial-600 mb-1.5">Matéria-prima do dia</p>
+                  <p className="font-display text-[10px] font-bold uppercase tracking-wide text-industrial-600 mb-1.5">Matéria-prima do dia</p>
                   <div className="flex flex-col gap-1">
                     {insumos.map((m) => (
                       <div key={m.label} className="flex items-center justify-between gap-2 text-xs">
@@ -667,7 +667,7 @@ export function ProgramacaoSemana({
       {/* Total de matéria-prima carregado na semana inteira (todos os dias somados) */}
       {materiaPrimaDaSemana.length > 0 && (
         <div className="rounded-xl border border-industrial-200 p-3">
-          <p className="text-xs font-bold uppercase tracking-wide text-industrial-600 mb-2">Matéria-prima da semana</p>
+          <p className="font-display text-xs font-bold uppercase tracking-wide text-industrial-600 mb-2">Matéria-prima da semana</p>
           <div className="flex flex-wrap gap-3">
             {materiaPrimaDaSemana.map((m) => (
               <div key={m.label} className="flex flex-col rounded-lg bg-industrial-50 border border-industrial-300 px-3 py-1.5 min-w-[110px]">
@@ -686,7 +686,7 @@ export function ProgramacaoSemana({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setTranspModal(null)}>
           <div className="w-full max-w-md rounded-xl bg-industrial-100 border border-industrial-300 p-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-industrial-900">
+              <h2 className="font-display text-base font-semibold text-industrial-900">
                 Enviar pra transportadora · {transpModal.agendamento.cliente || 'sem cliente'}
               </h2>
               <button type="button" onClick={() => setTranspModal(null)} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
@@ -744,7 +744,7 @@ export function ProgramacaoSemana({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setAgForm(null)}>
           <div className="w-full max-w-md rounded-xl bg-industrial-100 border border-industrial-300 p-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-industrial-900">Editar agendamento</h2>
+              <h2 className="font-display text-base font-semibold text-industrial-900">Editar agendamento</h2>
               <button type="button" onClick={() => setAgForm(null)} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
             </div>
             <label className="text-xs font-medium text-industrial-600">Data
@@ -786,7 +786,7 @@ export function ProgramacaoSemana({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setItemForm(null)}>
           <div className="w-full max-w-md rounded-xl bg-industrial-100 border border-industrial-300 p-5 flex flex-col gap-3" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-base font-semibold text-industrial-900">
+              <h2 className="font-display text-base font-semibold text-industrial-900">
                 {itemForm.itemId ? 'Editar item' : editandoNovoAgendamento ? 'Novo cliente' : 'Novo item'} · {ddmm(itemForm.data)}
               </h2>
               <button type="button" onClick={() => setItemForm(null)} className="text-industrial-600 hover:text-industrial-900"><X className="size-5" /></button>
