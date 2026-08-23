@@ -1,13 +1,42 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { X, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NAV_ITEMS } from '@/constants/nav-items'
 import { LogoMark } from '@/components/brand/logo'
 import { ROLE_LABELS } from '@/constants/roles'
 import type { AppUser } from '@/types'
+
+/**
+ * Item ativo considerando a query string: "Painel TV" é /ordens?vista=tv —
+ * só o pathname não distingue as duas entradas, e "Ordens do Dia" acendia
+ * dentro do painel de TV.
+ */
+function isItemActive(href: string, pathname: string, search: URLSearchParams): boolean {
+  const [path, query] = href.split('?')
+  const pathMatch = pathname === path || (path !== '/' && pathname.startsWith(path))
+  if (!pathMatch) return false
+
+  if (query) {
+    for (const [k, v] of new URLSearchParams(query)) {
+      if (search.get(k) !== v) return false
+    }
+    return true
+  }
+
+  // Item sem query só fica ativo se nenhuma variante com query do mesmo
+  // caminho (ex.: ?vista=tv) estiver ativa no momento.
+  return !NAV_ITEMS.some((other) => {
+    const [otherPath, otherQuery] = other.href.split('?')
+    if (other.href === href || otherPath !== path || !otherQuery) return false
+    for (const [k, v] of new URLSearchParams(otherQuery)) {
+      if (search.get(k) !== v) return false
+    }
+    return true
+  })
+}
 
 interface SidebarProps {
   user:       AppUser | null
@@ -21,6 +50,7 @@ interface SidebarProps {
  * gradiente spruce, marca no topo, navegação em pílulas e cartão de usuário. */
 export function Sidebar({ user, isOpen = true, collapsed = false, onClose, onSignOut }: SidebarProps) {
   const pathname     = usePathname()
+  const searchParams = useSearchParams()
   const visibleItems = NAV_ITEMS.filter(
     (item) => !user?.role || item.roles.includes(user.role)
   )
@@ -58,7 +88,7 @@ export function Sidebar({ user, isOpen = true, collapsed = false, onClose, onSig
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3">
           {visibleItems.map((item) => {
             const Icon     = item.icon
-            const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
+            const isActive = isItemActive(item.href, pathname, searchParams)
             return (
               <Link
                 key={item.href}
