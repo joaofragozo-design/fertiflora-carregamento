@@ -58,8 +58,11 @@ export default async function RootLayout({
   const initialUser = await getAuthUser()
 
   return (
-    <html lang="pt-BR">
-      <body className={`${inter.variable} ${jetbrainsMono.variable} ${outfit.variable} bg-industrial-50 min-h-screen`}>
+    // Variáveis de fonte no <html> (não no body): o preflight do Tailwind
+    // define a font-family base no html, e var() não re-resolve de um nível
+    // abaixo — no body, o app inteiro cairia na fonte do sistema.
+    <html lang="pt-BR" className={`${inter.variable} ${jetbrainsMono.variable} ${outfit.variable}`}>
+      <body className="bg-industrial-50 min-h-screen">
         <Providers initialUser={initialUser}>
           {children}
         </Providers>

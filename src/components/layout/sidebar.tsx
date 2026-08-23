@@ -34,7 +34,7 @@ export function Sidebar({ user, isOpen = true, collapsed = false, onClose, onSig
 
       <aside className={cn(
         'fixed inset-y-0 left-0 z-50 flex w-64 flex-col overflow-hidden bg-gradient-to-b from-spruce-700 via-spruce-800 to-spruce-900 transition-all duration-200 print:hidden',
-        'md:static md:my-3 md:ml-3 md:rounded-3xl md:shadow-editorial',
+        'md:static md:translate-x-0 md:my-3 md:ml-3 md:rounded-3xl md:shadow-editorial',
         isOpen ? 'translate-x-0' : '-translate-x-full',
         collapsed ? 'md:w-0 md:ml-0 md:border-0' : 'md:w-64'
       )}>
