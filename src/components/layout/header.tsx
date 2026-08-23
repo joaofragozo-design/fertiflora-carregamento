@@ -4,6 +4,7 @@ import { Wifi, WifiOff, LogOut, Menu, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LogoFull } from '@/components/brand/logo'
 import { InstallButton } from '@/components/pwa/install-button'
+import { ROLE_LABELS } from '@/constants/roles'
 import type { AppUser, ConnectionStatus } from '@/types'
 
 interface HeaderProps {
@@ -12,15 +13,6 @@ interface HeaderProps {
   onSignOut?: () => void
   onMenuToggle?: () => void
   onOpenSearch?: () => void
-}
-
-const ROLE_LABELS: Record<string, string> = {
-  operador_carregamento: 'Carregamento',
-  operador_pa:           'Operador',
-  admin:                 'Admin',
-  logistica:             'Logística',
-  logistica_02:          'Logística 02',
-  faturamento:           'Faturamento',
 }
 
 export function Header({ user, connectionStatus, onSignOut, onMenuToggle, onOpenSearch }: HeaderProps) {
@@ -39,7 +31,10 @@ export function Header({ user, connectionStatus, onSignOut, onMenuToggle, onOpen
             <Menu className="h-5 w-5" />
           </button>
         )}
-        <LogoFull showTagline={false} />
+        {/* No desktop a marca vive na sidebar (padrão STO); aqui só no mobile */}
+        <div className="md:hidden">
+          <LogoFull showTagline={false} />
+        </div>
 
         {onOpenSearch && (
           <button

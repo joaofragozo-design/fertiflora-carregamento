@@ -48,10 +48,11 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
       />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar
-          user={user}
+          user={displayUser}
           isOpen={mobileOpen}
           collapsed={collapsed}
           onClose={() => setMobileOpen(false)}
+          onSignOut={signOut}
         />
         <main className="flex-1 overflow-y-auto">
           <div className="app-container py-6">
