@@ -1,4 +1,6 @@
-const CACHE = 'fertiflora-v3'
+// v4: ícones novos (folha verde sobre oliva) — versão nova descarta o cache
+// antigo que ainda servia os ícones da identidade anterior
+const CACHE = 'fertiflora-v4'
 
 self.addEventListener('install', () => self.skipWaiting())
 
@@ -18,7 +20,7 @@ self.addEventListener('fetch', (e) => {
   const isStaticAsset =
     url.pathname.startsWith('/_next/static/') ||
     url.pathname.startsWith('/icons/') ||
-    url.pathname === '/fertiflora-logo.png'
+    url.pathname === '/fertiflora-mark-verde.png'
 
   if (!isStaticAsset) return // deixa o browser lidar normalmente
 
