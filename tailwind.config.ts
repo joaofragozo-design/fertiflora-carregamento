@@ -10,34 +10,49 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Verde-folha da marca (degradê da logo) — CTAs, estados ativos, acentos
+        // Verde Fertiflora (degradê da folha) — a cor protagonista da identidade
+        // portada do STO: CTAs, links, estados ativos, acentos
         brand: {
-          50:  '#F1F8ED',
-          100: '#E4F5DC',
-          200: '#C3E8B2',
-          300: '#9FD988',
-          400: '#7FC46E',
-          500: '#5FAE5B',
-          600: '#427F49',
-          700: '#315F39',
-          800: '#24452A',
-          900: '#173420',
-          950: '#0E2415',
+          50:  '#EFFAEB',
+          100: '#DDF4D4',
+          200: '#BBE8A9',
+          300: '#94D97D',
+          400: '#6FC85B',
+          500: '#4FB142',
+          600: '#3B9038',
+          700: '#2F7330',
+          800: '#265927',
+          900: '#1C431F',
+          950: '#112B14',
         },
-        // Neutro quente orgânico (era zinc/gray genérico) — fundo, texto, bordas
+        // Verde de sucesso — semântico: confirmações, dia finalizado (paridade
+        // com o STO; distinto do verde da marca pelo tom esmeralda)
+        success: {
+          50:  '#ECFDF5',
+          100: '#D1FAE5',
+          200: '#A7F3D0',
+          400: '#34D399',
+          500: '#10B981',
+          600: '#059669',
+          700: '#047857',
+        },
+        // Neutros do tema escuro (escala invertida: 50 = fundo quase-preto,
+        // 900 = texto quase-branco), com tinta verde-militar — o "preto" da casa
         industrial: {
-          50:  '#FCFBF6',  // fundo de página
-          100: '#F7F5E9',  // superfície (cards)
-          200: '#EFEDDF',  // borda sutil
-          300: '#DEDBC4',  // borda padrão
-          400: '#C7C3A6',  // texto muito suave
-          500: '#9B9679',  // texto suave
-          600: '#6E6B54',  // texto médio
-          700: '#4A4838',  // texto secundário
-          800: '#2E2C22',
-          900: '#1E1C15',  // texto primário
-          950: '#141209',  // texto escuro máximo
+          50:  '#12160C',  // fundo de página (oliva quase preto)
+          100: '#191E11',  // superfície (cards)
+          200: '#29301C',  // borda sutil
+          300: '#3B4429',  // borda padrão
+          400: '#6F7A5C',  // texto muito suave
+          500: '#94A07E',  // texto suave
+          600: '#B2BC9E',  // texto médio
+          700: '#CED6BC',  // texto secundário
+          800: '#E5EAD7',
+          900: '#F4F7EC',  // texto primário
+          950: '#FFFFFF',
         },
+        // Superfície de card sobre o fundo oliva
+        surface: '#1C2213',
         warning: {
           400: '#fb923c',
           500: '#f97316',
@@ -53,46 +68,52 @@ const config: Config = {
           500: '#3b82f6',
           600: '#2563eb',
         },
-        // Papel quente orgânico — superfícies de telas de marca (login, onboarding)
         paper: {
-          50:  '#FCFBF6',
-          100: '#F7F5E9',
-          200: '#EFEDDF',
-          300: '#DEDBC4',
-          400: '#C7C3A6',
-          500: '#9B9679',
-          600: '#6E6B54',
-          700: '#4A4838',
-          800: '#2E2C22',
-          900: '#1E1C15',
+          50:  '#12160C',
+          100: '#191E11',
+          200: '#29301C',
+          300: '#3B4429',
+          400: '#6F7A5C',
+          500: '#94A07E',
+          600: '#B2BC9E',
+          700: '#CED6BC',
+          800: '#E5EAD7',
+          900: '#F4F7EC',
         },
-        // Verde-folha da marca (degradê da logo) — acentos orgânicos, CTAs
+        // Acentos vivos sobre fundo escuro (ícones ativos da sidebar etc.)
         leaf: {
-          100: '#E4F5DC',
-          200: '#C3E8B2',
-          300: '#9FD988',
-          400: '#7FC46E',
-          500: '#5FAE5B',
-          600: '#427F49',
-          700: '#315F39',
-          900: '#173420',
+          100: '#DDF4D4',
+          200: '#BBE8A9',
+          300: '#94D97D',
+          400: '#6FC85B',
+          500: '#4FB142',
+          600: '#3B9038',
+          700: '#2F7330',
+          900: '#1C431F',
         },
-        // Teal do wordmark da marca — títulos, CTAs sólidos, autoridade
+        // Verde profundo de floresta — superfícies de marca (sidebar, login)
         spruce: {
-          50:  '#E7F0EE',
-          200: '#9AC2BB',
-          400: '#2E7A70',
-          500: '#1D6259',
-          600: '#155048',
-          700: '#0F3E39',
-          800: '#0A2E2A',
-          900: '#071F1D',
+          50:  '#EBF6EE',
+          200: '#A8D9B4',
+          400: '#3E9155',
+          500: '#277940',
+          600: '#1B6232',
+          700: '#124C27',
+          800: '#0B371D',
+          900: '#062815',
         },
       },
       fontFamily: {
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
         mono: ['var(--font-mono)', 'monospace'],
-        display: ['var(--font-display)', 'serif'],
+        display: ['var(--font-display)', 'sans-serif'],
+      },
+      // Raios generosos da identidade STO — rounded-lg/xl/2xl mais amigáveis
+      borderRadius: {
+        lg: '0.875rem',
+        xl: '1.25rem',
+        '2xl': '1.75rem',
+        '3xl': '2.25rem',
       },
       backgroundImage: {
         'grid-industrial': "url(\"data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E\")",
@@ -140,11 +161,11 @@ const config: Config = {
         },
       },
       boxShadow: {
-        'industrial':  '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.06)',
-        'glow-green':  '0 0 12px rgba(22,163,74,0.2)',
+        'industrial':  '0 1px 2px rgba(6,40,21,0.35), 0 8px 24px -12px rgba(0,0,0,0.5)',
+        'glow-green':  '0 0 12px rgba(79,177,66,0.25)',
         'glow-orange': '0 0 12px rgba(249,115,22,0.2)',
         'glow-red':    '0 0 12px rgba(239,68,68,0.2)',
-        'editorial':   '0 1px 2px rgba(30,28,21,0.05), 0 18px 40px -18px rgba(30,28,21,0.18), 0 34px 60px -32px rgba(66,127,73,0.22)',
+        'editorial':   '0 1px 2px rgba(0,0,0,0.4), 0 12px 32px -12px rgba(0,0,0,0.5), 0 24px 56px -24px rgba(79,177,66,0.12)',
       },
     },
   },

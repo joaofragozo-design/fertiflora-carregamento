@@ -184,7 +184,7 @@ function LiberadoCard({ item }: { item: Carregamento }) {
           <span className="h-2 w-2 animate-pulse rounded-full bg-brand-500" />
           <p className="text-sm font-bold text-industrial-900">{item.insumo}</p>
         </div>
-        <span className="text-xs font-semibold text-brand-700">{executadas}/{total} conchas</span>
+        <span className="text-xs font-semibold text-brand-300">{executadas}/{total} conchas</span>
       </div>
       {/* Barra de progresso */}
       <div className="h-2 w-full rounded-full bg-industrial-200">

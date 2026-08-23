@@ -253,21 +253,21 @@ export function TvBoard({ initialOrdens, programacao, recebimentos = [], estoque
         <div className="flex items-center gap-4 shrink-0">
           {/* Parado entre cargas — só aparece enquanto nenhuma carga está em andamento */}
           {!cargaEmAndamento && ultimoFinalizado && (
-            <div className="flex items-center gap-2 rounded-lg border border-amber-500 bg-amber-100 px-3 py-1.5">
-              <Clock className="size-4 text-amber-800" />
-              <span className="text-xs text-amber-800 font-medium">Parado há</span>
-              <span className="text-lg font-mono font-bold text-amber-900">
+            <div className="flex items-center gap-2 rounded-lg border border-amber-500 bg-amber-500/15 px-3 py-1.5">
+              <Clock className="size-4 text-amber-300" />
+              <span className="text-xs text-amber-300 font-medium">Parado há</span>
+              <span className="text-lg font-mono font-bold text-amber-200">
                 <Cronometro inicio={ultimoFinalizado.finalizado_em} />
               </span>
             </div>
           )}
           <div className="text-right">
             <span className="text-sm text-industrial-600">Total do dia </span>
-            <span className="text-2xl font-bold text-brand-700">{totalTons.toFixed(2)} ton</span>
+            <span className="text-2xl font-bold text-brand-300">{totalTons.toFixed(2)} ton</span>
           </div>
           <Link
             href={ROUTES.ORDENS_RELATORIO}
-            className="flex items-center gap-1.5 rounded-lg border border-industrial-300 px-3 py-2 text-sm font-medium text-industrial-700 hover:border-brand-500 hover:text-brand-700 transition-colors"
+            className="flex items-center gap-1.5 rounded-lg border border-industrial-300 px-3 py-2 text-sm font-medium text-industrial-700 hover:border-brand-500 hover:text-brand-300 transition-colors"
           >
             <Printer className="size-4" /> Relatório
           </Link>
@@ -294,7 +294,7 @@ export function TvBoard({ initialOrdens, programacao, recebimentos = [], estoque
               className={cn(
                 'rounded-2xl border border-l-8 p-5 transition-colors',
                 o._saving && 'opacity-80',
-                emAndamento ? 'bg-amber-200 border-amber-500' : 'bg-industrial-100 border-industrial-700',
+                emAndamento ? 'bg-amber-500/25 border-amber-500' : 'bg-industrial-100 border-industrial-700',
               )}
             >
               {/* Cliente + placa + status */}
@@ -309,13 +309,13 @@ export function TvBoard({ initialOrdens, programacao, recebimentos = [], estoque
                 <span
                   className={cn(
                     'flex items-center gap-2 text-2xl font-bold whitespace-nowrap',
-                    emAndamento ? 'text-amber-900' : 'text-industrial-500',
+                    emAndamento ? 'text-amber-200' : 'text-industrial-500',
                   )}
                 >
                   {emAndamento ? <Clock className="size-8" /> : null}
                   {emAndamento ? 'Em andamento' : 'Aguardando'}
                   {emAndamento && o.iniciado_em && (
-                    <span className="ml-2 text-3xl font-extrabold text-amber-900"><Cronometro inicio={o.iniciado_em} /></span>
+                    <span className="ml-2 text-3xl font-extrabold text-amber-200"><Cronometro inicio={o.iniciado_em} /></span>
                   )}
                 </span>
               </div>
@@ -333,7 +333,7 @@ export function TvBoard({ initialOrdens, programacao, recebimentos = [], estoque
                     Envelopar
                   </span>
                 ) : <span />}
-                <span className="text-4xl font-bold text-brand-700">
+                <span className="text-4xl font-bold text-brand-300">
                   {tonsCarga.toFixed(2)} <span className="text-xl font-normal text-industrial-500">ton</span>
                 </span>
               </div>
@@ -352,7 +352,7 @@ export function TvBoard({ initialOrdens, programacao, recebimentos = [], estoque
                         <span className="text-3xl font-extrabold text-industrial-950 tracking-wide">
                           {item.quantidade} × {EMBALAGEM_LABEL[item.embalagem]}
                         </span>
-                        <span className="text-2xl font-bold text-brand-700">{tons.toFixed(2)} ton</span>
+                        <span className="text-2xl font-bold text-brand-300">{tons.toFixed(2)} ton</span>
                       </div>
                       <div className="mt-2 text-2xl text-industrial-500">
                         Fórmula:{' '}
@@ -386,7 +386,7 @@ export function TvBoard({ initialOrdens, programacao, recebimentos = [], estoque
                       className={cn(
                         'flex-1 flex items-center justify-center gap-3 rounded-xl px-5 py-6 text-3xl font-bold transition-colors',
                         o.iniciado
-                          ? 'bg-industrial-100 border-2 border-brand-600 text-brand-700'
+                          ? 'bg-industrial-100 border-2 border-brand-600 text-brand-300'
                           : 'bg-amber-500 text-white hover:bg-amber-600',
                         bloqueiaIniciar && 'opacity-40 cursor-not-allowed hover:bg-amber-500',
                       )}
@@ -407,7 +407,7 @@ export function TvBoard({ initialOrdens, programacao, recebimentos = [], estoque
                     </button>
                   </div>
                   {bloqueiaIniciar && (
-                    <p className="text-base text-amber-800 mt-2 text-center">Finalize a carga em andamento primeiro.</p>
+                    <p className="text-base text-amber-300 mt-2 text-center">Finalize a carga em andamento primeiro.</p>
                   )}
                 </div>
               )}
@@ -438,13 +438,13 @@ export function TvBoard({ initialOrdens, programacao, recebimentos = [], estoque
                 <div
                   key={o.id}
                   className={cn(
-                    'flex items-center justify-between gap-3 rounded-xl border border-brand-300 bg-brand-100 px-3 py-2',
+                    'flex items-center justify-between gap-3 rounded-xl border border-brand-500/40 bg-brand-500/15 px-3 py-2',
                     o._saving && 'opacity-70',
                   )}
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <Check className="size-4 text-brand-700 shrink-0" strokeWidth={3} />
+                      <Check className="size-4 text-brand-300 shrink-0" strokeWidth={3} />
                       <span className="font-bold text-industrial-900 truncate">{o.cliente || 'Sem cliente'}</span>
                       {o.placa && <span className="text-xs font-mono text-industrial-500 uppercase shrink-0">{o.placa}</span>}
                     </div>
@@ -452,12 +452,12 @@ export function TvBoard({ initialOrdens, programacao, recebimentos = [], estoque
                       {resumoItens || 'sem itens'} · {tonsCarga.toFixed(2)} ton
                     </div>
                     {durMs > 0 && (
-                      <div className="text-xs text-brand-700 font-medium mt-0.5">
+                      <div className="text-xs text-brand-300 font-medium mt-0.5">
                         <Clock className="inline size-3 mb-0.5" /> {formatDuracao(durMs)} · {tonPorHora(tonsCarga, durMs).toFixed(2)} ton/h
                       </div>
                     )}
                     {intervalo != null && (
-                      <div className="text-xs text-amber-800 font-medium mt-0.5">
+                      <div className="text-xs text-amber-300 font-medium mt-0.5">
                         Intervalo até a próxima: {formatDuracao(intervalo)}
                       </div>
                     )}
@@ -466,7 +466,7 @@ export function TvBoard({ initialOrdens, programacao, recebimentos = [], estoque
                     <button
                       type="button"
                       onClick={() => toggleFinalizado(o)}
-                      className="flex items-center gap-1 text-xs font-medium text-industrial-500 hover:text-brand-700 transition-colors shrink-0"
+                      className="flex items-center gap-1 text-xs font-medium text-industrial-500 hover:text-brand-300 transition-colors shrink-0"
                       title="Reabrir (desfazer finalização)"
                     >
                       <RotateCcw className="size-3.5" /> Reabrir
@@ -481,21 +481,21 @@ export function TvBoard({ initialOrdens, programacao, recebimentos = [], estoque
 
       {/* PROGRAMAÇÃO DE HOJE — destacada: o que ainda falta carregar */}
       {agendamentosHoje.length > 0 && (
-        <div className="mt-2 rounded-2xl border-2 border-brand-500 bg-brand-50 p-5">
+        <div className="mt-2 rounded-2xl border-2 border-brand-500 bg-brand-500/10 p-5">
           <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
             <div className="flex items-center gap-2.5">
-              <Truck className="size-6 text-brand-700" />
+              <Truck className="size-6 text-brand-300" />
               <h2 className="text-2xl font-bold text-industrial-950">Programação de Hoje</h2>
               <span className="rounded-full bg-brand-600 text-white text-sm font-bold px-3 py-1">
                 {agendamentosHoje.length} {agendamentosHoje.length === 1 ? 'caminhão' : 'caminhões'} pra carregar
               </span>
             </div>
-            <span className="text-2xl font-bold text-brand-700">{totalTonsHoje.toFixed(2)} <span className="text-base font-normal text-industrial-500">ton</span></span>
+            <span className="text-2xl font-bold text-brand-300">{totalTonsHoje.toFixed(2)} <span className="text-base font-normal text-industrial-500">ton</span></span>
           </div>
 
           {/* Matéria-prima agregada do que ainda falta carregar hoje */}
           {materiaPrimaHoje.length > 0 && (
-            <div className="flex flex-wrap gap-x-10 gap-y-4 mb-5 pb-5 border-b border-brand-300">
+            <div className="flex flex-wrap gap-x-10 gap-y-4 mb-5 pb-5 border-b border-brand-500/40">
               {materiaPrimaHoje.map(({ label, kg }) => (
                 <div key={label} className="flex flex-col items-center text-center">
                   <span className="text-base font-bold uppercase tracking-wide text-industrial-500">{label}</span>
@@ -517,13 +517,13 @@ export function TvBoard({ initialOrdens, programacao, recebimentos = [], estoque
                   key={ag.id}
                   className={cn(
                     'rounded-lg px-3 py-2',
-                    carregado ? 'bg-brand-100 border border-brand-500' : 'bg-industrial-100',
+                    carregado ? 'bg-brand-500/15 border border-brand-500' : 'bg-industrial-100',
                   )}
                 >
-                  {carregado && <Check className="inline size-3.5 text-brand-700 mr-1 mb-0.5" strokeWidth={3} />}
-                  <span className={cn('font-bold', carregado ? 'text-brand-800' : 'text-industrial-950')}>{ag.cliente || 'Sem cliente'}</span>
-                  {resumo && <span className="text-brand-700"> · {resumo}</span>}
-                  <span className={carregado ? 'text-brand-700' : 'text-industrial-500'}> · {totalAg.toFixed(2)} ton</span>
+                  {carregado && <Check className="inline size-3.5 text-brand-300 mr-1 mb-0.5" strokeWidth={3} />}
+                  <span className={cn('font-bold', carregado ? 'text-brand-300' : 'text-industrial-950')}>{ag.cliente || 'Sem cliente'}</span>
+                  {resumo && <span className="text-brand-300"> · {resumo}</span>}
+                  <span className={carregado ? 'text-brand-300' : 'text-industrial-500'}> · {totalAg.toFixed(2)} ton</span>
                 </div>
               )
             })}
@@ -551,7 +551,7 @@ export function TvBoard({ initialOrdens, programacao, recebimentos = [], estoque
                     return (
                       <div key={ag.id} className="text-sm leading-snug">
                         <span className="font-semibold text-industrial-900">{ag.cliente || '—'}</span>
-                        {resumo && <span className="text-brand-700"> · {resumo}</span>}
+                        {resumo && <span className="text-brand-300"> · {resumo}</span>}
                         <span className="text-industrial-500"> · {totalAg.toFixed(2)} ton</span>
                       </div>
                     )

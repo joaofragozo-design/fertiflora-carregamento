@@ -229,7 +229,7 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
             {/* Badge de status */}
             <div className="flex justify-center">
               {tarefa.status === 'LIBERADO' ? (
-                <span className="flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-5 py-2 text-base font-bold uppercase tracking-widest text-brand-700">
+                <span className="flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-5 py-2 text-base font-bold uppercase tracking-widest text-brand-300">
                   <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-brand-500" />
                   Liberado — Execute
                 </span>
@@ -372,11 +372,11 @@ function AdminLiberadoCard({ item }: { item: Carregamento }) {
     <div className="overflow-hidden rounded-2xl border-2 border-brand-500/50 bg-brand-500/5">
       <div className="flex items-center gap-2 border-b border-brand-500/20 bg-brand-500/10 px-5 py-2.5">
         <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-brand-500" />
-        <span className="text-xs font-bold uppercase tracking-widest text-brand-700">Em execução</span>
+        <span className="text-xs font-bold uppercase tracking-widest text-brand-300">Em execução</span>
       </div>
       <div className="px-5 py-4 text-center">
         <p className="text-4xl font-black text-industrial-900">{item.insumo}</p>
-        <p className="mt-1 text-2xl font-black text-brand-700">{executadas}/{item.quantidade} conchas</p>
+        <p className="mt-1 text-2xl font-black text-brand-300">{executadas}/{item.quantidade} conchas</p>
         <div className="mt-3 h-2 w-full rounded-full bg-industrial-200">
           <div className="h-2 rounded-full bg-brand-500 transition-all" style={{ width: `${pct}%` }} />
         </div>

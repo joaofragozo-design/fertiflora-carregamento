@@ -31,12 +31,12 @@ const ETAPA: Record<'AGUARDANDO_CHEGADA' | 'AGUARDANDO_FILA' | 'DESCARREGANDO', 
   AGUARDANDO_FILA: {
     rotulo: 'Aguardando na fila',
     railClass: 'bg-warning-500',
-    chipClass: 'border-warning-500/40 text-warning-600 bg-warning-500/8',
+    chipClass: 'border-warning-500/40 text-warning-400 bg-warning-500/8',
   },
   DESCARREGANDO: {
     rotulo: 'Descarregando',
     railClass: 'bg-leaf-500',
-    chipClass: 'border-leaf-500/40 text-leaf-700 bg-leaf-100/60',
+    chipClass: 'border-leaf-500/40 text-leaf-300 bg-leaf-500/15',
   },
 }
 
@@ -83,7 +83,7 @@ export function FilaOperacao({
           </p>
           <h2 className="font-display text-xl font-semibold text-paper-900">Fila de operação</h2>
         </div>
-        <span className="flex items-center gap-1.5 rounded-full border border-spruce-600/25 bg-spruce-600/8 px-3 py-1 text-xs font-bold text-spruce-700">
+        <span className="flex items-center gap-1.5 rounded-full border border-spruce-600/25 bg-spruce-600/8 px-3 py-1 text-xs font-bold text-spruce-200">
           <PackageCheck className="size-3.5" />
           {fila.length} {fila.length === 1 ? 'em andamento' : 'em andamento'}
         </span>
@@ -120,7 +120,7 @@ export function FilaOperacao({
                     {ddmm(r.data_prevista)} · {labelFornecedor(r)}
                   </p>
                   {labelPlacaCompleta(r) && (
-                    <p className="mt-1 font-mono text-sm font-bold uppercase tracking-wide text-spruce-700">
+                    <p className="mt-1 font-mono text-sm font-bold uppercase tracking-wide text-spruce-200">
                       {labelPlacaCompleta(r)}
                     </p>
                   )}
@@ -137,7 +137,7 @@ export function FilaOperacao({
                         type="button"
                         onClick={() => copiarLinkChegada(r)}
                         title="Copiar link pro motorista confirmar a chegada pelo GPS dele"
-                        className="flex items-center gap-1.5 rounded-md border border-paper-300 px-2.5 py-1.5 text-xs font-semibold text-paper-600 transition-colors hover:border-spruce-500 hover:text-spruce-700"
+                        className="flex items-center gap-1.5 rounded-md border border-paper-300 px-2.5 py-1.5 text-xs font-semibold text-paper-600 transition-colors hover:border-spruce-500 hover:text-spruce-200"
                       >
                         <Link2 className="size-3.5" />
                         Link de chegada
@@ -146,7 +146,7 @@ export function FilaOperacao({
                         type="button"
                         onClick={() => onConfirmarChegada(r)}
                         disabled={processando}
-                        className="flex items-center gap-1.5 rounded-md bg-spruce-600 px-3 py-1.5 text-xs font-semibold text-paper-50 shadow-sm transition-colors hover:bg-spruce-500 disabled:opacity-50"
+                        className="flex items-center gap-1.5 rounded-md bg-spruce-600 px-3 py-1.5 text-xs font-semibold text-paper-900 shadow-sm transition-colors hover:bg-spruce-500 disabled:opacity-50"
                       >
                         <Truck className="size-3.5" />
                         {processando ? 'Confirmando…' : 'Confirmar manualmente'}
@@ -158,7 +158,7 @@ export function FilaOperacao({
                       type="button"
                       onClick={() => onIniciarDescarga(r)}
                       disabled={processando}
-                      className="flex items-center gap-1.5 rounded-md bg-spruce-600 px-3 py-1.5 text-xs font-semibold text-paper-50 shadow-sm transition-colors hover:bg-spruce-500 disabled:opacity-50"
+                      className="flex items-center gap-1.5 rounded-md bg-spruce-600 px-3 py-1.5 text-xs font-semibold text-paper-900 shadow-sm transition-colors hover:bg-spruce-500 disabled:opacity-50"
                     >
                       <PlayCircle className="size-3.5" />
                       {processando ? 'Iniciando…' : 'Iniciar descarga'}
@@ -169,7 +169,7 @@ export function FilaOperacao({
                       type="button"
                       onClick={() => onFinalizarDescarga(r)}
                       disabled={processando}
-                      className="flex items-center gap-1.5 rounded-md bg-spruce-600 px-3 py-1.5 text-xs font-semibold text-paper-50 shadow-sm transition-colors hover:bg-spruce-500 disabled:opacity-50"
+                      className="flex items-center gap-1.5 rounded-md bg-spruce-600 px-3 py-1.5 text-xs font-semibold text-paper-900 shadow-sm transition-colors hover:bg-spruce-500 disabled:opacity-50"
                     >
                       <Flag className="size-3.5" />
                       {processando ? 'Finalizando…' : 'Finalizar descarga'}

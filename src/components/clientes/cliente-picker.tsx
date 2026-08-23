@@ -240,7 +240,7 @@ export function ClientePicker({ value, clientes, clientesErp = [], onChange, onC
                       type="button"
                       onClick={cadastrarNovo}
                       disabled={criando}
-                      className="w-full text-left text-xs px-3 py-2 flex items-center gap-1.5 text-brand-700 font-semibold hover:bg-industrial-200 disabled:opacity-50"
+                      className="w-full text-left text-xs px-3 py-2 flex items-center gap-1.5 text-brand-300 font-semibold hover:bg-industrial-200 disabled:opacity-50"
                     >
                       <Plus className="size-3.5" /> {criando ? 'Cadastrando…' : `Cadastrar "${query.trim()}"`}
                     </button>
@@ -253,7 +253,7 @@ export function ClientePicker({ value, clientes, clientesErp = [], onChange, onC
                       onClick={() => selecionar(c.nome, c.codigo)}
                       className={cn(
                         'flex-1 min-w-0 text-left text-xs px-2 py-2 rounded truncate hover:bg-industrial-200 flex items-center justify-between gap-2',
-                        c.nome === value ? 'text-brand-700 font-semibold' : 'text-industrial-900',
+                        c.nome === value ? 'text-brand-300 font-semibold' : 'text-industrial-900',
                       )}
                     >
                       <span className="truncate">{c.nome}</span>
@@ -264,7 +264,7 @@ export function ClientePicker({ value, clientes, clientesErp = [], onChange, onC
                         type="button"
                         onClick={() => abrirEdicao(c)}
                         title="Editar nome/código"
-                        className="shrink-0 p-1.5 rounded text-industrial-500 hover:text-brand-700 hover:bg-industrial-200"
+                        className="shrink-0 p-1.5 rounded text-industrial-500 hover:text-brand-300 hover:bg-industrial-200"
                       >
                         <Pencil className="size-3" />
                       </button>

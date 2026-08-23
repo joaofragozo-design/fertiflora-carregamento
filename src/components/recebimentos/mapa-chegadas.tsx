@@ -138,7 +138,7 @@ export function MapaChegadas({ recebimentos }: MapaChegadasProps) {
           </p>
           <h2 className="font-display text-lg font-semibold text-paper-900">Motoristas a caminho</h2>
         </div>
-        <span className="flex items-center gap-1.5 rounded-full border border-leaf-500/30 bg-leaf-100/60 px-3 py-1 text-xs font-bold text-leaf-700">
+        <span className="flex items-center gap-1.5 rounded-full border border-leaf-500/30 bg-leaf-500/15 px-3 py-1 text-xs font-bold text-leaf-300">
           {ativos.length} {ativos.length === 1 ? 'ativo' : 'ativos'}
         </span>
       </div>

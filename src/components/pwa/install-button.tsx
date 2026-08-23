@@ -32,7 +32,7 @@ export function InstallButton() {
   return (
     <button
       onClick={instalar}
-      className="flex items-center gap-2 rounded-xl border border-brand-500/40 bg-brand-500/10 px-4 py-3 text-sm font-semibold text-brand-700 transition-all hover:bg-brand-500/20 active:scale-95"
+      className="flex items-center gap-2 rounded-xl border border-brand-500/40 bg-brand-500/10 px-4 py-3 text-sm font-semibold text-brand-300 transition-all hover:bg-brand-500/20 active:scale-95"
     >
       <Download className="h-4 w-4" />
       Instalar Aplicativo

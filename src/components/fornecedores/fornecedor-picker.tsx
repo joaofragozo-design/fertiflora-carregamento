@@ -177,7 +177,7 @@ export function FornecedorPicker({ value, fornecedores, onChange, onCriar, onEdi
                 type="button"
                 onClick={cadastrarNovo}
                 disabled={criando || !query.trim() || existeExato}
-                className="w-full text-left text-sm px-3 py-2 flex items-center gap-1.5 text-brand-700 font-semibold hover:bg-industrial-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-full text-left text-sm px-3 py-2 flex items-center gap-1.5 text-brand-300 font-semibold hover:bg-industrial-200 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Plus className="size-3.5" />
                 {criando
@@ -207,7 +207,7 @@ export function FornecedorPicker({ value, fornecedores, onChange, onCriar, onEdi
                       onClick={() => confirmarEdicao(f)}
                       disabled={salvandoEdit || !editValor.trim()}
                       title="Salvar"
-                      className="shrink-0 p-1 text-brand-700 hover:text-brand-800 disabled:opacity-40"
+                      className="shrink-0 p-1 text-brand-300 hover:text-brand-300 disabled:opacity-40"
                     >
                       <Check className="size-4" />
                     </button>
@@ -228,7 +228,7 @@ export function FornecedorPicker({ value, fornecedores, onChange, onCriar, onEdi
                       onClick={() => selecionar(f)}
                       className={cn(
                         'flex-1 min-w-0 text-left text-sm px-2 py-1.5 rounded truncate hover:bg-industrial-200',
-                        f.nome === value ? 'text-brand-700 font-semibold' : 'text-industrial-900',
+                        f.nome === value ? 'text-brand-300 font-semibold' : 'text-industrial-900',
                       )}
                     >
                       {f.nome}
@@ -238,7 +238,7 @@ export function FornecedorPicker({ value, fornecedores, onChange, onCriar, onEdi
                         type="button"
                         onClick={(e) => abrirEdicao(f, e)}
                         title="Editar nome do fornecedor"
-                        className="shrink-0 p-1.5 text-industrial-500 hover:text-brand-700"
+                        className="shrink-0 p-1.5 text-industrial-500 hover:text-brand-300"
                       >
                         <Pencil className="size-3.5" />
                       </button>

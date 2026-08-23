@@ -4,8 +4,14 @@
 
 @layer base {
   :root {
-    --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
-    --font-mono: 'IBM Plex Mono', monospace;
+    /* Tema escuro: controles nativos (date picker, select) renderizam escuros */
+    color-scheme: dark;
+  }
+
+  @media print {
+    :root {
+      color-scheme: light;
+    }
   }
 
   * {
@@ -38,7 +44,7 @@
 
   /* Seleção de texto */
   ::selection {
-    @apply bg-brand-600/40 text-brand-100;
+    @apply bg-brand-200 text-spruce-900;
   }
 
   /* Todo dado em font-mono no app é número/código tabular (toneladas, kg,

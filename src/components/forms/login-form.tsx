@@ -103,7 +103,7 @@ export function LoginForm({ supabaseConfigured = true }: LoginFormProps) {
         size="lg"
         loading={isSubmitting}
         disabled={!supabaseConfigured}
-        className="w-full mt-2 bg-spruce-600 text-paper-50 shadow-[0_10px_24px_-10px_rgba(66,127,73,0.5)] hover:bg-spruce-500 focus-visible:ring-leaf-400 focus-visible:ring-offset-paper-50"
+        className="w-full mt-2 bg-spruce-600 text-paper-900 shadow-[0_10px_24px_-10px_rgba(66,127,73,0.5)] hover:bg-spruce-500 focus-visible:ring-leaf-400 focus-visible:ring-offset-paper-50"
       >
         {!isSubmitting && <LogIn className="h-4 w-4" />}
         Entrar

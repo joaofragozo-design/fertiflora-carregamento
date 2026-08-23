@@ -277,7 +277,7 @@ export function EstoqueConfigPainel({ initialConfig, initialEstoqueAtual, usuari
                           <button
                             type="button"
                             onClick={() => abrirAjuste(mp.key)}
-                            className="flex items-center gap-1 text-xs font-medium text-industrial-600 hover:text-brand-700 transition-colors"
+                            className="flex items-center gap-1 text-xs font-medium text-industrial-600 hover:text-brand-300 transition-colors"
                           >
                             <PenSquare className="size-3.5" /> Ajustar
                           </button>
@@ -300,7 +300,7 @@ export function EstoqueConfigPainel({ initialConfig, initialEstoqueAtual, usuari
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-1.5 rounded-lg border border-industrial-400 px-3 py-2 text-xs font-medium text-industrial-700 hover:border-brand-500 hover:text-brand-700 transition-colors"
+                className="flex items-center gap-1.5 rounded-lg border border-industrial-400 px-3 py-2 text-xs font-medium text-industrial-700 hover:border-brand-500 hover:text-brand-300 transition-colors"
               >
                 <Upload className="size-3.5" /> Escolher arquivo CSV
               </button>
@@ -315,12 +315,12 @@ export function EstoqueConfigPainel({ initialConfig, initialEstoqueAtual, usuari
             {csvTexto.trim() && (
               <div className="mt-2 text-xs">
                 {preview.linhas.length > 0 && (
-                  <p className="text-brand-700 font-medium mb-1">
+                  <p className="text-brand-300 font-medium mb-1">
                     {preview.linhas.length} linha(s) prontas: {preview.linhas.map((l) => `${MATERIAS_PRIMA.find((m) => m.key === l.materia_prima_key)?.label} +${l.quantidade_ton}t`).join(', ')}
                   </p>
                 )}
                 {preview.erros.length > 0 && (
-                  <p className="text-red-600">{preview.erros.join(' · ')}</p>
+                  <p className="text-red-400">{preview.erros.join(' · ')}</p>
                 )}
               </div>
             )}

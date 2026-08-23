@@ -226,8 +226,8 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
   }
 
   return (
-    <div className="rounded-2xl border-2 border-amber-500 bg-amber-100 p-4">
-      <p className="flex items-center gap-2 text-sm font-bold text-amber-900 mb-2.5">
+    <div className="rounded-2xl border-2 border-amber-500 bg-amber-500/15 p-4">
+      <p className="flex items-center gap-2 text-sm font-bold text-amber-200 mb-2.5">
         <Container className="size-4" />
         Solicitações de carregamento · {solicitacoesPendentes.length + liberadosAguardandoWhatsapp.length}
       </p>
@@ -249,7 +249,7 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
                 </span>
                 {ag.motorista && (
                   <span className="inline-flex items-center gap-1">
-                    <button type="button" onClick={() => abrirEdicaoMotorista(ag.motorista!)} title="Editar motorista" className="text-industrial-500 hover:text-brand-700">
+                    <button type="button" onClick={() => abrirEdicaoMotorista(ag.motorista!)} title="Editar motorista" className="text-industrial-500 hover:text-brand-300">
                       <Pencil className="size-3" />
                     </button>
                     <button
@@ -257,7 +257,7 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
                       onClick={() => excluirMotorista(ag.motorista!)}
                       disabled={excluindoMotoristaId === ag.motorista.id}
                       title="Excluir motorista"
-                      className="text-industrial-500 hover:text-red-600 disabled:opacity-50"
+                      className="text-industrial-500 hover:text-red-400 disabled:opacity-50"
                     >
                       <Trash2 className="size-3" />
                     </button>
@@ -276,7 +276,7 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
                 onClick={() => excluirSolicitacao(ag)}
                 disabled={ocupado}
                 title="Excluir solicitação"
-                className="flex items-center justify-center rounded-lg border border-industrial-400 text-industrial-600 hover:border-red-500 hover:text-red-600 p-2 transition-colors disabled:opacity-50"
+                className="flex items-center justify-center rounded-lg border border-industrial-400 text-industrial-600 hover:border-red-500 hover:text-red-400 p-2 transition-colors disabled:opacity-50"
               >
                 <Trash2 className="size-4" />
               </button>
@@ -294,10 +294,10 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
           )
         })}
         {liberadosAguardandoWhatsapp.map((ag) => (
-          <div key={ag.id} className="flex items-center justify-between gap-3 flex-wrap rounded-xl bg-brand-50 border-2 border-brand-500 px-3 py-2.5">
+          <div key={ag.id} className="flex items-center justify-between gap-3 flex-wrap rounded-xl bg-brand-500/10 border-2 border-brand-500 px-3 py-2.5">
             <div className="min-w-0">
               <p className="text-sm font-bold text-industrial-900 flex items-center gap-1.5">
-                <CheckCircle2 className="size-3.5 text-brand-700 shrink-0" />
+                <CheckCircle2 className="size-3.5 text-brand-300 shrink-0" />
                 {ag.transportadora?.nome ?? 'Transportadora'}
                 <span className="font-normal text-industrial-600"> · {ag.cliente || 'sem cliente'} · {ddmm(ag.data)}</span>
               </p>
@@ -308,7 +308,7 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
                 </span>
                 {ag.motorista && (
                   <span className="inline-flex items-center gap-1">
-                    <button type="button" onClick={() => abrirEdicaoMotorista(ag.motorista!)} title="Editar motorista" className="text-industrial-500 hover:text-brand-700">
+                    <button type="button" onClick={() => abrirEdicaoMotorista(ag.motorista!)} title="Editar motorista" className="text-industrial-500 hover:text-brand-300">
                       <Pencil className="size-3" />
                     </button>
                     <button
@@ -316,7 +316,7 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
                       onClick={() => excluirMotorista(ag.motorista!)}
                       disabled={excluindoMotoristaId === ag.motorista.id}
                       title="Excluir motorista"
-                      className="text-industrial-500 hover:text-red-600 disabled:opacity-50"
+                      className="text-industrial-500 hover:text-red-400 disabled:opacity-50"
                     >
                       <Trash2 className="size-3" />
                     </button>
@@ -335,7 +335,7 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
                 onClick={() => excluirSolicitacao(ag)}
                 disabled={excluindoId === ag.id}
                 title="Excluir solicitação"
-                className="flex items-center justify-center rounded-lg border border-industrial-400 text-industrial-600 hover:border-red-500 hover:text-red-600 p-2 transition-colors disabled:opacity-50"
+                className="flex items-center justify-center rounded-lg border border-industrial-400 text-industrial-600 hover:border-red-500 hover:text-red-400 p-2 transition-colors disabled:opacity-50"
               >
                 <Trash2 className="size-4" />
               </button>
@@ -345,7 +345,7 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
                   target="_blank"
                   rel="noopener noreferrer"
                   title="Baixar ordem de carregamento em PDF"
-                  className="flex items-center gap-1.5 rounded-lg border border-brand-600 text-brand-700 hover:bg-brand-100 px-3 py-2 text-sm font-semibold transition-colors"
+                  className="flex items-center gap-1.5 rounded-lg border border-brand-600 text-brand-300 hover:bg-brand-500/15 px-3 py-2 text-sm font-semibold transition-colors"
                 >
                   <FileDown className="size-4" /> Nº {String(ag.numero_ordem).padStart(6, '0')}
                 </a>

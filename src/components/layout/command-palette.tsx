@@ -76,7 +76,7 @@ export function CommandPalette({ open, onOpenChange, user, onSignOut, onToggleSi
                   key={item.href}
                   value={item.label}
                   onSelect={() => ir(item.href)}
-                  className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-industrial-800 aria-selected:bg-brand-600/10 aria-selected:text-brand-700"
+                  className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-industrial-800 aria-selected:bg-brand-600/10 aria-selected:text-brand-300"
                 >
                   <Icon className="size-4 shrink-0" />
                   {item.label}
@@ -91,7 +91,7 @@ export function CommandPalette({ open, onOpenChange, user, onSignOut, onToggleSi
                 <Command.Item
                   value="Mostrar ou ocultar menu lateral"
                   onSelect={() => { onOpenChange(false); onToggleSidebar() }}
-                  className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-industrial-800 aria-selected:bg-brand-600/10 aria-selected:text-brand-700"
+                  className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-industrial-800 aria-selected:bg-brand-600/10 aria-selected:text-brand-300"
                 >
                   <PanelLeftClose className="size-4 shrink-0" />
                   Mostrar ou ocultar menu lateral
@@ -101,7 +101,7 @@ export function CommandPalette({ open, onOpenChange, user, onSignOut, onToggleSi
                 <Command.Item
                   value="Sair do sistema"
                   onSelect={() => { onOpenChange(false); onSignOut() }}
-                  className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-danger-600 aria-selected:bg-danger-500/10"
+                  className="flex cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-danger-400 aria-selected:bg-danger-500/10"
                 >
                   <LogOut className="size-4 shrink-0" />
                   Sair do sistema

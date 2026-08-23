@@ -40,7 +40,7 @@ const STATUS_STYLES: Record<StatusOrdem, string> = {
 const ROW_STYLES: Record<StatusOrdem, string> = {
   AGUARDANDO:   'hover:bg-industrial-200/50',
   EM_ANDAMENTO: 'bg-info-500/10',
-  FINALIZADO:   'bg-brand-100',
+  FINALIZADO:   'bg-brand-500/15',
 }
 
 const STATUS_LABEL: Record<StatusOrdem, string> = {
@@ -180,7 +180,7 @@ function FormulaCombobox({
                   onClick={() => { onChange(f.id); fechar() }}
                   className={cn(
                     'w-full text-left text-xs px-3 py-2 truncate hover:bg-industrial-200',
-                    f.id === value ? 'text-brand-700 font-semibold' : 'text-industrial-900',
+                    f.id === value ? 'text-brand-300 font-semibold' : 'text-industrial-900',
                   )}
                 >
                   {f.nome}
@@ -228,7 +228,7 @@ function InlineInput({
 
 function StatusReadOnly({ on }: { on: boolean }) {
   return on
-    ? <Check className="size-4 text-brand-700 mx-auto" strokeWidth={3} />
+    ? <Check className="size-4 text-brand-300 mx-auto" strokeWidth={3} />
     : <span className="inline-block size-3.5 rounded-sm border-2 border-industrial-500 mx-auto" />
 }
 
@@ -238,7 +238,7 @@ function Kpi({ label, value, unit, tone }: { label: string; value: string | numb
       <p className="text-xs text-industrial-600">{label}</p>
       <p className={cn(
         'text-2xl font-bold leading-tight mt-0.5',
-        tone === 'brand' ? 'text-brand-600' : tone === 'amber' ? 'text-amber-600' : 'text-industrial-900',
+        tone === 'brand' ? 'text-brand-600' : tone === 'amber' ? 'text-amber-400' : 'text-industrial-900',
       )}>
         {value}{unit && <span className="text-sm font-normal text-industrial-600"> {unit}</span>}
       </p>
@@ -267,7 +267,7 @@ function CelulaMateriaPrima({ formula }: { formula: Formula | null | undefined }
       <span
         className={cn(
           'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold border',
-          ok ? 'bg-brand-100 border-brand-500 text-brand-800' : 'bg-red-100 border-red-400 text-red-700',
+          ok ? 'bg-brand-500/15 border-brand-500 text-brand-300' : 'bg-red-500/15 border-red-400 text-red-400',
         )}
         title="Soma total (deve fechar 1000)"
       >
@@ -530,7 +530,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
             </button>
             <button
               type="button" onClick={irHoje}
-              className="rounded-lg border border-industrial-300 px-3 py-1.5 text-sm font-medium text-industrial-700 hover:text-brand-700 hover:border-brand-500 transition-colors"
+              className="rounded-lg border border-industrial-300 px-3 py-1.5 text-sm font-medium text-industrial-700 hover:text-brand-300 hover:border-brand-500 transition-colors"
             >
               Hoje
             </button>
@@ -539,7 +539,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
         </div>
         <Link
           href={ROUTES.ORDENS_RELATORIO}
-          className="flex items-center gap-1.5 rounded-lg border border-industrial-300 px-3 py-2 text-xs font-medium text-industrial-800 hover:border-brand-500 hover:text-brand-700 transition-colors"
+          className="flex items-center gap-1.5 rounded-lg border border-industrial-300 px-3 py-2 text-xs font-medium text-industrial-800 hover:border-brand-500 hover:text-brand-300 transition-colors"
         >
           <Printer className="size-4" />
           Relatório do dia
@@ -627,7 +627,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
                                     e.dataTransfer.effectAllowed = 'move'
                                     e.dataTransfer.setData('text/plain', ordem.id)
                                   }}
-                                  className="cursor-grab active:cursor-grabbing text-industrial-600 hover:text-brand-700"
+                                  className="cursor-grab active:cursor-grabbing text-industrial-600 hover:text-brand-300"
                                   title="Arraste para reordenar a prioridade"
                                   aria-label="Arraste para reordenar"
                                 >
@@ -641,7 +641,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
                                     onClick={() => handleMover(ordem, -1)}
                                     disabled={idx === 0}
                                     aria-label="Aumentar prioridade"
-                                    className="text-industrial-600 hover:text-brand-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                                    className="text-industrial-600 hover:text-brand-300 disabled:opacity-30 disabled:cursor-not-allowed"
                                   >
                                     <ChevronUp className="size-3.5" />
                                   </button>
@@ -650,7 +650,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
                                     onClick={() => handleMover(ordem, 1)}
                                     disabled={idx === linhas.length - 1}
                                     aria-label="Diminuir prioridade"
-                                    className="text-industrial-600 hover:text-brand-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                                    className="text-industrial-600 hover:text-brand-300 disabled:opacity-30 disabled:cursor-not-allowed"
                                   >
                                     <ChevronDown className="size-3.5" />
                                   </button>
@@ -743,14 +743,14 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
                                 className={cn(
                                   'px-2 py-0.5 rounded text-[10px] font-bold border transition-colors',
                                   ordem.envelopar
-                                    ? 'bg-brand-100 border-brand-500 text-brand-800'
+                                    ? 'bg-brand-500/15 border-brand-500 text-brand-300'
                                     : 'bg-industrial-100 border-industrial-400 text-industrial-500',
                                 )}
                               >
                                 {ordem.envelopar ? 'SIM' : 'NÃO'}
                               </button>
                             ) : (
-                              <span className={cn('text-[11px] font-bold', ordem.envelopar ? 'text-brand-700' : 'text-industrial-500')}>
+                              <span className={cn('text-[11px] font-bold', ordem.envelopar ? 'text-brand-300' : 'text-industrial-500')}>
                                 {ordem.envelopar ? 'SIM' : 'NÃO'}
                               </span>
                             )}
@@ -788,7 +788,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
                         )}
                       </td>
 
-                      <td className={cn(tdCls, 'text-right font-mono text-brand-700 font-bold')}>
+                      <td className={cn(tdCls, 'text-right font-mono text-brand-300 font-bold')}>
                         {tons.toFixed(2)}
                       </td>
 
@@ -817,7 +817,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
                               type="button"
                               onClick={() => handleRemoveItem(ordem.id, item.id)}
                               disabled={itens.length <= 1}
-                              className="text-industrial-500 hover:text-red-600 transition-colors p-0.5 rounded disabled:opacity-20 disabled:cursor-not-allowed"
+                              className="text-industrial-500 hover:text-red-400 transition-colors p-0.5 rounded disabled:opacity-20 disabled:cursor-not-allowed"
                               title="Remover item"
                             >
                               <Trash2 className="size-3.5" />
@@ -831,12 +831,12 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
                           <button
                             type="button"
                             onClick={() => handleDeleteTruck(ordem.id)}
-                            className="text-industrial-500 hover:text-red-600 transition-colors p-0.5 rounded"
+                            className="text-industrial-500 hover:text-red-400 transition-colors p-0.5 rounded"
                             title="Remover caminhão/carga"
                           >
                             <Trash2 className="size-3.5" />
                           </button>
-                          <div className="text-[10px] font-mono font-bold text-brand-700 mt-2" title="Total do caminhão">
+                          <div className="text-[10px] font-mono font-bold text-brand-300 mt-2" title="Total do caminhão">
                             {tonsCarga.toFixed(2)}
                           </div>
                         </td>
@@ -851,7 +851,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
                         <button
                           type="button"
                           onClick={() => handleAddItem(ordem.id)}
-                          className="flex items-center gap-1.5 text-[11px] font-medium text-industrial-600 hover:text-brand-700 transition-colors"
+                          className="flex items-center gap-1.5 text-[11px] font-medium text-industrial-600 hover:text-brand-300 transition-colors"
                         >
                           <Plus className="size-3.5" /> Adicionar item ao mesmo caminhão (outra fórmula/embalagem)
                         </button>
@@ -878,7 +878,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
                   <td colSpan={9} className="px-2 py-2 text-xs text-industrial-700 text-right font-semibold">
                     Total do dia:
                   </td>
-                  <td className="px-2 py-2 text-right font-mono font-bold text-brand-700">
+                  <td className="px-2 py-2 text-right font-mono font-bold text-brand-300">
                     {totalTons.toFixed(2)}
                   </td>
                   <td colSpan={COLUNAS - 10} />

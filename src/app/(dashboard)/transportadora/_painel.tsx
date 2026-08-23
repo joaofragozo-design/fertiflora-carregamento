@@ -178,7 +178,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
             <span className="text-industrial-500"> · {(item.tons ?? 0).toFixed(2)} ton</span>
           </p>
         ))}
-        <p className="text-xs font-bold text-brand-700 mt-0.5">Total: {total.toFixed(2)} ton</p>
+        <p className="text-xs font-bold text-brand-300 mt-0.5">Total: {total.toFixed(2)} ton</p>
       </div>
     )
   }
@@ -198,14 +198,14 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
 
       {/* Regras da fábrica — mesmo texto enviado por WhatsApp na liberação (regrasFabrica em @/lib/whatsapp),
        *  pra nunca ficar dessincronizado do que o motorista recebe. */}
-      <div className="rounded-xl border border-amber-500 bg-amber-100 p-4">
-        <p className="flex items-center gap-1.5 text-sm font-bold text-amber-900 mb-1.5">
+      <div className="rounded-xl border border-amber-500 bg-amber-500/15 p-4">
+        <p className="flex items-center gap-1.5 text-sm font-bold text-amber-200 mb-1.5">
           <AlertTriangle className="size-4" /> Orientações da fábrica
         </p>
-        <ul className="text-xs text-amber-900 flex flex-col gap-0.5 list-none">
+        <ul className="text-xs text-amber-200 flex flex-col gap-0.5 list-none">
           {regrasFabrica(true).map((r, i) => <li key={i}>{r}</li>)}
         </ul>
-        <p className="text-xs text-amber-900 mt-1.5">
+        <p className="text-xs text-amber-200 mt-1.5">
           📍 <a href={LOCALIZACAO_FABRICA_URL} target="_blank" rel="noopener noreferrer" className="underline">Localização da fábrica</a>
         </p>
       </div>
@@ -219,7 +219,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
           <button
             type="button"
             onClick={abrirNovoMotorista}
-            className="flex items-center gap-1 rounded-lg border border-industrial-400 px-3 py-1.5 text-xs font-medium text-industrial-700 hover:border-brand-500 hover:text-brand-700 transition-colors"
+            className="flex items-center gap-1 rounded-lg border border-industrial-400 px-3 py-1.5 text-xs font-medium text-industrial-700 hover:border-brand-500 hover:text-brand-300 transition-colors"
           >
             <Plus className="size-3.5" /> Novo motorista
           </button>
@@ -239,7 +239,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                     type="button"
                     onClick={() => abrirEdicaoMotorista(m)}
                     title="Editar motorista"
-                    className="flex items-center justify-center rounded-lg border border-industrial-400 text-industrial-600 hover:border-brand-500 hover:text-brand-700 p-2 transition-colors"
+                    className="flex items-center justify-center rounded-lg border border-industrial-400 text-industrial-600 hover:border-brand-500 hover:text-brand-300 p-2 transition-colors"
                   >
                     <Pencil className="size-4" />
                   </button>
@@ -248,7 +248,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                     onClick={() => excluirMotorista(m)}
                     disabled={excluindoMotoristaId === m.id}
                     title="Excluir motorista"
-                    className="flex items-center justify-center rounded-lg border border-industrial-400 text-industrial-600 hover:border-red-500 hover:text-red-600 p-2 transition-colors disabled:opacity-50"
+                    className="flex items-center justify-center rounded-lg border border-industrial-400 text-industrial-600 hover:border-red-500 hover:text-red-400 p-2 transition-colors disabled:opacity-50"
                   >
                     <Trash2 className="size-4" />
                   </button>
@@ -267,7 +267,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
           </h2>
           <div className="flex flex-col gap-2">
             {pendentes.map((ag) => (
-              <div key={ag.id} className="rounded-xl border-2 border-brand-500 bg-brand-50 p-4">
+              <div key={ag.id} className="rounded-xl border-2 border-brand-500 bg-brand-500/10 p-4">
                 <div className="flex items-center justify-between gap-3 flex-wrap">
                   <div>
                     <p className="font-bold text-industrial-900">{ag.cliente || 'Cliente a definir'}</p>
@@ -297,7 +297,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                   <button
                     type="button"
                     onClick={abrirNovoMotorista}
-                    className="flex items-center gap-1 rounded-lg border border-industrial-400 px-3 py-2 text-xs font-medium text-industrial-700 hover:border-brand-500 hover:text-brand-700 transition-colors"
+                    className="flex items-center gap-1 rounded-lg border border-industrial-400 px-3 py-2 text-xs font-medium text-industrial-700 hover:border-brand-500 hover:text-brand-300 transition-colors"
                   >
                     <Plus className="size-3.5" /> Novo motorista
                   </button>
@@ -330,7 +330,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                     <p className="font-bold text-industrial-900">{ag.cliente || 'Cliente a definir'}</p>
                     <p className="text-xs text-industrial-500 capitalize">{fmtData(ag.data)} · Motorista: {ag.motorista?.nome ?? '—'} {ag.motorista && formatPlacaCompleta(ag.motorista) && `(${formatPlacaCompleta(ag.motorista)})`}</p>
                   </div>
-                  <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-700">
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-400">
                     <Clock className="size-3.5" /> Solicitação enviada
                   </span>
                 </div>
@@ -358,7 +358,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                   key={ag.id}
                   className={cn(
                     'rounded-xl border p-4',
-                    expirado ? 'border-industrial-300 bg-industrial-100 opacity-70' : 'border-brand-500 bg-brand-100',
+                    expirado ? 'border-industrial-300 bg-industrial-100 opacity-70' : 'border-brand-500 bg-brand-500/15',
                   )}
                 >
                   <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -369,7 +369,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                       </p>
                     </div>
                     <div className="text-right">
-                      <span className={cn('flex items-center gap-1.5 text-xs font-bold', expirado ? 'text-industrial-500' : 'text-brand-700')}>
+                      <span className={cn('flex items-center gap-1.5 text-xs font-bold', expirado ? 'text-industrial-500' : 'text-brand-300')}>
                         <CheckCircle2 className="size-4" />
                         {expirado ? 'Liberação expirada' : `Liberado ${ag.liberado_em ? new Date(ag.liberado_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}`}
                       </span>
@@ -382,7 +382,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                   </div>
                   <CardItens ag={ag} />
                   {temSacaria(ag) && !expirado && (
-                    <p className="text-[11px] font-bold text-amber-800 mt-1.5">⚠ Carga em sacaria: apresentar-se até as 10h da manhã.</p>
+                    <p className="text-[11px] font-bold text-amber-300 mt-1.5">⚠ Carga em sacaria: apresentar-se até as 10h da manhã.</p>
                   )}
                 </div>
               )

@@ -313,17 +313,17 @@ export function RecebimentoSemana({
               key={data}
               className={cn(
                 'flex flex-col gap-2 rounded-xl border p-2.5',
-                ehAmanha ? 'border-brand-500 bg-brand-50' : ehHoje ? 'border-industrial-500' : 'border-industrial-200',
+                ehAmanha ? 'border-brand-500 bg-brand-500/10' : ehHoje ? 'border-industrial-500' : 'border-industrial-200',
               )}
             >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-bold text-industrial-900">{nome}</p>
                   <p className="text-xs text-industrial-600">
-                    {ddmm(data)}{ehAmanha && <span className="ml-1 text-brand-700 font-semibold">· amanhã</span>}{ehHoje && <span className="ml-1 text-industrial-500 font-semibold">· hoje</span>}
+                    {ddmm(data)}{ehAmanha && <span className="ml-1 text-brand-300 font-semibold">· amanhã</span>}{ehHoje && <span className="ml-1 text-industrial-500 font-semibold">· hoje</span>}
                   </p>
                 </div>
-                <span className="text-xs font-mono font-bold text-brand-700">{totalDia(data).toFixed(2)}</span>
+                <span className="text-xs font-mono font-bold text-brand-300">{totalDia(data).toFixed(2)}</span>
               </div>
 
               <div className="flex flex-col gap-2">
@@ -332,7 +332,7 @@ export function RecebimentoSemana({
                     key={r.id}
                     className={cn(
                       'rounded-lg border p-2 transition-colors',
-                      r.confirmado_em ? 'border-brand-500 bg-brand-100' : 'border-industrial-300 bg-industrial-100',
+                      r.confirmado_em ? 'border-brand-500 bg-brand-500/15' : 'border-industrial-300 bg-industrial-100',
                     )}
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -351,10 +351,10 @@ export function RecebimentoSemana({
                         <div className="flex items-center gap-2 shrink-0">
                           {!r.finalizado_em && (
                             <button type="button" onClick={() => abrirEdicao(r)} title="Editar recebimento"
-                              className="text-industrial-600 hover:text-brand-700"><Pencil className="size-3.5" /></button>
+                              className="text-industrial-600 hover:text-brand-300"><Pencil className="size-3.5" /></button>
                           )}
                           <button type="button" onClick={() => remover(r)} title="Remover previsão"
-                            className="text-industrial-600 hover:text-red-600"><X className="size-3.5" /></button>
+                            className="text-industrial-600 hover:text-red-400"><X className="size-3.5" /></button>
                         </div>
                       )}
                     </div>
@@ -378,7 +378,7 @@ export function RecebimentoSemana({
                     {r.confirmado_em && (
                       <p className={cn(
                         'text-[11px] font-semibold mt-1',
-                        getStatusRecebimento(r) === 'FINALIZADO' ? 'text-brand-700' : 'text-amber-700',
+                        getStatusRecebimento(r) === 'FINALIZADO' ? 'text-brand-300' : 'text-amber-400',
                       )}>
                         {STATUS_RECEBIMENTO_LABEL[getStatusRecebimento(r)]}
                       </p>
@@ -391,7 +391,7 @@ export function RecebimentoSemana({
                             type="button"
                             onClick={() => iniciarDescarga(r)}
                             disabled={processandoId === r.id}
-                            className="flex items-center gap-1 text-[11px] font-semibold text-brand-700 hover:text-brand-800 transition-colors disabled:opacity-50"
+                            className="flex items-center gap-1 text-[11px] font-semibold text-brand-300 hover:text-brand-300 transition-colors disabled:opacity-50"
                           >
                             <PlayCircle className="size-3" />
                             {processandoId === r.id ? 'Iniciando…' : 'Iniciar descarga'}
@@ -402,7 +402,7 @@ export function RecebimentoSemana({
                             type="button"
                             onClick={() => finalizarDescarga(r)}
                             disabled={processandoId === r.id}
-                            className="flex items-center gap-1 text-[11px] font-semibold text-brand-700 hover:text-brand-800 transition-colors disabled:opacity-50"
+                            className="flex items-center gap-1 text-[11px] font-semibold text-brand-300 hover:text-brand-300 transition-colors disabled:opacity-50"
                           >
                             <Flag className="size-3" />
                             {processandoId === r.id ? 'Finalizando…' : 'Finalizar descarga'}
@@ -414,7 +414,7 @@ export function RecebimentoSemana({
                     {podeConfirmar && (
                       <div className="mt-1.5">
                         {r.confirmado_em ? (
-                          <span className="flex items-center gap-1 text-[11px] font-semibold text-brand-700">
+                          <span className="flex items-center gap-1 text-[11px] font-semibold text-brand-300">
                             <CheckCircle2 className="size-3" /> Chegou às {new Date(r.confirmado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         ) : (
@@ -422,7 +422,7 @@ export function RecebimentoSemana({
                             type="button"
                             onClick={() => confirmarChegada(r)}
                             disabled={processandoId === r.id}
-                            className="flex items-center gap-1 text-[11px] font-semibold text-brand-700 hover:text-brand-800 transition-colors disabled:opacity-50"
+                            className="flex items-center gap-1 text-[11px] font-semibold text-brand-300 hover:text-brand-300 transition-colors disabled:opacity-50"
                           >
                             <Truck className="size-3" />
                             {processandoId === r.id ? 'Confirmando…' : 'Confirmar chegada do caminhão'}
@@ -439,7 +439,7 @@ export function RecebimentoSemana({
 
                 {podeEditar && (
                   <button type="button" onClick={() => abrirNovo(data)}
-                    className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-industrial-400 py-1.5 text-xs font-medium text-industrial-600 hover:border-brand-500 hover:text-brand-700 transition-colors">
+                    className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-industrial-400 py-1.5 text-xs font-medium text-industrial-600 hover:border-brand-500 hover:text-brand-300 transition-colors">
                     <Plus className="size-3.5" /> Adicionar recebimento
                   </button>
                 )}

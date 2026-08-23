@@ -207,10 +207,10 @@ export function GestaoTransportadoras({ initialTransportadoras, initialMotorista
 
       {/* Credenciais recém-criadas (a senha não fica salva em lugar nenhum depois) */}
       {credenciais && (
-        <div className="rounded-xl border-2 border-brand-500 bg-brand-50 p-4">
+        <div className="rounded-xl border-2 border-brand-500 bg-brand-500/10 p-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <KeyRound className="size-4 text-brand-700" />
+              <KeyRound className="size-4 text-brand-300" />
               <p className="text-sm font-semibold text-industrial-900">
                 Acesso criado para {credenciais.nome} — repasse agora (a senha não será mostrada de novo):
               </p>
@@ -225,7 +225,7 @@ export function GestaoTransportadoras({ initialTransportadoras, initialMotorista
             <button
               type="button"
               onClick={copiarCredenciais}
-              className="flex items-center gap-1.5 rounded-lg border border-brand-500 text-brand-700 hover:bg-brand-100 px-3 py-1.5 text-xs font-semibold transition-colors"
+              className="flex items-center gap-1.5 rounded-lg border border-brand-500 text-brand-300 hover:bg-brand-500/15 px-3 py-1.5 text-xs font-semibold transition-colors"
             >
               <Copy className="size-3.5" /> Copiar
             </button>
@@ -258,14 +258,14 @@ export function GestaoTransportadoras({ initialTransportadoras, initialMotorista
                 </div>
               </button>
               <div className="flex items-center gap-3 shrink-0">
-                <span className={cn('text-xs font-medium', t.profile_id ? 'text-brand-700' : 'text-industrial-500')}>
+                <span className={cn('text-xs font-medium', t.profile_id ? 'text-brand-300' : 'text-industrial-500')}>
                   {t.profile_id ? 'Com acesso' : 'Sem login'}
                 </span>
                 <button
                   type="button"
                   onClick={() => setEdit({ id: t.id, nome: t.nome, cnpj: t.cnpj ?? '', email: t.email ?? '' })}
                   title="Editar nome / CNPJ / e-mail"
-                  className="text-industrial-600 hover:text-brand-700"
+                  className="text-industrial-600 hover:text-brand-300"
                 >
                   <Pencil className="size-4" />
                 </button>
@@ -281,7 +281,7 @@ export function GestaoTransportadoras({ initialTransportadoras, initialMotorista
                   <button
                     type="button"
                     onClick={() => setFormMotorista(formMotoristaVazio(t.id))}
-                    className="flex items-center gap-1 rounded-lg border border-industrial-400 px-2.5 py-1 text-xs font-medium text-industrial-700 hover:border-brand-500 hover:text-brand-700 transition-colors"
+                    className="flex items-center gap-1 rounded-lg border border-industrial-400 px-2.5 py-1 text-xs font-medium text-industrial-700 hover:border-brand-500 hover:text-brand-300 transition-colors"
                   >
                     <Plus className="size-3.5" /> Novo motorista
                   </button>
@@ -306,7 +306,7 @@ export function GestaoTransportadoras({ initialTransportadoras, initialMotorista
                               placa_2: m.placa_2 ?? '', placa_3: m.placa_3 ?? '', placa_4: m.placa_4 ?? '',
                             })}
                             title="Editar motorista"
-                            className="flex items-center justify-center rounded-lg border border-industrial-400 text-industrial-600 hover:border-brand-500 hover:text-brand-700 p-1.5 transition-colors"
+                            className="flex items-center justify-center rounded-lg border border-industrial-400 text-industrial-600 hover:border-brand-500 hover:text-brand-300 p-1.5 transition-colors"
                           >
                             <Pencil className="size-3.5" />
                           </button>
@@ -315,7 +315,7 @@ export function GestaoTransportadoras({ initialTransportadoras, initialMotorista
                             onClick={() => excluirMotorista(m)}
                             disabled={excluindoMotoristaId === m.id}
                             title="Excluir motorista"
-                            className="flex items-center justify-center rounded-lg border border-industrial-400 text-industrial-600 hover:border-red-500 hover:text-red-600 p-1.5 transition-colors disabled:opacity-50"
+                            className="flex items-center justify-center rounded-lg border border-industrial-400 text-industrial-600 hover:border-red-500 hover:text-red-400 p-1.5 transition-colors disabled:opacity-50"
                           >
                             <Trash2 className="size-3.5" />
                           </button>

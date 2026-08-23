@@ -35,8 +35,8 @@ export function Sidebar({ user, isOpen = true, collapsed = false, onClose }: Sid
 
         {/* Fechar mobile */}
         <div className="flex h-14 items-center justify-between border-b border-white/10 px-4 md:hidden">
-          <span className="text-xs font-semibold uppercase tracking-widest text-paper-300">Menu</span>
-          <button onClick={onClose} className="rounded-md p-1.5 text-paper-300 hover:bg-white/10">
+          <span className="text-xs font-semibold uppercase tracking-widest text-paper-600">Menu</span>
+          <button onClick={onClose} className="rounded-md p-1.5 text-paper-600 hover:bg-white/10">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -53,11 +53,11 @@ export function Sidebar({ user, isOpen = true, collapsed = false, onClose }: Sid
                 className={cn(
                   'flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
                   isActive
-                    ? 'bg-white/10 text-paper-50 border-2 border-leaf-400/50 font-bold'
-                    : 'text-paper-300 border-2 border-transparent hover:bg-white/5 hover:text-paper-50'
+                    ? 'bg-white/10 text-paper-900 border-2 border-leaf-400/50 font-bold'
+                    : 'text-paper-600 border-2 border-transparent hover:bg-white/5 hover:text-paper-900'
                 )}
               >
-                <Icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-leaf-400' : 'text-paper-400')} />
+                <Icon className={cn('h-4 w-4 shrink-0', isActive ? 'text-leaf-400' : 'text-paper-500')} />
                 <span className="leading-tight">{item.label}</span>
               </Link>
             )
@@ -65,7 +65,7 @@ export function Sidebar({ user, isOpen = true, collapsed = false, onClose }: Sid
         </nav>
 
         <div className="border-t border-white/10 px-3 py-3">
-          <p className="text-[10px] font-medium uppercase tracking-widest text-paper-400">
+          <p className="text-[10px] font-medium uppercase tracking-widest text-paper-500">
             Sistema de Carregamento
           </p>
         </div>

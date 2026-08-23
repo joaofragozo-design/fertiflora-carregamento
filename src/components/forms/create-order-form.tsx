@@ -112,7 +112,7 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
         <p className="text-xs font-semibold uppercase tracking-wider text-industrial-500">
           Matéria Prima
           {insumoFinal && (
-            <span className="ml-2 normal-case font-bold text-brand-700">{insumoFinal}</span>
+            <span className="ml-2 normal-case font-bold text-brand-300">{insumoFinal}</span>
           )}
         </p>
         <button
@@ -135,7 +135,7 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
       {/* ── Fixados ────────────────────────────────────────────── */}
       {pinnedList.length > 0 && (
         <div className="space-y-2">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-yellow-600/60">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-yellow-400/60">
             ⭐ Fixados
           </p>
           <div className="flex flex-wrap gap-2">
@@ -170,7 +170,7 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
           className={cn(
             'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-semibold transition-all',
             manual
-              ? 'border-2 border-brand-500 text-brand-700'
+              ? 'border-2 border-brand-500 text-brand-300'
               : 'border-2 border-dashed border-industrial-400 text-industrial-500 hover:border-industrial-600 hover:text-industrial-900'
           )}
         >
@@ -221,7 +221,7 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
               <button
                 type="button"
                 onClick={handleManualPin}
-                className="flex items-center gap-1 rounded-md border border-yellow-600/40 bg-yellow-600/10 px-2.5 py-1 text-xs font-semibold text-amber-700 transition-colors hover:bg-yellow-600/20"
+                className="flex items-center gap-1 rounded-md border border-yellow-600/40 bg-yellow-600/10 px-2.5 py-1 text-xs font-semibold text-amber-400 transition-colors hover:bg-yellow-600/20"
               >
                 ⭐ Fixar
               </button>
@@ -236,7 +236,7 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
           )}
 
           {manualSaved === true && (
-            <p className="text-xs text-amber-700">
+            <p className="text-xs text-amber-400">
               ⭐ &ldquo;{manualValue.trim()}&rdquo; fixado. Aparecerá no topo da lista.
             </p>
           )}
@@ -279,7 +279,7 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
         <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-industrial-500">
           Conchas
           {quantidade !== null && (
-            <span className="ml-2 normal-case font-bold text-brand-700">{quantidade} conchas</span>
+            <span className="ml-2 normal-case font-bold text-brand-300">{quantidade} conchas</span>
           )}
         </p>
 
@@ -307,7 +307,7 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
       {/* ── Preview ────────────────────────────────────────────── */}
       {insumoFinal && quantidade !== null && (
         <div className="rounded-xl border border-brand-500/30 bg-brand-500/5 px-4 py-3">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-brand-700">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-brand-300">
             Solicitação
           </p>
           <p className="text-base font-bold text-industrial-900">
@@ -357,11 +357,11 @@ function InsumoChip({ nome, selected, variant, onClick }: {
       className={cn(
         'rounded-lg border-2 px-3 py-1.5 text-sm font-semibold transition-all active:scale-95',
         selected && variant === 'pinned'
-          ? 'border-yellow-500 bg-yellow-50 text-yellow-800'
+          ? 'border-yellow-500 bg-yellow-500/10 text-yellow-300'
           : selected
           ? 'border-brand-600 bg-brand-600 text-white'
           : variant === 'pinned'
-          ? 'border-yellow-400 bg-yellow-50 text-yellow-700 hover:border-yellow-500 hover:text-yellow-800'
+          ? 'border-yellow-400 bg-yellow-500/10 text-yellow-400 hover:border-yellow-500 hover:text-yellow-300'
           : 'border-industrial-300 bg-transparent text-industrial-600 hover:border-industrial-600 hover:text-industrial-900'
       )}
     >

@@ -126,8 +126,8 @@ export function ChegadaClient({ recebimentoId, jaConfirmado }: ChegadaClientProp
 
   if (estado.fase === 'sucesso') {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-xl border border-leaf-500/30 bg-leaf-100/50 p-6 text-center">
-        <CheckCircle2 className="size-10 text-leaf-700" />
+      <div className="flex flex-col items-center gap-3 rounded-xl border border-leaf-500/30 bg-leaf-500/10 p-6 text-center">
+        <CheckCircle2 className="size-10 text-leaf-300" />
         <p className="font-display text-lg font-semibold text-paper-900">Chegada confirmada</p>
         <p className="text-sm text-paper-600">
           {estado.distanciaMetros >= 0
@@ -144,7 +144,7 @@ export function ChegadaClient({ recebimentoId, jaConfirmado }: ChegadaClientProp
         href={linkRota()}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex w-full items-center justify-center gap-2 rounded-lg border border-paper-300 bg-paper-50 px-4 py-3 text-sm font-semibold text-paper-800 transition-colors hover:border-spruce-500 hover:text-spruce-700"
+        className="flex w-full items-center justify-center gap-2 rounded-lg border border-paper-300 bg-paper-50 px-4 py-3 text-sm font-semibold text-paper-800 transition-colors hover:border-spruce-500 hover:text-spruce-200"
       >
         <Navigation className="size-4" />
         Traçar rota até a fábrica
@@ -152,7 +152,7 @@ export function ChegadaClient({ recebimentoId, jaConfirmado }: ChegadaClientProp
 
       {estado.fase === 'compartilhando' ? (
         <div className="flex flex-col gap-2.5 rounded-lg border border-spruce-600/30 bg-spruce-600/8 p-4">
-          <div className="flex items-center gap-2 text-sm font-semibold text-spruce-700">
+          <div className="flex items-center gap-2 text-sm font-semibold text-spruce-200">
             <Radar className="size-4 animate-pulse" />
             Compartilhando localização…
           </div>
@@ -175,7 +175,7 @@ export function ChegadaClient({ recebimentoId, jaConfirmado }: ChegadaClientProp
         <button
           type="button"
           onClick={iniciarCompartilhamento}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-spruce-600 px-4 py-3.5 text-base font-semibold text-paper-50 shadow-[0_10px_24px_-10px_rgba(66,127,73,0.5)] transition-colors hover:bg-spruce-500"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-spruce-600 px-4 py-3.5 text-base font-semibold text-paper-900 shadow-[0_10px_24px_-10px_rgba(66,127,73,0.5)] transition-colors hover:bg-spruce-500"
         >
           <Radar className="size-5" />
           Compartilhar minha localização
@@ -183,7 +183,7 @@ export function ChegadaClient({ recebimentoId, jaConfirmado }: ChegadaClientProp
       )}
 
       {estado.fase === 'erro' && (
-        <div className="flex items-start gap-2.5 rounded-lg border border-danger-500/30 bg-danger-500/8 p-3.5 text-sm text-danger-600">
+        <div className="flex items-start gap-2.5 rounded-lg border border-danger-500/30 bg-danger-500/8 p-3.5 text-sm text-danger-400">
           <TriangleAlert className="mt-0.5 size-4 shrink-0" />
           <p>{estado.mensagem}</p>
         </div>

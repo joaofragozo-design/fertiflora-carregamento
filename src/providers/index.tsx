@@ -23,9 +23,9 @@ export function Providers({ children, initialUser }: ProvidersProps) {
           closeButton
           toastOptions={{
             style: {
-              background: '#1a1a1a',
-              border: '1px solid rgba(255,255,255,0.08)',
-              color: '#f5f5f5',
+              background: '#1C2213',
+              border: '1px solid rgba(244,247,236,0.1)',
+              color: '#F4F7EC',
             },
           }}
         />

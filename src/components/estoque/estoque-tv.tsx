@@ -20,10 +20,10 @@ interface EstoqueTvProps {
 // crua — mesmo critério do painel de ordens, pra "vermelho"/"amarelo"
 // significarem sempre a mesma coisa em qualquer tela do app.
 const NIVEL_STYLE: Record<NivelEstoque, { bar: string; texto: string }> = {
-  perigo:        { bar: 'border-danger-500 bg-danger-500/10',   texto: 'text-danger-600' },
-  cuidado:       { bar: 'border-warning-500 bg-warning-500/10', texto: 'text-warning-600' },
-  tudo_bem:      { bar: 'border-brand-500 bg-brand-50',         texto: 'text-brand-800' },
-  bem_tranquilo: { bar: 'border-brand-600 bg-brand-100',        texto: 'text-brand-800' },
+  perigo:        { bar: 'border-danger-500 bg-danger-500/10',   texto: 'text-danger-400' },
+  cuidado:       { bar: 'border-warning-500 bg-warning-500/10', texto: 'text-warning-400' },
+  tudo_bem:      { bar: 'border-brand-500 bg-brand-500/10',         texto: 'text-brand-300' },
+  bem_tranquilo: { bar: 'border-brand-600 bg-brand-500/15',        texto: 'text-brand-300' },
 }
 
 function fmtTon(n: number): string {
@@ -116,7 +116,7 @@ export function EstoqueTv({ initialEstoque, initialConfig, consumoHojePorChave }
               {fmtTon(qtd)} <span className="text-xs font-normal">ton</span>
             </p>
             {razao >= LIMIAR_ALERTA_CONSUMO_HOJE && (
-              <p className="flex items-center gap-1 text-[10px] font-bold text-red-700 mt-1">
+              <p className="flex items-center gap-1 text-[10px] font-bold text-red-400 mt-1">
                 <AlertTriangle className="size-3" />
                 {razao === Infinity ? 'sem estoque suficiente hoje' : `${Math.round(razao * 100)}% do estoque sai hoje`}
               </p>

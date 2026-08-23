@@ -118,7 +118,7 @@ function FormulaPicker({
               <li key={f.id}>
                 <button type="button" onClick={() => { onChange(f.id); setOpen(false); setQuery('') }}
                   className={cn('w-full text-left text-sm px-3 py-1.5 truncate hover:bg-industrial-200',
-                    f.id === value ? 'text-brand-700 font-semibold' : 'text-industrial-900')}>
+                    f.id === value ? 'text-brand-300 font-semibold' : 'text-industrial-900')}>
                   {f.nome}
                 </button>
               </li>
@@ -436,7 +436,7 @@ export function ProgramacaoSemana({
           {podeEditar && (
             <Link
               href={ROUTES.ORDENS_RELATORIO}
-              className="flex items-center gap-1.5 rounded-lg border border-industrial-300 px-3 py-2 text-xs font-medium text-industrial-800 hover:border-brand-500 hover:text-brand-700 transition-colors"
+              className="flex items-center gap-1.5 rounded-lg border border-industrial-300 px-3 py-2 text-xs font-medium text-industrial-800 hover:border-brand-500 hover:text-brand-300 transition-colors"
             >
               <Printer className="size-4" />
               Relatório do dia
@@ -460,17 +460,17 @@ export function ProgramacaoSemana({
               key={data}
               className={cn(
                 'flex flex-col gap-2 rounded-xl border p-2.5',
-                ehAmanha ? 'border-brand-500 bg-brand-50' : ehHoje ? 'border-industrial-500' : 'border-industrial-200',
+                ehAmanha ? 'border-brand-500 bg-brand-500/10' : ehHoje ? 'border-industrial-500' : 'border-industrial-200',
               )}
             >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-bold text-industrial-900">{nome}</p>
                   <p className="text-xs text-industrial-600">
-                    {ddmm(data)}{ehAmanha && <span className="ml-1 text-brand-700 font-semibold">· amanhã</span>}{ehHoje && <span className="ml-1 text-industrial-500 font-semibold">· hoje</span>}
+                    {ddmm(data)}{ehAmanha && <span className="ml-1 text-brand-300 font-semibold">· amanhã</span>}{ehHoje && <span className="ml-1 text-industrial-500 font-semibold">· hoje</span>}
                   </p>
                 </div>
-                <span className="text-xs font-mono font-bold text-brand-700">{totalDia(data).toFixed(2)}</span>
+                <span className="text-xs font-mono font-bold text-brand-300">{totalDia(data).toFixed(2)}</span>
               </div>
 
               <div className="flex flex-col gap-2">
@@ -479,7 +479,7 @@ export function ProgramacaoSemana({
                     key={ag.id}
                     className={cn(
                       'rounded-lg border p-2 transition-colors',
-                      ag.confirmado_em ? 'border-brand-500 bg-brand-100' : 'border-industrial-300 bg-industrial-100',
+                      ag.confirmado_em ? 'border-brand-500 bg-brand-500/15' : 'border-industrial-300 bg-industrial-100',
                     )}
                   >
                     <div className="flex items-start justify-between gap-2">
@@ -500,9 +500,9 @@ export function ProgramacaoSemana({
                       {podeEditar && (
                         <div className="flex gap-1 shrink-0">
                           <button type="button" onClick={() => abrirEdicaoAgendamento(ag)} title="Editar data/cliente/observação"
-                            className="text-industrial-600 hover:text-brand-700"><Pencil className="size-3.5" /></button>
+                            className="text-industrial-600 hover:text-brand-300"><Pencil className="size-3.5" /></button>
                           <button type="button" onClick={() => excluirAgendamento(ag)} title="Remover agendamento"
-                            className="text-industrial-600 hover:text-red-600"><Trash2 className="size-3.5" /></button>
+                            className="text-industrial-600 hover:text-red-400"><Trash2 className="size-3.5" /></button>
                         </div>
                       )}
                     </div>
@@ -511,7 +511,7 @@ export function ProgramacaoSemana({
                       {(ag.itens ?? []).map((item) => (
                         <div key={item.id} className="flex items-start justify-between gap-2 border-t border-industrial-200 first:border-t-0 pt-1 first:pt-0">
                           <div className="min-w-0">
-                            {item.formula?.nome && <p className="text-xs font-medium text-brand-700 truncate">{item.formula.nome}</p>}
+                            {item.formula?.nome && <p className="text-xs font-medium text-brand-300 truncate">{item.formula.nome}</p>}
                             <p className="text-xs text-industrial-500">
                               {item.quantidade} {EMBALAGEM_LABEL[item.embalagem]} · <span className="font-bold text-industrial-700">{(item.tons ?? 0).toFixed(2)} ton</span>
                             </p>
@@ -519,11 +519,11 @@ export function ProgramacaoSemana({
                           {podeEditar && (
                             <div className="flex gap-1 shrink-0">
                               <button type="button" onClick={() => abrirEdicaoItem(ag, item)} title="Editar item"
-                                className="text-industrial-500 hover:text-brand-700"><Pencil className="size-3" /></button>
+                                className="text-industrial-500 hover:text-brand-300"><Pencil className="size-3" /></button>
                               <button
                                 type="button" onClick={() => removerItem(ag, item)} title="Remover item"
                                 disabled={(ag.itens ?? []).length <= 1}
-                                className="text-industrial-500 hover:text-red-600 disabled:opacity-20 disabled:cursor-not-allowed"
+                                className="text-industrial-500 hover:text-red-400 disabled:opacity-20 disabled:cursor-not-allowed"
                               >
                                 <Trash2 className="size-3" />
                               </button>
@@ -539,7 +539,7 @@ export function ProgramacaoSemana({
                     {ag.solicitacao_status && (
                       <p className={cn(
                         'flex items-center gap-1 text-[11px] font-semibold mt-1',
-                        ag.solicitacao_status === 'LIBERADO' ? 'text-brand-700' : 'text-amber-700',
+                        ag.solicitacao_status === 'LIBERADO' ? 'text-brand-300' : 'text-amber-400',
                       )}>
                         <Container className="size-3 shrink-0" />
                         <span className="truncate">
@@ -556,7 +556,7 @@ export function ProgramacaoSemana({
                         target="_blank"
                         rel="noopener noreferrer"
                         title="Gerar ordem de carregamento em PDF"
-                        className="flex items-center gap-1 text-[11px] font-semibold text-brand-700 hover:text-brand-800 transition-colors mt-1"
+                        className="flex items-center gap-1 text-[11px] font-semibold text-brand-300 hover:text-brand-300 transition-colors mt-1"
                       >
                         <FileDown className="size-3" /> Gerar ordem Nº {String(ag.numero_ordem).padStart(6, '0')}
                       </a>
@@ -565,7 +565,7 @@ export function ProgramacaoSemana({
                     {podeEditar && (
                       <div className="flex items-center justify-between gap-2 mt-1.5 flex-wrap">
                         <button type="button" onClick={() => abrirNovoItem(ag)}
-                          className="flex items-center gap-1 text-[11px] font-medium text-industrial-500 hover:text-brand-700 transition-colors">
+                          className="flex items-center gap-1 text-[11px] font-medium text-industrial-500 hover:text-brand-300 transition-colors">
                           <Plus className="size-3" /> Adicionar item
                         </button>
                         <div className="flex items-center gap-2">
@@ -575,7 +575,7 @@ export function ProgramacaoSemana({
                             title={ag.solicitacao_status ? 'Reenviar / trocar a transportadora' : 'Enviar para uma transportadora indicar o motorista'}
                             className={cn(
                               'flex items-center gap-1 text-[11px] font-semibold transition-colors',
-                              ag.solicitacao_status ? 'text-brand-700' : 'text-industrial-500 hover:text-brand-700',
+                              ag.solicitacao_status ? 'text-brand-300' : 'text-industrial-500 hover:text-brand-300',
                             )}
                           >
                             <Container className="size-3" />
@@ -587,7 +587,7 @@ export function ProgramacaoSemana({
                               onClick={() => reverterLiberacao(ag)}
                               disabled={revertendoId === ag.id}
                               title="Reverter liberação — volta pra fila de Solicitações sem perder transportadora/motorista/número da ordem"
-                              className="flex items-center gap-1 text-[11px] font-semibold text-amber-700 hover:text-amber-800 transition-colors disabled:opacity-50"
+                              className="flex items-center gap-1 text-[11px] font-semibold text-amber-400 hover:text-amber-300 transition-colors disabled:opacity-50"
                             >
                               <RotateCcw className="size-3" />
                               {revertendoId === ag.id ? 'Revertendo…' : 'Reverter liberação'}
@@ -600,7 +600,7 @@ export function ProgramacaoSemana({
                             title={ag.enviado_em ? `Enviado em ${new Date(ag.enviado_em).toLocaleString('pt-BR')} — clique para reenviar` : 'Enviar para Ordens do Dia'}
                             className={cn(
                               'flex items-center gap-1 text-[11px] font-semibold transition-colors disabled:opacity-50',
-                              ag.enviado_em ? 'text-brand-700' : 'text-industrial-500 hover:text-brand-700',
+                              ag.enviado_em ? 'text-brand-300' : 'text-industrial-500 hover:text-brand-300',
                             )}
                           >
                             {ag.enviado_em ? <CheckCircle2 className="size-3" /> : <Send className="size-3" />}
@@ -613,7 +613,7 @@ export function ProgramacaoSemana({
                     {podeConfirmar && (
                       <div className="mt-1.5">
                         {ag.confirmado_em ? (
-                          <span className="flex items-center gap-1 text-[11px] font-semibold text-brand-700">
+                          <span className="flex items-center gap-1 text-[11px] font-semibold text-brand-300">
                             <CheckCircle2 className="size-3" /> Chegou às {new Date(ag.confirmado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         ) : (
@@ -621,7 +621,7 @@ export function ProgramacaoSemana({
                             type="button"
                             onClick={() => confirmarChegada(ag)}
                             disabled={confirmandoId === ag.id}
-                            className="flex items-center gap-1 text-[11px] font-semibold text-brand-700 hover:text-brand-800 transition-colors disabled:opacity-50"
+                            className="flex items-center gap-1 text-[11px] font-semibold text-brand-300 hover:text-brand-300 transition-colors disabled:opacity-50"
                           >
                             <Truck className="size-3" />
                             {confirmandoId === ag.id ? 'Confirmando…' : 'Confirmar chegada do caminhão'}
@@ -638,7 +638,7 @@ export function ProgramacaoSemana({
 
                 {podeEditar && (
                   <button type="button" onClick={() => abrirNovoAgendamento(data)}
-                    className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-industrial-400 py-1.5 text-xs font-medium text-industrial-600 hover:border-brand-500 hover:text-brand-700 transition-colors">
+                    className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-industrial-400 py-1.5 text-xs font-medium text-industrial-600 hover:border-brand-500 hover:text-brand-300 transition-colors">
                     <Plus className="size-3.5" /> Adicionar cliente
                   </button>
                 )}
@@ -711,13 +711,13 @@ export function ProgramacaoSemana({
             </label>
 
             {transportadoras.length === 0 && (
-              <p className="text-xs text-amber-700 font-medium">
+              <p className="text-xs text-amber-400 font-medium">
                 Nenhuma transportadora cadastrada — crie o acesso dela na tela Transportadoras.
               </p>
             )}
 
             {transpModal.agendamento.solicitacao_status && (
-              <p className="text-xs text-amber-700 font-medium">
+              <p className="text-xs text-amber-400 font-medium">
                 Este agendamento já está com uma transportadora ({SOLICITACAO_STATUS_LABEL[transpModal.agendamento.solicitacao_status]}).
                 Reenviar recomeça o fluxo do zero.
               </p>
@@ -845,7 +845,7 @@ export function ProgramacaoSemana({
             </div>
 
             <div className="flex items-center justify-between pt-1">
-              <span className="text-sm text-industrial-600">Total: <span className="font-bold text-brand-700">{tonsItemForm.toFixed(2)} ton</span></span>
+              <span className="text-sm text-industrial-600">Total: <span className="font-bold text-brand-300">{tonsItemForm.toFixed(2)} ton</span></span>
               <div className="flex gap-2">
                 <button type="button" onClick={() => setItemForm(null)}
                   className="rounded-lg border border-industrial-400 px-4 py-2 text-sm font-medium text-industrial-700 hover:bg-industrial-200">Cancelar</button>

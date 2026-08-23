@@ -26,7 +26,7 @@ const STATUS_LABEL: Record<StatusOrdem, string> = {
 const ROW_STYLES: Record<StatusOrdem, string> = {
   AGUARDANDO:   '',
   EM_ANDAMENTO: 'bg-info-500/15 print:bg-info-500/15',
-  FINALIZADO:   'bg-brand-200 print:bg-brand-200',
+  FINALIZADO:   'bg-brand-500/25 print:bg-brand-200',
 }
 
 function fmtKg(n: number): string {
@@ -113,7 +113,7 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
             type="button"
             onClick={enviarPorEmail}
             disabled={enviando}
-            className="flex items-center gap-2 rounded-lg border border-industrial-300 text-industrial-800 hover:border-brand-500 hover:text-brand-700 px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 rounded-lg border border-industrial-300 text-industrial-800 hover:border-brand-500 hover:text-brand-300 px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Mail className="size-4" /> {enviando ? 'Enviando…' : 'Enviar por e-mail'}
           </button>
@@ -138,7 +138,7 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
           </div>
           <div>
             <span className="text-industrial-600">Total do dia: </span>
-            <span className="font-bold text-brand-700">{totalTons.toFixed(2)} ton</span>
+            <span className="font-bold text-brand-300">{totalTons.toFixed(2)} ton</span>
           </div>
         </div>
       </div>
@@ -204,7 +204,7 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
                           {durMs > 0 ? (
                             <span className="inline-flex items-center justify-center gap-2">
                               <span className="font-semibold text-industrial-900">{formatDuracao(durMs)}</span>
-                              <span className="font-bold text-brand-700">{tonPorHora(tonsCarga, durMs).toFixed(2)} t/h</span>
+                              <span className="font-bold text-brand-300">{tonPorHora(tonsCarga, durMs).toFixed(2)} t/h</span>
                             </span>
                           ) : <span className="text-industrial-500">—</span>}
                         </td>
@@ -212,7 +212,7 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
                     )}
                     <td className={cn(td, 'text-right font-mono')}>{item.quantidade}</td>
                     <td className={cn(td, 'text-center')}>{EMBALAGEM_LABEL[item.embalagem]}</td>
-                    <td className={cn(td, 'text-right font-mono font-bold text-brand-700')}>{tons.toFixed(2)}</td>
+                    <td className={cn(td, 'text-right font-mono font-bold text-brand-300')}>{tons.toFixed(2)}</td>
                     <td className={cn(td, 'font-bold')}>{f?.nome ?? '—'}</td>
                     <td className={td}>
                       {f ? (
@@ -238,7 +238,7 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
             <tfoot>
               <tr>
                 <td colSpan={8} className="px-2 py-2 text-right text-xs font-semibold text-industrial-700">Total do dia:</td>
-                <td className="px-2 py-2 text-right font-mono font-bold text-brand-700">{totalTons.toFixed(2)}</td>
+                <td className="px-2 py-2 text-right font-mono font-bold text-brand-300">{totalTons.toFixed(2)}</td>
                 <td colSpan={2} />
               </tr>
             </tfoot>
@@ -270,10 +270,10 @@ export function RelatorioDiario({ ordens, data }: RelatorioDiarioProps) {
             <tfoot>
               <tr>
                 <td className="px-2 py-2 text-xs font-bold text-industrial-900 print:text-black">Total geral</td>
-                <td className="px-2 py-2 text-right font-mono font-bold text-brand-700">
+                <td className="px-2 py-2 text-right font-mono font-bold text-brand-300">
                   {fmtNum(consumo.reduce((s, x) => s + x.kg, 0))}
                 </td>
-                <td className="px-2 py-2 text-right font-mono font-bold text-brand-700">
+                <td className="px-2 py-2 text-right font-mono font-bold text-brand-300">
                   {fmtNum(consumo.reduce((s, x) => s + x.kg, 0) / 1000, 2)}
                 </td>
               </tr>

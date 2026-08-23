@@ -1,27 +1,28 @@
 import type { Metadata, Viewport } from 'next'
-import { IBM_Plex_Sans, IBM_Plex_Mono, Petrona } from 'next/font/google'
+import { Inter, JetBrains_Mono, Outfit } from 'next/font/google'
 import { Providers } from '@/providers'
 import { getAuthUser } from '@/lib/supabase/get-user'
 import { SwRegister } from '@/components/pwa/sw-register'
 import '@/styles/globals.css'
 
-const plexSans = IBM_Plex_Sans({
+// Fontes da identidade compartilhada com o FertiFlora STO:
+// Inter no texto, JetBrains Mono nos números, Outfit nos títulos de marca.
+const inter = Inter({
   variable: '--font-sans',
   weight: ['400', '500', '600', '700'],
   subsets: ['latin'],
 })
 
-const plexMono = IBM_Plex_Mono({
+const jetbrainsMono = JetBrains_Mono({
   variable: '--font-mono',
   weight: ['400', '500', '600', '700'],
   subsets: ['latin'],
 })
 
-/** Serifa editorial para títulos de telas de marca (login, onboarding) */
-const petrona = Petrona({
+/** Geométrica de display para títulos de telas de marca (login, onboarding) */
+const outfit = Outfit({
   variable: '--font-display',
   weight: ['500', '600', '700'],
-  style: ['normal', 'italic'],
   subsets: ['latin'],
 })
 
@@ -43,8 +44,8 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#f4f4f5',
-  colorScheme: 'light',
+  themeColor: '#12160C',
+  colorScheme: 'dark',
   width: 'device-width',
   initialScale: 1,
 }
@@ -58,7 +59,7 @@ export default async function RootLayout({
 
   return (
     <html lang="pt-BR">
-      <body className={`${plexSans.variable} ${plexMono.variable} ${petrona.variable} bg-industrial-50 min-h-screen`}>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} ${outfit.variable} bg-industrial-50 min-h-screen`}>
         <Providers initialUser={initialUser}>
           {children}
         </Providers>
