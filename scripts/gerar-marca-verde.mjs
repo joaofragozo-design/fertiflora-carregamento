@@ -84,23 +84,24 @@ const quadrado = await sharp({
 await sharp(quadrado).resize(512, 512).png().toFile('src/app/icon.png')
 console.log('ok: src/app/icon.png (512)')
 
-// 4. Ícones PWA no padrão do STO: fundo escuro (cor do ícone do STO girada
-//    pra verde) + folha centrada na zona segura maskable (~62% da altura)
-const fundoSto = await corMedia(STO_ICON, { soOpacos: true })
-// o fundo do ícone STO é quase todo a cor chapada; média inclui a folha,
-// então escurece de leve — compensa reduzindo L se vier claro demais
-const [fr, fg, fb] = girarParaVerde(fundoSto)
-console.log(`fundo: rgb(${fundoSto.map(Math.round).join(',')}) → verde rgb(${fr},${fg},${fb})`)
+// 4. Ícones do app instalado (PWA/Apple): folha verde-clara centrada na zona
+//    segura maskable (~58% da altura) sobre fundo VERDE-OLIVA ESCURO — o tom
+//    do tema do app, escolhido pelo usuário (não o roxo girado do STO).
+const FUNDO_ICONE = { r: 0x33, g: 0x3d, b: 0x20 } // #333D20 — oliva escuro
 
-for (const tam of [192, 512]) {
+async function gerarIcone(tam, destino) {
   const alturaFolha = Math.round(tam * 0.58)
   const larguraFolha = Math.round(alturaFolha * (meta.width / meta.height))
   const folhaMenor = await sharp(folhaVerde).resize(larguraFolha, alturaFolha).png().toBuffer()
   await sharp({
-    create: { width: tam, height: tam, channels: 4, background: { r: fr, g: fg, b: fb, alpha: 1 } },
+    create: { width: tam, height: tam, channels: 4, background: { ...FUNDO_ICONE, alpha: 1 } },
   })
     .composite([{ input: folhaMenor, left: Math.round((tam - larguraFolha) / 2), top: Math.round((tam - alturaFolha) / 2) }])
     .png()
-    .toFile(`public/icons/icon-${tam}.png`)
-  console.log(`ok: public/icons/icon-${tam}.png`)
+    .toFile(destino)
+  console.log(`ok: ${destino}`)
 }
+
+await gerarIcone(192, 'public/icons/icon-192.png')
+await gerarIcone(512, 'public/icons/icon-512.png')
+await gerarIcone(180, 'src/app/apple-icon.png') // iPhone "adicionar à tela de início"
