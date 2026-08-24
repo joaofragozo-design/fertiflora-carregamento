@@ -128,7 +128,9 @@ export function MapaChegadas({ recebimentos }: MapaChegadasProps) {
   }, [ativos, mapaPronto])
 
   return (
-    <div className="relative overflow-hidden rounded-tl-2xl rounded-br-2xl rounded-tr-lg rounded-bl-lg border border-paper-300 bg-paper-50 shadow-editorial">
+    {/* z-0 cria stacking context: os panes internos do Leaflet (z-index
+        400–1000) ficam confinados aqui e não passam por cima dos modais. */}
+    <div className="relative z-0 overflow-hidden rounded-tl-2xl rounded-br-2xl rounded-tr-lg rounded-bl-lg border border-paper-300 bg-paper-50 shadow-editorial">
       <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-leaf-400 to-spruce-600" />
 
       <div className="flex items-center justify-between gap-3 px-5 pt-5 pb-3">

@@ -45,6 +45,9 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
   const [agendamentos, setAgendamentos] = useState(initialSolicitacoes)
   const [liberandoId, setLiberandoId] = useState<string | null>(null)
   const [enviandoId, setEnviandoId] = useState<string | null>(null)
+  // Solicitações cujo envio automático falhou e o link manual foi aberto —
+  // ganham o botão "Já enviei" pra sair da fila (o wa.me não confirma envio).
+  const [manualAbertoIds, setManualAbertoIds] = useState<Set<string>>(new Set())
   const [excluindoId, setExcluindoId] = useState<string | null>(null)
   const [formMotorista, setFormMotorista] = useState<FormMotoristaState | null>(null)
   const [salvandoMotorista, setSalvandoMotorista] = useState(false)
@@ -152,15 +155,36 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
       const json = await res.json().catch(() => null)
       if (!res.ok) {
         // Envio automático falhou (WuzAPI fora do ar, número desconectado etc.)
-        // — abre o link manual pra não travar a fila.
-        if (json?.linkManual) window.open(json.linkManual, '_blank', 'noopener')
-        toast.error(json?.error ? `${json.error} Abrindo link manual.` : 'Falha no envio automático — abrindo link manual.')
+        // — abre o link manual pra não travar a fila e libera o botão
+        // "Já enviei", senão a solicitação fica presa na tela pra sempre.
+        if (json?.linkManual) {
+          window.open(json.linkManual, '_blank', 'noopener')
+          setManualAbertoIds((prev) => new Set(prev).add(ag.id))
+          toast.error('Envio automático falhou — mande pelo WhatsApp que abriu e depois clique em "Já enviei".', { duration: 8000 })
+        } else {
+          toast.error(json?.error ?? 'Falha no envio automático.')
+        }
         return
       }
       setAgendamentos((prev) => prev.map((a) => (a.id === json.agendamento.id ? json.agendamento : a)))
       toast.success(`WhatsApp enviado pra ${ag.motorista.nome}.`)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao enviar o WhatsApp.')
+    } finally {
+      setEnviandoId(null)
+    }
+  }
+
+  /** Mensagem enviada manualmente pelo wa.me — marca o envio pra sair da fila. */
+  async function confirmarEnvioManual(ag: Programacao) {
+    if (!window.confirm(`Confirmar que a mensagem já foi enviada no WhatsApp de ${ag.motorista?.nome ?? 'motorista'}? A solicitação sai desta fila.`)) return
+    setEnviandoId(ag.id)
+    try {
+      const upd = await svc.marcarWhatsappEnviado(ag.id)
+      setAgendamentos((prev) => prev.map((a) => (a.id === upd.id ? upd : a)))
+      toast.success('Envio registrado — solicitação saiu da fila.')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao registrar o envio.')
     } finally {
       setEnviandoId(null)
     }
@@ -358,6 +382,17 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
               >
                 <MessageCircle className="size-4" /> {enviandoId === ag.id ? 'Enviando…' : 'Enviar WhatsApp'}
               </button>
+              {manualAbertoIds.has(ag.id) && (
+                <button
+                  type="button"
+                  onClick={() => confirmarEnvioManual(ag)}
+                  disabled={enviandoId === ag.id}
+                  title="Mandei a mensagem manualmente pelo WhatsApp — tirar da fila"
+                  className="flex items-center gap-1.5 rounded-lg border border-brand-500 text-brand-300 hover:bg-brand-500/15 px-3 py-2 text-sm font-semibold transition-colors disabled:opacity-50"
+                >
+                  <CheckCircle2 className="size-4" /> Já enviei
+                </button>
+              )}
             </div>
           </div>
         ))}
