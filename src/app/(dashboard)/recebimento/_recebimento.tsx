@@ -453,9 +453,10 @@ export function RecebimentoSemana({
         <EstoqueConfigPainel initialConfig={initialEstoqueConfig} initialEstoqueAtual={initialEstoqueAtual} usuario={usuario} />
       )}
 
-      {/* Modal de novo recebimento / edição */}
+      {/* Modal de novo recebimento / edição — z acima do teto do Leaflet
+          (1000), garantia extra contra o mapa vazar por cima dos campos */}
       {form && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={fecharModal}>
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/50 p-4 overflow-y-auto" onClick={fecharModal}>
           <div className="w-full max-w-md rounded-xl bg-industrial-100 border border-industrial-300 p-5 flex flex-col gap-3 my-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h2 className="font-display text-base font-semibold text-industrial-900 flex items-center gap-2">
