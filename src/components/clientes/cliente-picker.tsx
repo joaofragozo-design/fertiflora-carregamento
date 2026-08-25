@@ -183,7 +183,7 @@ export function ClientePicker({ value, clientes, clientesErp = [], onChange, onC
             width: pos.width,
             maxHeight: `calc(100vh - ${pos.top}px - 12px)`,
           }}
-          className="z-[100] flex flex-col bg-industrial-100 border border-industrial-400 rounded shadow-industrial overflow-hidden"
+          className="z-[1200] flex flex-col bg-industrial-100 border border-industrial-400 rounded shadow-industrial overflow-hidden"
         >
           {editando ? (
             <div className="p-2.5 flex flex-col gap-2">

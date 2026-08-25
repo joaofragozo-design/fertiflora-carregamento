@@ -156,7 +156,7 @@ export function FornecedorPicker({ value, fornecedores, onChange, onCriar, onEdi
             width: pos.width,
             maxHeight: `calc(100vh - ${pos.top}px - 12px)`,
           }}
-          className="z-[100] flex flex-col bg-industrial-100 border border-industrial-400 rounded-lg shadow-industrial overflow-hidden"
+          className="z-[1200] flex flex-col bg-industrial-100 border border-industrial-400 rounded-lg shadow-industrial overflow-hidden"
         >
           <div className="p-1.5 border-b border-industrial-300 shrink-0">
             <input
