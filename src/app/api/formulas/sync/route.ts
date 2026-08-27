@@ -140,8 +140,19 @@ export async function POST(req: NextRequest) {
   // cujo nome não existe mais na planilha (lixo de seed antigo, fórmula apagada).
   // Guarda de segurança: só reconcilia com um volume plausível de linhas, pra
   // nunca esvaziar a tabela caso a leitura da planilha venha vazia/parcial.
+  //
+  // FORMULAS_PROTEGIDAS (env, nomes separados por ";"): fórmulas cadastradas
+  // manualmente no banco que o script da planilha ainda não envia — a
+  // reconciliação não pode apagá-las (ex.: "...CALTIM+S(...) JUNINHO", que
+  // existe na planilha mas fora do intervalo lido pelo script).
   let removidas = 0;
   const nomesNaPlanilha = new Set(linhas.map((l) => l.nome));
+  const protegidas = new Set(
+    (process.env.FORMULAS_PROTEGIDAS ?? "")
+      .split(";")
+      .map((n) => n.trim())
+      .filter(Boolean)
+  );
 
   if (nomesNaPlanilha.size >= 50) {
     const { data: existentes } = await supabaseAdmin
@@ -149,7 +160,7 @@ export async function POST(req: NextRequest) {
       .select("id, nome");
 
     const orfas = ((existentes ?? []) as { id: number; nome: string }[])
-      .filter((f) => !nomesNaPlanilha.has(f.nome))
+      .filter((f) => !nomesNaPlanilha.has(f.nome) && !protegidas.has(f.nome))
       .map((f) => f.id);
 
     if (orfas.length > 0) {
