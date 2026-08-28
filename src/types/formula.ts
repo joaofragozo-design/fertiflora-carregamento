@@ -138,6 +138,10 @@ export function mascararNomeFormula(nome: string): string {
 // os demais.
 export function labelMateriaPrima(formula: Formula, chave: MateriaPrimaKey): string {
   if (chave === 'caltimag' && /fertimag/i.test(formula.nome)) return 'FERTIMAG'
+  // CALTIM+S é matéria-prima distinta do CALTIMAG+S, mas divide a mesma
+  // coluna (`oxmag_s`) — o nome da fórmula diz qual foi usada. O regex não
+  // pega "CALTIMAG+S" (tem "AG" entre o CALTIM e o +S).
+  if (chave === 'oxmag_s' && /caltim\+s/i.test(formula.nome)) return 'CALTIM+S'
   return MATERIAS_PRIMA.find((m) => m.key === chave)!.label
 }
 
