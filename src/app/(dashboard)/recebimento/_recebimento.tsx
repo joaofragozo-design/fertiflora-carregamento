@@ -33,7 +33,7 @@ interface RecebimentoSemanaProps {
   usuario:              string
 }
 
-const DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta']
+const DIAS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
 
 function pad(n: number): string {
   return String(n).padStart(2, '0')
@@ -272,7 +272,7 @@ export function RecebimentoSemana({
               <ChevronLeft className="size-4" />
             </button>
             <span className="text-sm font-medium text-industrial-800 px-2">
-              Semana de {ddmm(semanaInicio)} a {ddmm(addDiasIso(semanaInicio, 4))}
+              Semana de {ddmm(semanaInicio)} a {ddmm(semanaFim)}
             </span>
             <button type="button" onClick={() => irParaSemana(addDiasIso(semanaInicio, 7))} aria-label="Próxima semana"
               className="rounded-lg border border-industrial-300 p-1.5 text-industrial-600 hover:text-industrial-900 hover:border-brand-500 transition-colors">
@@ -304,7 +304,7 @@ export function RecebimentoSemana({
       {(podeConfirmar || podeEditar) && <MapaChegadas recebimentos={recebimentos} />}
 
       {/* Grade da semana */}
-      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-3">
         {dias.map(({ nome, data }) => {
           const ehAmanha = data === amanha
           const ehHoje = data === hoje

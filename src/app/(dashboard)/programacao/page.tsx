@@ -51,7 +51,7 @@ export default async function ProgramacaoPage({
     ? segundaDaSemana(new Date(sp!.semana + 'T12:00:00'))
     : segundaDaSemana(new Date())
   const semanaInicio = iso(segunda)
-  const semanaFim = iso(addDias(segunda, 4))
+  const semanaFim = iso(addDias(segunda, 5)) // sábado incluso
 
   const supabase = await createClient()
 
