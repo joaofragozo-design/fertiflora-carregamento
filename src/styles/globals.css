@@ -54,6 +54,19 @@
   .font-mono {
     font-variant-numeric: tabular-nums;
   }
+
+  /* Motoristas/transportadoras usam o painel no celular, às vezes no pátio —
+   * quem depende de movimento reduzido (enjoo, vestibular) não pode ficar
+   * sem essa opção só porque é um app "operacional". Desliga toda animação/
+   * transição custom sem quebrar o layout (mantém estados finais visíveis). */
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer components {
@@ -71,4 +84,123 @@
   .bg-industrial-texture {
     @apply bg-industrial-50 bg-grid-industrial;
   }
+
+  /* ============================================================
+   * "Ficha de Balança" — componente Ticket (ver DESIGN.md)
+   * Canhoto de papel com topo rasgado em ziguezague, furo de picote e
+   * numeração de sequência — a superfície de cada carga/ordem/login.
+   * ============================================================ */
+  .ticket-shell {
+    @apply relative text-ticket-ink;
+    background-color: theme('colors.ticket.paper');
+    background-image:
+      radial-gradient(ellipse at 50% -10%, rgb(0 0 0 / 0.08), transparent 55%),
+      repeating-linear-gradient(0deg, rgb(0 0 0 / 0.018) 0px, rgb(0 0 0 / 0.018) 1px, transparent 1px, transparent 3px);
+    clip-path: polygon(
+      0% 0px, 7.14% 9px, 14.28% 0px, 21.42% 9px, 28.56% 0px, 35.7% 9px,
+      42.84% 0px, 50% 9px, 57.14% 0px, 64.28% 9px, 71.42% 0px, 78.56% 9px,
+      85.7% 0px, 92.84% 9px, 100% 0px,
+      100% 100%, 0% 100%
+    );
+    filter: drop-shadow(0 10px 18px rgb(0 0 0 / 0.4)) drop-shadow(0 3px 6px rgb(0 0 0 / 0.3));
+  }
+  .ticket-punch {
+    @apply absolute rounded-full bg-industrial-50;
+    top: 16px; left: 22px; width: 10px; height: 10px;
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.55), inset 0 -1px 1px rgb(255 255 255 / 0.03);
+  }
+  .ticket-seq {
+    @apply absolute text-[11px] font-bold tracking-[.03em] text-ticket-soft;
+    top: 18px; right: 18px;
+  }
+  .ticket-rule {
+    @apply border-y border-ticket-rule opacity-[0.85];
+    height: 5px;
+    margin: 12px 0;
+  }
+  .ticket-rule-dark { @apply border-industrial-200; }
+
+  /* Divisória tracejada entre itens/seções do ticket */
+  .ticket-dash { border-top: 1px dashed rgb(32 28 20 / 0.22); }
+
+  /* Variante "formulário contínuo" (1ª via / login): rasgo reto e irregular no
+   * topo — arrancado na picote da impressora, não destacado num canhoto — e
+   * furos de tracionamento nas duas bordas. Os furos são a cor do fundo da
+   * página: são buracos, não decoração. */
+  .ticket-continuo {
+    /* Rasgo de picote: dentes miúdos (≤ 5px), espaçamento irregular — não é o
+     * ziguezague regular do canhoto. */
+    clip-path: polygon(
+      0% 2px, 1.5% 4px, 2.5% 1px, 4.5% 5px, 6% 2px, 7% 4px, 9% 0px, 10.5% 3px,
+      12% 1px, 14% 5px, 15% 2px, 17% 4px, 18.5% 1px, 20% 3px, 22% 0px, 23.5% 4px,
+      25% 2px, 27% 5px, 28% 1px, 30% 3px, 32% 0px, 33% 4px, 35% 2px, 37% 5px,
+      38% 1px, 40% 3px, 41.5% 0px, 43% 4px, 45% 2px, 46.5% 5px, 48% 1px, 50% 3px,
+      52% 0px, 53% 4px, 55% 2px, 57% 5px, 58% 1px, 60% 3px, 61.5% 0px, 63% 4px,
+      65% 1px, 66.5% 5px, 68% 2px, 70% 3px, 72% 0px, 73% 4px, 75% 2px, 77% 5px,
+      78% 1px, 80% 3px, 81.5% 0px, 83% 4px, 85% 2px, 87% 5px, 88% 1px, 90% 3px,
+      92% 0px, 93% 4px, 95% 2px, 96.5% 5px, 98% 1px, 100% 3px,
+      100% 100%, 0% 100%
+    );
+  }
+  .ticket-continuo::before,
+  .ticket-continuo::after {
+    content: '';
+    position: absolute;
+    top: 20px;
+    bottom: 14px;
+    width: 12px;
+    background-image: radial-gradient(circle at 50% 50%, theme('colors.industrial.50') 3.4px, transparent 4px);
+    background-size: 12px 24px;
+    background-repeat: repeat-y;
+    background-position: center top;
+  }
+  .ticket-continuo::before { left: 9px; }
+  .ticket-continuo::after  { right: 9px; }
+  .ticket-continuo .ticket-punch { display: none; }
+  .ticket-continuo .ticket-seq { top: 14px; right: 30px; }
+
+  /* Painel da balança (login): réguas tracejadas do indicador de peso */
+  .panel-rule { height: 0; border-top: 1px dashed rgb(79 177 66 / 0.55); }
+
+  /* "Nª via" — marcador de seção que trata cada tela como uma cópia
+   * carbono do mesmo formulário contínuo (login = 1ª via, programação = 2ª). */
+  .via-tag { @apply flex items-baseline gap-3 mb-4; }
+  .via-tag .via-num { @apply font-mono text-[13px] font-extrabold tracking-[.08em] text-industrial-500; }
+  .via-tag .via-name { @apply font-mono text-[13px] font-bold tracking-[.06em] text-industrial-800; }
+  /* Furinhos de formulário contínuo em vez de traço tracejado genérico —
+   * reforça a leitura de "página perfurada saindo da impressora", não só
+   * uma régua decorativa. */
+  .via-tag .via-fill {
+    @apply flex-1 -translate-y-1;
+    height: 1px;
+    background-image: radial-gradient(circle, theme('colors.industrial.300') 1px, transparent 1.3px);
+    background-size: 7px 1px;
+    background-repeat: repeat-x;
+    background-position: center;
+  }
+
+  /* ---- carimbo de status (rubber stamp) ---- */
+  .stamp {
+    --rot: -5deg;
+    @apply relative inline-flex flex-col items-center justify-center uppercase font-extrabold leading-[1.12];
+    padding: 7px 13px;
+    border: 3px solid currentColor;
+    border-radius: 3px;
+    transform: rotate(var(--rot));
+    background-image: repeating-linear-gradient(115deg, currentColor 0 1px, transparent 1px 4px);
+    mix-blend-mode: multiply;
+    opacity: 0.94;
+    clip-path: polygon(2% 9%, 10% 0%, 26% 5%, 41% 0%, 60% 6%, 79% 0%, 96% 7%,
+      100% 24%, 96% 46%, 100% 71%, 95% 93%, 79% 100%, 59% 95%,
+      40% 100%, 21% 94%, 5% 100%, 0% 77%, 4% 49%, 0% 24%);
+    flex-shrink: 0;
+  }
+  .stamp::after {
+    content: '';
+    @apply absolute rounded border border-current opacity-[0.55];
+    inset: -4px;
+  }
+  .stamp-1l { @apply text-[15px] tracking-[.05em]; }
+  .stamp-2l { @apply text-[11px] tracking-[.04em]; }
+  .stamp-2l span { display: block; }
 }

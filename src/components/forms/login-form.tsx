@@ -5,13 +5,13 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
-import { Eye, EyeOff, LogIn, User } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import { loginSchema, type LoginInput } from '@/lib/validations/auth'
 import { createClient } from '@/lib/supabase/client'
 import { AuthService } from '@/services/auth.service'
 import { ROUTES } from '@/constants/routes'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
+import { useLoginSceneExit } from '@/components/login/login-scene'
 
 interface LoginFormProps {
   supabaseConfigured?: boolean
@@ -19,6 +19,7 @@ interface LoginFormProps {
 
 export function LoginForm({ supabaseConfigured = true }: LoginFormProps) {
   const searchParams = useSearchParams()
+  const sairDaCena = useLoginSceneExit()
   const [showPassword, setShowPassword] = useState(false)
 
   const {
@@ -48,6 +49,8 @@ export function LoginForm({ supabaseConfigured = true }: LoginFormProps) {
       // router.push + router.refresh criam corrida de condição nos cookies.
       const next        = searchParams.get('next')
       const destination = next ?? ROUTES.CARREGAMENTO
+      // O caminhão sai da balança antes da troca de tela (imediato com reduced-motion).
+      await sairDaCena()
       window.location.href = destination
     } catch (err) {
       console.error('[LoginForm] Falha no login:', err)
@@ -57,57 +60,71 @@ export function LoginForm({ supabaseConfigured = true }: LoginFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
-      <div className="relative">
-        <Input
-          label="Usuário"
+    <form onSubmit={handleSubmit(onSubmit)} noValidate className="pt-1">
+      <div className="mb-4">
+        <label htmlFor="username" className="block text-[10px] tracking-[.08em] uppercase text-ticket-soft mb-1">
+          Usuário
+        </label>
+        <input
+          id="username"
           type="text"
-          placeholder="nome_usuario"
+          placeholder="operador.logistica"
           autoComplete="username"
           autoFocus
           autoCapitalize="none"
           autoCorrect="off"
           spellCheck={false}
           disabled={!supabaseConfigured}
-          error={errors.username?.message}
-          className="border-paper-300 bg-paper-50 text-paper-900 placeholder:text-paper-500 hover:border-paper-400 focus:border-leaf-500 focus:ring-leaf-400/40 focus:ring-offset-paper-50"
+          className={cn(
+            'w-full bg-transparent border-b-[1.5px] border-dashed border-ticket-rule py-1.5 px-0.5 font-mono text-[15px] text-ticket-ink',
+            'placeholder:text-ticket-soft/70 focus:outline-none focus:border-solid focus:border-brand-600',
+            errors.username && 'border-danger-600',
+          )}
           {...register('username')}
         />
-        <User className="pointer-events-none absolute right-3 top-[34px] h-4 w-4 text-paper-500" />
+        {errors.username && <p className="mt-1 text-xs text-danger-600">{errors.username.message}</p>}
       </div>
 
-      <div className="relative">
-        <Input
-          label="Senha"
+      <div className="mb-5 relative">
+        <label htmlFor="password" className="block text-[10px] tracking-[.08em] uppercase text-ticket-soft mb-1">
+          Senha
+        </label>
+        <input
+          id="password"
           type={showPassword ? 'text' : 'password'}
           placeholder="••••••••"
           autoComplete="current-password"
           disabled={!supabaseConfigured}
-          error={errors.password?.message}
-          className="border-paper-300 bg-paper-50 text-paper-900 placeholder:text-paper-500 hover:border-paper-400 focus:border-leaf-500 focus:ring-leaf-400/40 focus:ring-offset-paper-50"
+          className={cn(
+            'w-full bg-transparent border-b-[1.5px] border-dashed border-ticket-rule py-1.5 px-0.5 pr-7 font-mono text-[15px] text-ticket-ink',
+            'placeholder:text-ticket-soft/70 focus:outline-none focus:border-solid focus:border-brand-600',
+            errors.password && 'border-danger-600',
+          )}
           {...register('password')}
         />
         <button
           type="button"
           onClick={() => setShowPassword((v) => !v)}
-          className="absolute right-3 top-[34px] text-paper-500 hover:text-paper-700 transition-colors"
+          className="absolute right-0.5 bottom-1.5 text-ticket-soft hover:text-ticket-ink transition-colors"
           aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
           disabled={!supabaseConfigured}
         >
-          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
         </button>
+        {errors.password && <p className="mt-1 text-xs text-danger-600">{errors.password.message}</p>}
       </div>
 
-      <Button
+      <button
         type="submit"
-        size="lg"
-        loading={isSubmitting}
-        disabled={!supabaseConfigured}
-        className="w-full mt-2 bg-spruce-600 text-paper-900 shadow-[0_10px_24px_-10px_rgba(66,127,73,0.5)] hover:bg-spruce-500 focus-visible:ring-leaf-400 focus-visible:ring-offset-paper-50"
+        disabled={!supabaseConfigured || isSubmitting}
+        className={cn(
+          'w-full py-3 rounded-[2px] border-2 border-brand-600 bg-brand-600 text-ticket-paper',
+          'font-mono font-extrabold uppercase tracking-[.08em] text-sm transition-colors',
+          'hover:bg-brand-500 hover:border-brand-500 disabled:opacity-50 disabled:pointer-events-none',
+        )}
       >
-        {!isSubmitting && <LogIn className="h-4 w-4" />}
-        Entrar
-      </Button>
+        {isSubmitting ? 'Entrando…' : 'Entrar'}
+      </button>
     </form>
   )
 }

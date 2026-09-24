@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { Search, ChevronDown, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
+import { PageTitle } from '@/components/ui/page-header'
 import type { Formula } from '@/types/formula'
 import { INGREDIENTES, calcularIngrediente } from '@/types/formula'
 import { ImportarFormulasClient } from './_client'
@@ -29,7 +30,7 @@ export function CatalogoFormulas({ formulas }: CatalogoFormulasProps) {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-display tracking-tight text-lg font-semibold text-industrial-900">Fórmulas</h1>
+          <PageTitle>Fórmulas</PageTitle>
           <p className="text-xs text-industrial-600 mt-0.5 flex items-center gap-1.5">
             <RefreshCw className="size-3" />
             Sincronizadas automaticamente da planilha do Google Sheets

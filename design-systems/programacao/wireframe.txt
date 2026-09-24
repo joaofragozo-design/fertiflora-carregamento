@@ -1,0 +1,55 @@
++--------------------------------------------------------------------------------------------+
+| nav                                                                                         |
+| [ico:menu]  [in: Buscar... ⌘K]                          [t3:Online] [av:] [t2:logistica]     |
+|                                                          [t3:Logistica] [ico:logout]          |
++--------------------------------------------------------------------------------------------+
+
++-----------------------+  +-------------------------------------------------------------------+
+| rail                  |  | main                                                               |
+|                        |  | [t3: 2ª VIA] ·············· [t3: PROGRAMAÇÃO DE CARREGAMENTO]     |
+| [img:logo]             |  |                                                                     |
+| [h3: FertiLog]         |  | [h1: Programação de Carregamento]                                  |
+| [t3: Fertiflora ·      |  |                                                                     |
+|       Carregamento]    |  | [ico:chevron-left] [t2: Semana de 21/09 a 26/09]                   |
+|                        |  | [ico:chevron-right]           [btn2: Mostrar sábado]               |
+| [lnk: Ordens do Dia]   |  |                               [btn2: Relatório do dia]             |
+| [lnk: Painel TV]       |  |                                       +-----------------------+     |
+| [btn: Programação]     |  |                                       | card4                 |     |
+| [lnk: Programação de   |  |                                       | [t3: TOTAL DA SEMANA] |     |
+|        Recebimento]    |  |                                       | [h2: 1031.50][t3:ton] |     |
+| [lnk: Fórmulas]        |  |                                       +-----------------------+     |
+| [lnk: Solicitações]    |  |                                                                     |
+| [lnk: Transportadoras] |  | +-----------------------------------------------------------------+ |
+|                        |  | | section                                                         | |
+| [av:] [t2:logistica]   |  | | [ico:chevron-down] [t2: SEGUNDA] [t3: 21/09]      [t3: 192.75]   | |
+| [t3: Logistica]        |  | |                                                                   | |
+| [ico:logout]           |  | | +---------------------------------------------------------------+ | |
++------------------------+  | | | card                                                          | | |
+                             | | | [ico:dot]                                    [t3: Nº 000234] | | |
+                             | | | [t3: CLIENTE]                                                 | | |
+                             | | | [h3: AGRICOLA BORTOLUZZI(275980)]                             | | |
+                             | | | ─────────────────────────────────────────────────────────────| | |
+                             | | | [t2: 02-06-08+CO+CALTIMAG+S(Ca 6,3%+2,0%Mg+2,1%S)]            | | |
+                             | | |                              [ico:edit] [ico:trash]           | | |
+                             | | | [t3: 40 BAG DE 1000kg · 40.00 ton]                            | | |
+                             | | | [ico:link] [t3: AGRICOLA BORTOLUZZI(275980)]                  | | |
+                             | | | ─────────────────────────────────────────────────────────────| | |
+                             | | | [t3: TOTAL]                          [h2: 40.00] [t3: ton]    | | |
+                             | | | [t3: Chegou às 07:45]                     [stamp: CONFIRMADO] | | |
+                             | | | [btn: + Adicionar item]                                       | | |
+                             | | | [btn2: Transportadora ✓]        [btn3: Enviado]               | | |
+                             | | +---------------------------------------------------------------+ | |
+                             | | ··· (repete: um card por cliente/agendamento do dia)              | |
+                             | |                                                                   | |
+                             | | +---------------------------------------------------------------+ | |
+                             | | | card5                                                          | | |
+                             | | | [t3: MATÉRIA-PRIMA DO DIA]                                     | | |
+                             | | | [t2: M.O.]        [t3: 80.090 kg]                              | | |
+                             | | | [t2: CARBONATO]    [t3: 42.533 kg]                             | | |
+                             | | | ··· (repete: um par label/kg por insumo)                       | | |
+                             | | +---------------------------------------------------------------+ | |
+                             | +-----------------------------------------------------------------+ |
+                             | ··· (repete: uma "section" por dia da semana — TERÇA, QUARTA·hoje,   |
+                             |      QUINTA·amanhã, SEXTA, SÁBADO — mesmo padrão de card/card5,      |
+                             |      lado a lado em colunas separadas por régua tracejada vertical)  |
+                             +-------------------------------------------------------------------+

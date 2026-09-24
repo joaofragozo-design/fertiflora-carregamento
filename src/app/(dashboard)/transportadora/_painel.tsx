@@ -13,6 +13,7 @@ import { EMBALAGEM_LABEL, mascararNomeFormula } from '@/types/formula'
 import { regrasFabrica, LOCALIZACAO_FABRICA_URL } from '@/lib/whatsapp'
 import { cn } from '@/lib/utils/cn'
 import { formatPlacaCompleta } from '@/lib/utils/format'
+import { PageTitle } from '@/components/ui/page-header'
 
 interface PainelTransportadoraProps {
   transportadora:      Transportadora
@@ -188,9 +189,9 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
   return (
     <div className="flex flex-col gap-5 max-w-4xl">
       <div>
-        <h1 className="font-display tracking-tight text-lg font-semibold text-industrial-900 flex items-center gap-2">
+        <PageTitle className="flex items-center gap-2">
           <Truck className="size-5 text-brand-600" /> {transportadora.nome}
-        </h1>
+        </PageTitle>
         <p className="text-xs text-industrial-600 mt-1">
           Carregamentos enviados pela Fertiflora. Selecione o motorista, envie a solicitação e aguarde a liberação.
         </p>
@@ -286,7 +287,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                     <select
                       value={motoristaSel[ag.id] ?? ''}
                       onChange={(e) => setMotoristaSel((prev) => ({ ...prev, [ag.id]: e.target.value }))}
-                      className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 focus:outline-none focus:border-brand-500"
+                      className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-base md:text-sm text-industrial-900 focus:outline-none focus:border-brand-500"
                     >
                       <option value="">Selecionar motorista…</option>
                       {motoristas.map((m) => (
@@ -410,7 +411,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                 value={formMotorista.nome}
                 onChange={(e) => setFormMotorista({ ...formMotorista, nome: e.target.value })}
                 placeholder="ex.: José da Silva"
-                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-base md:text-sm text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
               />
             </label>
             <label className="text-xs font-medium text-industrial-600">WhatsApp com DDD (obrigatório — recebe o aviso de liberação)
@@ -418,7 +419,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                 value={formMotorista.whatsapp}
                 onChange={(e) => setFormMotorista({ ...formMotorista, whatsapp: e.target.value })}
                 placeholder="ex.: (45) 99999-9999"
-                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-base md:text-sm font-mono text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
               />
             </label>
 
@@ -428,14 +429,14 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                   value={formMotorista.cpf}
                   onChange={(e) => setFormMotorista({ ...formMotorista, cpf: e.target.value })}
                   placeholder="000.000.000-00"
-                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-base md:text-sm font-mono text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
                 />
               </label>
               <label className="text-xs font-medium text-industrial-600">RG
                 <input
                   value={formMotorista.rg}
                   onChange={(e) => setFormMotorista({ ...formMotorista, rg: e.target.value })}
-                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 focus:outline-none focus:border-brand-500"
+                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-base md:text-sm font-mono text-industrial-900 focus:outline-none focus:border-brand-500"
                 />
               </label>
             </div>
@@ -444,7 +445,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
               <input
                 value={formMotorista.cnh}
                 onChange={(e) => setFormMotorista({ ...formMotorista, cnh: e.target.value })}
-                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 focus:outline-none focus:border-brand-500"
+                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-base md:text-sm font-mono text-industrial-900 focus:outline-none focus:border-brand-500"
               />
             </label>
 
@@ -456,7 +457,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                     value={formMotorista.placa_cavalo}
                     onChange={(e) => setFormMotorista({ ...formMotorista, placa_cavalo: e.target.value.toUpperCase() })}
                     placeholder="ABC1D23"
-                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-base md:text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
                   />
                 </label>
                 <label className="text-xs font-medium text-industrial-600">Placa 1
@@ -464,7 +465,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                     value={formMotorista.placa_1}
                     onChange={(e) => setFormMotorista({ ...formMotorista, placa_1: e.target.value.toUpperCase() })}
                     placeholder="ABC1D23"
-                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-base md:text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
                   />
                 </label>
               </div>
@@ -474,7 +475,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                     value={formMotorista.placa_2}
                     onChange={(e) => setFormMotorista({ ...formMotorista, placa_2: e.target.value.toUpperCase() })}
                     placeholder="opcional"
-                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-base md:text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
                   />
                 </label>
                 <label className="text-xs font-medium text-industrial-600">Placa 3
@@ -482,7 +483,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                     value={formMotorista.placa_3}
                     onChange={(e) => setFormMotorista({ ...formMotorista, placa_3: e.target.value.toUpperCase() })}
                     placeholder="opcional"
-                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-base md:text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
                   />
                 </label>
                 <label className="text-xs font-medium text-industrial-600">Placa 4
@@ -490,7 +491,7 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
                     value={formMotorista.placa_4}
                     onChange={(e) => setFormMotorista({ ...formMotorista, placa_4: e.target.value.toUpperCase() })}
                     placeholder="opcional"
-                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-base md:text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
                   />
                 </label>
               </div>

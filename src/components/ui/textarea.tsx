@@ -22,7 +22,9 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           ref={ref}
           id={textareaId}
           className={cn(
-            'min-h-[80px] w-full rounded-md border bg-industrial-100 px-3 py-2 text-sm text-industrial-900 placeholder:text-industrial-500 resize-y',
+            // text-base (16px) evita o zoom automático do iOS ao focar — mesmo
+            // motivo do Input (ver comentário lá).
+            'min-h-[80px] w-full rounded-md border bg-industrial-100 px-3 py-2 text-base md:text-sm text-industrial-900 placeholder:text-industrial-500 resize-y',
             'transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1 focus:ring-offset-industrial-100',
             error
               ? 'border-danger-500 focus:ring-danger-500'

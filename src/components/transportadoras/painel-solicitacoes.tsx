@@ -412,14 +412,14 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
                 autoFocus
                 value={formMotorista.nome}
                 onChange={(e) => setFormMotorista({ ...formMotorista, nome: e.target.value })}
-                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm text-industrial-900 focus:outline-none focus:border-brand-500"
+                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-base md:text-sm text-industrial-900 focus:outline-none focus:border-brand-500"
               />
             </label>
             <label className="text-xs font-medium text-industrial-600">WhatsApp com DDD (obrigatório — recebe o aviso de liberação)
               <input
                 value={formMotorista.whatsapp}
                 onChange={(e) => setFormMotorista({ ...formMotorista, whatsapp: e.target.value })}
-                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 focus:outline-none focus:border-brand-500"
+                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-base md:text-sm font-mono text-industrial-900 focus:outline-none focus:border-brand-500"
               />
             </label>
 
@@ -428,14 +428,14 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
                 <input
                   value={formMotorista.cpf}
                   onChange={(e) => setFormMotorista({ ...formMotorista, cpf: e.target.value })}
-                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 focus:outline-none focus:border-brand-500"
+                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-base md:text-sm font-mono text-industrial-900 focus:outline-none focus:border-brand-500"
                 />
               </label>
               <label className="text-xs font-medium text-industrial-600">RG
                 <input
                   value={formMotorista.rg}
                   onChange={(e) => setFormMotorista({ ...formMotorista, rg: e.target.value })}
-                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 focus:outline-none focus:border-brand-500"
+                  className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-base md:text-sm font-mono text-industrial-900 focus:outline-none focus:border-brand-500"
                 />
               </label>
             </div>
@@ -444,7 +444,7 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
               <input
                 value={formMotorista.cnh}
                 onChange={(e) => setFormMotorista({ ...formMotorista, cnh: e.target.value })}
-                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono text-industrial-900 focus:outline-none focus:border-brand-500"
+                className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-base md:text-sm font-mono text-industrial-900 focus:outline-none focus:border-brand-500"
               />
             </label>
 
@@ -455,14 +455,14 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
                   <input
                     value={formMotorista.placa_cavalo}
                     onChange={(e) => setFormMotorista({ ...formMotorista, placa_cavalo: e.target.value.toUpperCase() })}
-                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 focus:outline-none focus:border-brand-500"
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-base md:text-sm font-mono uppercase text-industrial-900 focus:outline-none focus:border-brand-500"
                   />
                 </label>
                 <label className="text-xs font-medium text-industrial-600">Placa 1
                   <input
                     value={formMotorista.placa_1}
                     onChange={(e) => setFormMotorista({ ...formMotorista, placa_1: e.target.value.toUpperCase() })}
-                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 focus:outline-none focus:border-brand-500"
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-base md:text-sm font-mono uppercase text-industrial-900 focus:outline-none focus:border-brand-500"
                   />
                 </label>
               </div>
@@ -472,7 +472,7 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
                     value={formMotorista.placa_2}
                     onChange={(e) => setFormMotorista({ ...formMotorista, placa_2: e.target.value.toUpperCase() })}
                     placeholder="opcional"
-                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-base md:text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
                   />
                 </label>
                 <label className="text-xs font-medium text-industrial-600">Placa 3
@@ -480,7 +480,7 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
                     value={formMotorista.placa_3}
                     onChange={(e) => setFormMotorista({ ...formMotorista, placa_3: e.target.value.toUpperCase() })}
                     placeholder="opcional"
-                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-base md:text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
                   />
                 </label>
                 <label className="text-xs font-medium text-industrial-600">Placa 4
@@ -488,7 +488,7 @@ export function PainelSolicitacoes({ initialSolicitacoes, usuario }: PainelSolic
                     value={formMotorista.placa_4}
                     onChange={(e) => setFormMotorista({ ...formMotorista, placa_4: e.target.value.toUpperCase() })}
                     placeholder="opcional"
-                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
+                    className="mt-1 w-full bg-industrial-50 border border-industrial-400 rounded-lg px-3 py-2 text-base md:text-sm font-mono uppercase text-industrial-900 placeholder-industrial-500 focus:outline-none focus:border-brand-500"
                   />
                 </label>
               </div>

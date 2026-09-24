@@ -8,6 +8,7 @@ import { TransportadorasService } from '@/services/transportadoras.service'
 import type { Transportadora, Motorista } from '@/types/transportadora'
 import { formatPlacaCompleta } from '@/lib/utils/format'
 import { cn } from '@/lib/utils/cn'
+import { PageTitle } from '@/components/ui/page-header'
 
 interface GestaoTransportadorasProps {
   initialTransportadoras: Transportadora[]
@@ -191,7 +192,7 @@ export function GestaoTransportadoras({ initialTransportadoras, initialMotorista
     <div className="flex flex-col gap-4 max-w-3xl">
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-display tracking-tight text-lg font-semibold text-industrial-900">Transportadoras</h1>
+          <PageTitle>Transportadoras</PageTitle>
           <p className="text-xs text-industrial-600 mt-1">
             Cada transportadora ganha um login próprio pra cadastrar motoristas e enviar solicitações de carregamento.
           </p>

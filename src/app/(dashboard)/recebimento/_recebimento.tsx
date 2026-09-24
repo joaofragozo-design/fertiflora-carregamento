@@ -18,6 +18,7 @@ import type { Transportadora } from '@/types/transportadora'
 import type { EstoqueAtual, EstoqueConfig } from '@/types/estoque'
 import { MATERIAS_PRIMA } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
+import { PageTitle } from '@/components/ui/page-header'
 
 interface RecebimentoSemanaProps {
   initialRecebimentos: RecebimentoPrevisto[]
@@ -265,7 +266,7 @@ export function RecebimentoSemana({
       {/* Cabeçalho + navegação de semana */}
       <div className="flex items-end justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-display tracking-tight text-lg font-semibold text-industrial-900">Programação de Recebimento</h1>
+          <PageTitle>Programação de Recebimento</PageTitle>
           <div className="flex items-center gap-1.5 mt-2">
             <button type="button" onClick={() => irParaSemana(addDiasIso(semanaInicio, -7))} aria-label="Semana anterior"
               className="rounded-lg border border-industrial-300 p-1.5 text-industrial-600 hover:text-industrial-900 hover:border-brand-500 transition-colors">

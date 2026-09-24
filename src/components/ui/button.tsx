@@ -19,6 +19,10 @@ const buttonVariants = cva(
           'text-industrial-700 hover:bg-industrial-200 hover:text-industrial-900',
         outline:
           'border border-industrial-400 text-industrial-800 hover:bg-industrial-200 hover:border-industrial-500',
+        // "Ficha de Balança" (ver DESIGN.md) — botão de ação sobre o canhoto de
+        // papel claro: mono, versalete rastreada, raio contido, sem sombra suave.
+        ticket:
+          'bg-brand-600 text-ticket-paper font-mono uppercase tracking-[.08em] rounded-[2px] border-2 border-brand-600 hover:bg-brand-500 hover:border-brand-500',
       },
       size: {
         sm:   'h-8  px-3   text-xs',

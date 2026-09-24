@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FertiLog — Programação de Carregamento</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <filter id="stamp-rough" x="-20%" y="-20%" width="140%" height="140%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.02 0.18" numOctaves="2" seed="7" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <header class="topbar">
+    <button class="icon-btn" aria-label="Mostrar ou ocultar menu"><span class="ico ico-menu"></span></button>
+    <div class="search"><span class="ico ico-search"></span><span class="search-ph">Buscar...</span><span class="kbd">⌘K</span></div>
+    <div class="topbar-right">
+      <span class="status-online"><span class="dot-online"></span>Online</span>
+      <span class="avatar avatar-sm">L</span>
+      <span class="topbar-user">
+        <span class="t2">logistica</span>
+        <span class="t3">Logística</span>
+      </span>
+      <button class="icon-btn" aria-label="Sair do sistema"><span class="ico ico-logout"></span></button>
+    </div>
+  </header>
+
+  <div class="shell">
+    <aside class="rail">
+      <div class="rail-brand">
+        <img class="rail-logo" src="assets/logo.png" alt="Fertiflora" />
+        <div>
+          <div class="rail-brand-name">FertiLog</div>
+          <div class="rail-brand-sub">Fertiflora · Carregamento</div>
+        </div>
+      </div>
+      <nav class="rail-nav">
+        <a class="rail-link" href="#">Ordens do Dia</a>
+        <a class="rail-link" href="#">Painel TV</a>
+        <a class="rail-link active" href="#">Programação</a>
+        <a class="rail-link" href="#">Programação de Recebimento</a>
+        <a class="rail-link" href="#">Fórmulas</a>
+        <a class="rail-link" href="#">Solicitações</a>
+        <a class="rail-link" href="#">Transportadoras</a>
+      </nav>
+      <div class="rail-user">
+        <span class="avatar">L</span>
+        <span class="rail-user-info">
+          <span class="t2">logistica</span>
+          <span class="t3">Logística</span>
+        </span>
+        <button class="icon-btn" aria-label="Sair"><span class="ico ico-logout"></span></button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="via-tag"><span>2ª VIA</span><span class="via-tag-line"></span><span>PROGRAMAÇÃO DE CARREGAMENTO</span></div>
+
+      <h1 class="page-title">Programação de Carregamento</h1>
+
+      <div class="week-nav">
+        <button class="icon-btn" aria-label="Semana anterior"><span class="ico ico-chevron-left"></span></button>
+        <span class="t2">Semana de 21/09 a 26/09</span>
+        <button class="icon-btn" aria-label="Próxima semana"><span class="ico ico-chevron-right"></span></button>
+        <div class="week-nav-actions">
+          <button class="btn btn-ghost"><span class="ico ico-eye"></span>Mostrar sábado</button>
+          <button class="btn btn-ghost"><span class="ico ico-printer"></span>Relatório do dia</button>
+          <div class="stat-box">
+            <span class="t3">TOTAL DA SEMANA</span>
+            <span class="stat-value">1031.50<span class="t3">ton</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="week-grid">
+        <section class="day-col">
+          <header class="day-header">
+            <button class="icon-btn" aria-label="Minimizar o dia"><span class="ico ico-chevron-down"></span></button>
+            <span class="t2">SEGUNDA</span><span class="t3">21/09</span>
+            <span class="day-total">192.75</span>
+          </header>
+
+          <article class="ticket-shell">
+            <span class="ticket-punch" aria-hidden="true"></span>
+            <div class="ticket-toprow"><span class="ticket-label">CLIENTE</span></div>
+            <h3 class="ticket-client">AGROPECUÁRIA SANTA FÉ<span class="t3">(275980)</span></h3>
+            <div class="ticket-rule"></div>
+            <div class="ticket-item">
+              <p class="t2">02-06-08+CO+CALTIMAG+S(Ca 6,3%+2,0%Mg+2,1%S)</p>
+              <span class="ticket-item-actions"><span class="ico ico-edit"></span><span class="ico ico-trash"></span></span>
+              <p class="t3">40 BAG DE 1000kg · 40.00 ton</p>
+            </div>
+            <p class="ticket-transp"><span class="ico ico-link"></span>AGROPECUÁRIA SANTA FÉ(275980)</p>
+            <div class="ticket-rule"></div>
+            <div class="ticket-total-row">
+              <span class="ticket-label">TOTAL</span>
+              <span class="ticket-total">40.00<span class="t3">ton</span></span>
+            </div>
+            <p class="t3 ticket-arrived">Chegou às 07:45</p>
+            <div class="stamp stamp-1l stamp-confirmado" style="--rot:-6deg">CONFIRMADO</div>
+            <div class="ticket-actions">
+              <button class="btn btn-ticket btn-sm">+ Adicionar item</button>
+              <button class="btn btn-ghost btn-sm">Transportadora ✓</button>
+              <button class="btn btn-ghost btn-sm">Enviado</button>
+            </div>
+          </article>
+
+          <article class="ticket-shell">
+            <span class="ticket-punch" aria-hidden="true"></span>
+            <span class="ticket-seq">Nº 000234</span>
+            <div class="ticket-toprow"><span class="ticket-label">CLIENTE</span></div>
+            <h3 class="ticket-client">COOPERATIVA VALE VERDE<span class="t3">(294993)</span></h3>
+            <div class="ticket-rule"></div>
+            <div class="ticket-item">
+              <p class="t2">07-06-06+CO(SAM)(Ca 2,3%+6,0%S)</p>
+              <span class="ticket-item-actions"><span class="ico ico-edit"></span><span class="ico ico-trash"></span></span>
+              <p class="t3">300 SACOS · 15.00 ton</p>
+            </div>
+            <p class="ticket-transp"><span class="ico ico-link"></span>COOPERATIVA VALE VERDE(294943) · VINICIUS RAMALHO</p>
+            <div class="ticket-rule"></div>
+            <div class="ticket-total-row">
+              <span class="ticket-label">TOTAL</span>
+              <span class="ticket-total">17.25<span class="t3">ton</span></span>
+            </div>
+            <p class="t3 ticket-arrived">Chegou às 08:34</p>
+            <div class="stamp stamp-1l stamp-confirmado" style="--rot:4deg">CONFIRMADO</div>
+            <div class="ticket-actions">
+              <button class="btn btn-ticket btn-sm">+ Adicionar item</button>
+              <button class="btn btn-ghost btn-sm">Transportadora ✓</button>
+              <button class="btn btn-ghost btn-sm">Enviado</button>
+            </div>
+          </article>
+
+          <aside class="raw-material">
+            <span class="t3">MATÉRIA-PRIMA DO DIA</span>
+            <div class="raw-row"><span class="t2">M.O.</span><span class="t3">80.090 kg</span></div>
+            <div class="raw-row"><span class="t2">CARBONATO</span><span class="t3">42.533 kg</span></div>
+            <div class="raw-row"><span class="t2">CLORETO</span><span class="t3">26.668 kg</span></div>
+          </aside>
+        </section>
+
+        <section class="day-col">
+          <header class="day-header">
+            <button class="icon-btn" aria-label="Minimizar o dia"><span class="ico ico-chevron-down"></span></button>
+            <span class="t2">TERÇA</span><span class="t3">22/09</span>
+            <span class="day-total">160.25</span>
+          </header>
+
+          <article class="ticket-shell">
+            <span class="ticket-punch" aria-hidden="true"></span>
+            <span class="ticket-seq">Nº 000233</span>
+            <div class="ticket-toprow"><span class="ticket-label">CLIENTE</span></div>
+            <h3 class="ticket-client">FAZENDA BOA ESPERANÇA<span class="t3">(205559)</span></h3>
+            <div class="ticket-rule"></div>
+            <div class="ticket-item">
+              <p class="t2">02-10-10+CO(Ca 4,7%)</p>
+              <span class="ticket-item-actions"><span class="ico ico-edit"></span><span class="ico ico-trash"></span></span>
+              <p class="t3">42 BAG DE 1000kg · 42.00 ton</p>
+            </div>
+            <p class="ticket-transp"><span class="ico ico-link"></span>TRANSLOG LOGÍSTICA(291030) · MARCIO SANTOS</p>
+            <div class="ticket-rule"></div>
+            <div class="ticket-total-row">
+              <span class="ticket-label">TOTAL</span>
+              <span class="ticket-total">42.00<span class="t3">ton</span></span>
+            </div>
+            <p class="t3 ticket-arrived">Chegou às 07:25</p>
+            <div class="stamp stamp-1l stamp-confirmado" style="--rot:-3deg">CONFIRMADO</div>
+            <div class="ticket-actions">
+              <button class="btn btn-ticket btn-sm">+ Adicionar item</button>
+              <button class="btn btn-ghost btn-sm">Transportadora ✓</button>
+              <button class="btn btn-ghost btn-sm">Enviado</button>
+            </div>
+          </article>
+
+          <aside class="raw-material">
+            <span class="t3">MATÉRIA-PRIMA DO DIA</span>
+            <div class="raw-row"><span class="t2">M.O.</span><span class="t3">66.230 kg</span></div>
+            <div class="raw-row"><span class="t2">CARBONATO</span><span class="t3">35.867 kg</span></div>
+          </aside>
+        </section>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

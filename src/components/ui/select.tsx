@@ -26,7 +26,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             ref={ref}
             id={selectId}
             className={cn(
-              'h-10 w-full appearance-none rounded-md border bg-industrial-100 px-3 pr-9 text-sm text-industrial-900',
+              // text-base (16px) evita o zoom automático do iOS ao focar — mesmo
+              // motivo do Input (ver comentário lá).
+              'h-10 w-full appearance-none rounded-md border bg-industrial-100 px-3 pr-9 text-base md:text-sm text-industrial-900',
               'transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1 focus:ring-offset-industrial-100',
               error
                 ? 'border-danger-500 focus:ring-danger-500'

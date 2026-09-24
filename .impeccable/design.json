@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-16T00:00:00.000Z",
+  "title": "Design System: FertiLog",
+  "extensions": {
+    "colorMeta": {
+      "brand-primary": { "role": "primary", "displayName": "Verde Fertiflora", "canonical": "#3B9038" },
+      "ticket-paper": { "role": "neutral", "displayName": "Papel do Canhoto", "canonical": "#ece1c8" },
+      "ticket-ink": { "role": "neutral", "displayName": "Tinta", "canonical": "#201c14" },
+      "stamp-liberado": { "role": "success", "displayName": "Carimbo Liberado", "canonical": "#2f7a2c" },
+      "stamp-confirmado": { "role": "info", "displayName": "Carimbo Confirmado", "canonical": "#2a4d8f" },
+      "stamp-enviado": { "role": "warning", "displayName": "Carimbo Enviado", "canonical": "#9c5510" },
+      "stamp-solicitado": { "role": "neutral", "displayName": "Carimbo Solicitado", "canonical": "#545b52" },
+      "neutral-bg": { "role": "neutral", "displayName": "Oliva Quase-Preto", "canonical": "#12160C" }
+    },
+    "typographyMeta": {
+      "ticket-display": { "displayName": "Mono (sistema Ticket)", "purpose": "Toda a tela em Login/Programação — título, corpo, label, número, sem fonte de display separada." },
+      "legacy-display": { "displayName": "Display legado", "purpose": "Hero/título do sistema legado (Outfit) — telas ainda não migradas." }
+    },
+    "shadows": [
+      { "name": "ticket-drop-shadow", "value": "drop-shadow(0 10px 18px rgba(0,0,0,.4)) drop-shadow(0 3px 6px rgba(0,0,0,.3))", "purpose": "Única pista de profundidade nas telas do sistema Ticket — simula papel solto sobre o fundo." },
+      { "name": "shadow-industrial", "value": "0 1px 2px rgba(6,40,21,.35), 0 8px 24px -12px rgba(0,0,0,.5)", "purpose": "Sombra padrão de card no sistema legado." }
+    ],
+    "motion": [
+      { "name": "ease-glide", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Easing padrão de toda transição — Tailwind transitionTimingFunction.DEFAULT, vale pros dois sistemas." },
+      { "name": "ease-entrance", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Exponencial mais decisiva, sem overshoot — confirmações raras de alto valor." },
+      { "name": "reduced-motion", "value": "@media (prefers-reduced-motion: reduce) { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }", "purpose": "Sempre respeitado — motorista/transportadora acessam pelo celular." }
+    ],
+    "breakpoints": [
+      { "name": "md", "value": "768px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Ticket",
+      "kind": "card",
+      "refersTo": "ticket",
+      "description": "Canhoto de papel — furo de picote, topo em ziguezague, número de sequência real. Sistema 'Ficha de Balança' (Login, Programação).",
+      "html": "<div class=\"ds-ticket\"><span class=\"ds-ticket-punch\"></span><span class=\"ds-ticket-seq\">Nº 000206</span><p class=\"ds-ticket-label\">Cliente</p><p class=\"ds-ticket-client\">Fazenda Boa Vista</p></div>",
+      "css": ".ds-ticket { position: relative; background: #ece1c8; color: #201c14; padding: 30px 20px 18px; clip-path: polygon(0% 0px, 7.14% 9px, 14.28% 0px, 21.42% 9px, 28.56% 0px, 35.7% 9px, 42.84% 0px, 50% 9px, 57.14% 0px, 64.28% 9px, 71.42% 0px, 78.56% 9px, 85.7% 0px, 92.84% 9px, 100% 0px, 100% 100%, 0% 100%); filter: drop-shadow(0 10px 18px rgba(0,0,0,.4)) drop-shadow(0 3px 6px rgba(0,0,0,.3)); font-family: 'JetBrains Mono', monospace; } .ds-ticket-punch { position: absolute; top: 16px; left: 22px; width: 10px; height: 10px; border-radius: 50%; background: #12160C; } .ds-ticket-seq { position: absolute; top: 18px; right: 18px; font-size: 11px; font-weight: 700; color: #5a5340; } .ds-ticket-label { font-size: 10px; letter-spacing: .09em; text-transform: uppercase; color: #5a5340; margin: 0; } .ds-ticket-client { font-size: 17px; font-weight: 800; text-transform: uppercase; margin: 2px 0 0; }"
+    },
+    {
+      "name": "Stamp Liberado",
+      "kind": "custom",
+      "refersTo": "stamp-liberado",
+      "description": "Carimbo de borracha de status — só sobre a superfície clara do Ticket.",
+      "html": "<div class=\"ds-stamp\">Liberado</div>",
+      "css": ".ds-stamp { position: relative; display: inline-flex; align-items: center; justify-content: center; padding: 7px 13px; border: 3px solid #2f7a2c; border-radius: 3px; transform: rotate(-5deg); text-transform: uppercase; font-weight: 800; font-family: 'JetBrains Mono', monospace; color: #2f7a2c; background-image: repeating-linear-gradient(115deg, currentColor 0 1px, transparent 1px 4px); mix-blend-mode: multiply; opacity: .94; clip-path: polygon(2% 9%, 10% 0%, 26% 5%, 41% 0%, 60% 6%, 79% 0%, 96% 7%, 100% 24%, 96% 46%, 100% 71%, 95% 93%, 79% 100%, 59% 95%, 40% 100%, 21% 94%, 5% 100%, 0% 77%, 4% 49%, 0% 24%); }"
+    },
+    {
+      "name": "Ticket Button",
+      "kind": "button",
+      "refersTo": "button-ticket",
+      "description": "Botão do sistema Ticket — variante aditiva 'ticket' em button.tsx.",
+      "html": "<button class=\"ds-btn-ticket\">Entrar</button>",
+      "css": ".ds-btn-ticket { background: #3B9038; color: #ece1c8; font-family: 'JetBrains Mono', monospace; font-weight: 800; text-transform: uppercase; letter-spacing: .08em; border: 2px solid #3B9038; border-radius: 2px; padding: 13px; transition: background 150ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-ticket:hover { background: #4FB142; border-color: #4FB142; }"
+    },
+    {
+      "name": "Primary Button (legado)",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Botão do sistema legado — ainda em uso na maior parte do app.",
+      "html": "<button class=\"ds-btn-primary\">Liberar</button>",
+      "css": ".ds-btn-primary { background: #3B9038; color: #fff; padding: 0.625rem 1rem; border-radius: 0.375rem; font-size: 0.875rem; font-weight: 500; border: none; transition: background 150ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-primary:hover { background: #4FB142; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "A Ficha de Balança",
+    "overview": "Todo caminhão que sai da fábrica já carrega uma ficha de pesagem impressa em matriz de pontos. FertiLog copia esse objeto pra dentro da tela: cada carregamento é um canhoto de papel flutuando sobre um fundo quase-preto; o estado é um carimbo de borracha carimbado sobre o papel. A tipografia inteira é monoespaçada — não só nos números. Em rollout: Login e Programação já migradas; o resto do app segue no sistema legado 'verde-militar' (Posto de Comando Noturno) até aprovação de continuar.",
+    "keyCharacteristics": [
+      "Cartão de carga = ticket de papel sobre fundo escuro, não card com sombra.",
+      "Estado = carimbo de borracha, nunca badge/pílula.",
+      "Mono como voz de toda a tela nas páginas migradas.",
+      "Verde Fertiflora é a única cor de ação em qualquer sistema.",
+      "Cada tela migrada abre com seu 'Nª via' em sequência."
+    ],
+    "rules": [
+      { "name": "A Regra do Carimbo Duplo", "body": "confirmado_em sempre supera solicitacao_status na escolha do carimbo — uma carga confirmada já passou por liberação.", "section": "colors" },
+      { "name": "A Regra do Papel vs. Vidro", "body": "O documento (ticket) tem textura/recorte físico; o controle de interação (botão, input) é preciso e quase reto. Nunca os dois registros no mesmo elemento.", "section": "shapes" },
+      { "name": "A Regra da Tinta Translúcida (sistema legado)", "body": "Sobre fundo escuro, todo estado semântico usa fundo translúcido, nunca preenchimento sólido claro.", "section": "colors" }
+    ],
+    "dos": [
+      "Do manter o verde Fertiflora como única cor de ação em qualquer sistema.",
+      "Do usar Stamp pra estado no sistema Ticket — nunca badge de pílula ali.",
+      "Do dar a cada tela migrada seu próprio Nª via em sequência.",
+      "Do manter o corpo inteiro em mono nas telas do sistema Ticket.",
+      "Do verificar em qual sistema uma tela já está antes de copiar padrão de outra."
+    ],
+    "donts": [
+      "Don't aplicar o motivo canhoto de papel em modais — eles continuam no vocabulário legado.",
+      "Don't usar Stamp fora de uma superfície Ticket clara — o multiply só funciona sobre o papel.",
+      "Don't truncar observação/nº de pedido — é informação real, deixe quebrar linha.",
+      "Don't motion vistoso de showcase."
+    ]
+  }
+}

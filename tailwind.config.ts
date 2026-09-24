@@ -91,6 +91,25 @@ const config: Config = {
           700: '#2F7330',
           900: '#1C431F',
         },
+        // "Ficha de Balança" — sistema de carregamento como ficha de pesagem
+        // impressa em matriz de pontos (ver DESIGN.md). `ticket` é a superfície
+        // clara do canhoto de papel (nunca usado como fundo de página — só
+        // dentro do componente Ticket); `stamp` são as 4 tintas de carimbo de
+        // status, deliberadamente mais foscas que `brand` (tinta carimbada,
+        // não cor de ação — `brand` continua sendo a única cor interativa).
+        ticket: {
+          paper: '#ece1c8',
+          edge:  '#d9cbab',
+          ink:   '#201c14',
+          soft:  '#5a5340',
+          rule:  '#362f21',
+        },
+        stamp: {
+          solicitado: '#545b52',
+          enviado:    '#9c5510',
+          liberado:   '#2f7a2c',
+          confirmado: '#2a4d8f',
+        },
         // Verde profundo de floresta — superfícies de marca (sidebar, login)
         spruce: {
           50:  '#EBF6EE',
@@ -107,6 +126,23 @@ const config: Config = {
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
         mono: ['var(--font-mono)', 'monospace'],
         display: ['var(--font-display)', 'sans-serif'],
+      },
+      // Escala fluida (metodologia Utopia — clamp(min, slope·vw + intercept, max),
+      // viewport 360→1280/1920px): título de página cresce pouco (dashboard denso),
+      // hero (login/404/painel de TV) cresce mais — sem saltos de breakpoint.
+      fontSize: {
+        'fluid-title': ['clamp(1.125rem, 1.03rem + 0.43vw, 1.375rem)', { lineHeight: '1.3' }],
+        'fluid-hero':  ['clamp(1.75rem, 1.58rem + 0.77vw, 2.5rem)',   { lineHeight: '1.1' }],
+      },
+      // Easing padrão do app inteiro (afeta transition/transition-colors/-all/-transform
+      // de qualquer componente, aqui e nos próximos apps Fertiflora que herdarem este
+      // config): "glide" — suave, sem exagero, recomendado pra UI operacional séria.
+      // "entrance" é a mesma família (exponencial, sem overshoot/bounce), só um pouco
+      // mais decisiva — reservada a poucas confirmações de alto valor (carga liberada).
+      transitionTimingFunction: {
+        DEFAULT: 'cubic-bezier(0.16, 1, 0.3, 1)',
+        glide:   'cubic-bezier(0.16, 1, 0.3, 1)',
+        entrance:'cubic-bezier(0.22, 1, 0.36, 1)',
       },
       // Raios generosos da identidade STO — rounded-lg/xl/2xl mais amigáveis
       borderRadius: {

@@ -15,6 +15,37 @@ interface Banner {
 const DISMISSED_KEY = 'ff_chegadas_dismissidas'
 const MAX_DISMISSED = 300
 
+/**
+ * Marca d'água "visto até" (ISO) por navegador: o catch-up só reapresenta
+ * confirmações que aconteceram DEPOIS da última que este navegador já
+ * mostrou. Sem isso, cada reload da Logística repetia todas as chegadas do
+ * dia (som + balão) como se fossem novas.
+ */
+const VISTO_ATE_KEY = 'ff_chegadas_visto_ate'
+/** Primeiro acesso neste navegador: só o que chegou na última meia hora. */
+const JANELA_PRIMEIRO_ACESSO_MS = 30 * 60_000
+/** Teto do catch-up mesmo com marca d'água antiga (aba fechada há dias). */
+const JANELA_MAXIMA_MS = 12 * 60 * 60_000
+
+function getVistoAte(): number {
+  try {
+    const v = localStorage.getItem(VISTO_ATE_KEY)
+    const t = v ? Date.parse(v) : NaN
+    return Number.isFinite(t) ? t : 0
+  } catch {
+    return 0
+  }
+}
+
+function marcarVistoAte(iso: string) {
+  try {
+    const t = Date.parse(iso)
+    if (Number.isFinite(t) && t > getVistoAte()) localStorage.setItem(VISTO_ATE_KEY, iso)
+  } catch {
+    /* localStorage indisponível — ignora */
+  }
+}
+
 function getDismissed(): Set<string> {
   try {
     return new Set(JSON.parse(localStorage.getItem(DISMISSED_KEY) ?? '[]'))
@@ -78,6 +109,7 @@ export function ConfirmacaoChegadaListener() {
   }, [])
 
   const enfileirar = useCallback((b: Banner) => {
+    marcarVistoAte(b.confirmado_em)
     if (getDismissed().has(b.id)) return
     setBanners((prev) => (prev.some((x) => x.id === b.id) ? prev : [...prev, b]))
     tocarBeep()
@@ -95,17 +127,22 @@ export function ConfirmacaoChegadaListener() {
     }
   }, [])
 
-  // Catch-up: confirmações de hoje que ainda não foram vistas (ex.: aba fechada na hora).
+  // Catch-up: confirmações que aconteceram depois da última que este navegador
+  // viu (ex.: aba fechada na hora). Filtra por `confirmado_em` (o momento da
+  // chegada), não pela data programada — e nunca reapresenta o que já passou
+  // pela marca d'água, senão todo reload repete o dia inteiro.
   useEffect(() => {
     let cancelado = false
     ;(async () => {
-      const hoje = new Date().toISOString().slice(0, 10)
+      const agora = Date.now()
+      const vistoAte = getVistoAte()
+      const desde = new Date(Math.max(vistoAte || agora - JANELA_PRIMEIRO_ACESSO_MS, agora - JANELA_MAXIMA_MS)).toISOString()
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data } = await (supabase as any)
         .from('programacao_carregamento')
         .select('id, cliente, data, confirmado_em')
-        .eq('data', hoje)
-        .not('confirmado_em', 'is', null)
+        .gt('confirmado_em', desde)
+        .order('confirmado_em', { ascending: true })
       if (cancelado) return
       for (const row of (data ?? []) as Banner[]) enfileirar(row)
     })()

@@ -22,7 +22,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           id={inputId}
           className={cn(
-            'h-10 w-full rounded-md border bg-industrial-100 px-3 text-sm text-industrial-900 placeholder:text-industrial-500',
+            // text-base (16px) evita o zoom automático do iOS ao focar em campo com
+            // fonte <16px — motorista/transportadora usam isso no celular no pátio.
+            'h-10 w-full rounded-md border bg-industrial-100 px-3 text-base md:text-sm text-industrial-900 placeholder:text-industrial-500',
             'transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1 focus:ring-offset-industrial-100',
             error
               ? 'border-danger-500 focus:ring-danger-500'
