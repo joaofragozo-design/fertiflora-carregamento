@@ -165,6 +165,19 @@ function tonsDoAgendamento(ag: Programacao): number {
   return (ag.itens ?? []).reduce((s, it) => s + (it.tons ?? 0), 0)
 }
 
+/**
+ * Ordem das cargas dentro do dia: o que ainda falta fica em cima (na ordem em
+ * que foi programado); o que já chegou desce pro fim, por hora de confirmação.
+ * Ao confirmar, o card desliza sozinho pro bloco das concluídas (layout animation).
+ */
+function ordenarCargasDoDia(cargas: Programacao[]): Programacao[] {
+  const pendentes = cargas.filter((c) => !c.confirmado_em)
+  const confirmadas = cargas
+    .filter((c) => !!c.confirmado_em)
+    .sort((a, b) => Date.parse(a.confirmado_em!) - Date.parse(b.confirmado_em!))
+  return [...pendentes, ...confirmadas]
+}
+
 function FormulaPicker({
   value,
   formulas,
@@ -628,7 +641,7 @@ export function ProgramacaoSemana({
           const ehHoje = data === hoje
           const insumos = insumosDoDia(data)
           const colapsado = diasColapsados.has(data)
-          const cargas = agendamentosDoDia(data)
+          const cargas = ordenarCargasDoDia(agendamentosDoDia(data))
           const qtdCargas = cargas.length
           const pendentes = cargas.filter((c) => !c.confirmado_em).length
           return (
@@ -686,8 +699,11 @@ export function ProgramacaoSemana({
                 {cargas.map((ag) => {
                   const concluida = !!ag.confirmado_em
                   const compacta = concluida && !fichasAbertas.has(ag.id)
-                  const horaChegada = ag.confirmado_em
-                    ? new Date(ag.confirmado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                  // Hora da chegada; se foi confirmada noutro dia (ex.: véspera), mostra a data junto —
+                  // a ordem é cronológica real, e sem a data pareceria fora de ordem.
+                  const chegada = ag.confirmado_em ? new Date(ag.confirmado_em) : null
+                  const horaChegada = chegada
+                    ? `${`${pad(chegada.getDate())}/${pad(chegada.getMonth() + 1)}` === ddmm(data) ? '' : `${pad(chegada.getDate())}/${pad(chegada.getMonth() + 1)} `}${chegada.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
                     : null
                   return (
                     <motion.div
