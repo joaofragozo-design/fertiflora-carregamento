@@ -20,7 +20,8 @@ function labelMateriaPrima(r: RecebimentoPrevisto): string {
   return mp?.label ?? r.materia_prima ?? 'Matéria-prima'
 }
 
-function motoristasAtivos(recebimentos: RecebimentoPrevisto[]) {
+/** Motoristas com posição fresca (últimos 10 min) — exportado pra tela decidir se o mapa merece espaço. */
+export function motoristasAtivos(recebimentos: RecebimentoPrevisto[]) {
   const agora = Date.now()
   return recebimentos.filter((r) => {
     if (r.finalizado_em || r.confirmado_em) return false

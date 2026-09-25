@@ -2,7 +2,10 @@
 
 import { useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, X, ChevronLeft, ChevronRight, Truck, CheckCircle2, Package, PlayCircle, Flag, Pencil } from 'lucide-react'
+import {
+  Plus, X, ChevronLeft, ChevronRight, ChevronDown, Truck, Package, PlayCircle, Flag, Pencil,
+  Clock3, PackageCheck, CalendarClock, MapPin, FileText, Container, Trash2, type LucideIcon,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { RecebimentosService, type RecebimentoPrevisto, STATUS_RECEBIMENTO_LABEL, getStatusRecebimento, labelPlacaCompleta } from '@/services/recebimentos.service'
@@ -10,7 +13,7 @@ import { FornecedoresService } from '@/services/fornecedores.service'
 import { FornecedorPicker } from '@/components/fornecedores/fornecedor-picker'
 import { EstoqueConfigPainel } from '@/components/estoque/estoque-config-painel'
 import { FilaOperacao } from '@/components/recebimentos/fila-operacao'
-import { MapaChegadas } from '@/components/recebimentos/mapa-chegadas'
+import { MapaChegadas, motoristasAtivos } from '@/components/recebimentos/mapa-chegadas'
 import { useRecebimentosSemana } from '@/hooks/use-recebimentos-semana'
 import { ROUTES } from '@/constants/routes'
 import type { Fornecedor } from '@/types/fornecedor'
@@ -60,6 +63,65 @@ function labelFornecedor(r: RecebimentoPrevisto): string {
   return r.fornecedor_obj?.nome ?? r.fornecedor ?? '—'
 }
 
+// ─── Peças visuais da tela (mesma gramática da Ordens do Dia) ──────────────
+type StatusReceb = ReturnType<typeof getStatusRecebimento>
+const STATUS_PILL: Record<StatusReceb, { icon: LucideIcon; cls: string }> = {
+  AGUARDANDO_CHEGADA: { icon: Truck,        cls: 'bg-industrial-200 text-industrial-800' },
+  AGUARDANDO_FILA:    { icon: Clock3,       cls: 'bg-amber-500/20 text-amber-300' },
+  DESCARREGANDO:      { icon: PlayCircle,   cls: 'bg-info-500 text-white' },
+  FINALIZADO:         { icon: PackageCheck, cls: 'bg-brand-700 text-white' },
+}
+function StatusPill({ status }: { status: StatusReceb }) {
+  const { icon: Icon, cls } = STATUS_PILL[status]
+  return (
+    <span className={cn('inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-0.5 text-[10px] font-bold', cls)}>
+      <Icon className="size-3" /> {STATUS_RECEBIMENTO_LABEL[status]}
+    </span>
+  )
+}
+function PlacaChip({ placa }: { placa: string }) {
+  return (
+    <span className="inline-flex items-center rounded-md border border-industrial-400 bg-industrial-50 px-1.5 py-0.5 font-mono text-[11px] font-bold uppercase tracking-wider text-industrial-900">
+      {placa}
+    </span>
+  )
+}
+function Kpi({ label, value, unit, caption, icon: Icon, tone = 'neutral' }: {
+  label: string; value: string | number; unit?: string; caption?: string; icon: LucideIcon; tone?: 'neutral' | 'brand' | 'amber' | 'info'
+}) {
+  const cor = { neutral: 'text-industrial-900', brand: 'text-brand-400', amber: 'text-amber-300', info: 'text-info-400' }[tone]
+  const fundo = { neutral: 'bg-industrial-200 text-industrial-600', brand: 'bg-brand-500/15 text-brand-300', amber: 'bg-amber-500/15 text-amber-300', info: 'bg-info-500/15 text-info-400' }[tone]
+  return (
+    <div className="flex items-start justify-between gap-3 rounded-xl border border-industrial-200 bg-industrial-100 px-4 py-3">
+      <div className="min-w-0">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-industrial-600">{label}</p>
+        <p className={cn('mt-1 font-mono text-2xl font-extrabold leading-none', cor)}>
+          {value}{unit && <span className="ml-1 text-sm font-normal text-industrial-600">{unit}</span>}
+        </p>
+        {caption && <p className="mt-1.5 truncate text-[11px] text-industrial-600">{caption}</p>}
+      </div>
+      <span className={cn('flex size-9 shrink-0 items-center justify-center rounded-lg', fundo)}><Icon className="size-[18px]" /></span>
+    </div>
+  )
+}
+function AcaoBtn({ tone = 'neutral', className, children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { tone?: 'neutral' | 'primary' | 'warn' }) {
+  return (
+    <button
+      type="button"
+      {...props}
+      className={cn(
+        'inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50',
+        tone === 'primary' && 'bg-brand-600 text-white hover:bg-brand-500',
+        tone === 'warn' && 'bg-amber-500/15 text-amber-300 hover:bg-amber-500/25',
+        tone === 'neutral' && 'text-industrial-500 hover:bg-industrial-200 hover:text-brand-300',
+        className,
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
 interface FormState {
   data:              string
   materia_prima_key: string
@@ -105,6 +167,24 @@ export function RecebimentoSemana({
   const doDia = (data: string) => recebimentos.filter((r) => r.data_prevista === data)
   const totalDia = (data: string) => doDia(data).reduce((s, r) => s + (r.quantidade_ton ?? 0), 0)
   const totalSemana = useMemo(() => recebimentos.reduce((s, r) => s + (r.quantidade_ton ?? 0), 0), [recebimentos])
+
+  // Indicadores da semana por etapa do recebimento.
+  const kpis = useMemo(() => {
+    const acc = { previstos: 0, aCaminho: 0, naFila: 0, descarregando: 0, finalizados: 0, tonsRecebidas: 0 }
+    for (const r of recebimentos) {
+      acc.previstos++
+      const s = getStatusRecebimento(r)
+      if (s === 'AGUARDANDO_CHEGADA') acc.aCaminho++
+      else if (s === 'AGUARDANDO_FILA') acc.naFila++
+      else if (s === 'DESCARREGANDO') acc.descarregando++
+      else { acc.finalizados++; acc.tonsRecebidas += r.quantidade_ton ?? 0 }
+    }
+    return acc
+  }, [recebimentos])
+  const ativos = useMemo(() => motoristasAtivos(recebimentos).length, [recebimentos])
+  // Mapa só ocupa a tela quando tem alguém a caminho; senão fica uma faixa recolhida.
+  const [mapaAberto, setMapaAberto] = useState<boolean | null>(null)
+  const mostrarMapa = mapaAberto ?? ativos > 0
 
   function irParaSemana(inicio: string) {
     router.push(`${ROUTES.RECEBIMENTO}?semana=${inicio}`)
@@ -284,10 +364,18 @@ export function RecebimentoSemana({
             <p className="text-xs text-industrial-600 mt-1.5">Prévia (somente leitura).</p>
           )}
         </div>
-        <div className="text-right">
-          <p className="text-xs text-industrial-600">Total da semana</p>
-          <p className="text-2xl font-bold text-brand-600">{totalSemana.toFixed(2)} <span className="text-sm font-normal text-industrial-600">ton</span></p>
-        </div>
+      </div>
+
+      {/* Indicadores da semana */}
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <Kpi label="Previsto na semana" value={totalSemana.toFixed(2)} unit="ton" tone="brand" icon={CalendarClock}
+          caption={`${kpis.previstos} ${kpis.previstos === 1 ? 'carga prevista' : 'cargas previstas'} · ${kpis.aCaminho} a caminho`} />
+        <Kpi label="Na fila" value={kpis.naFila} tone="amber" icon={Clock3}
+          caption={kpis.naFila ? 'chegaram e aguardam descarga' : 'ninguém aguardando no pátio'} />
+        <Kpi label="Descarregando" value={kpis.descarregando} tone="info" icon={PlayCircle}
+          caption={kpis.descarregando ? 'descarga em andamento' : 'nenhuma descarga agora'} />
+        <Kpi label="Recebido" value={kpis.tonsRecebidas.toFixed(2)} unit="ton" tone="brand" icon={PackageCheck}
+          caption={`${kpis.finalizados} ${kpis.finalizados === 1 ? 'descarga finalizada' : 'descargas finalizadas'} · já no estoque`} />
       </div>
 
       {podeConfirmar && (
@@ -302,10 +390,38 @@ export function RecebimentoSemana({
 
       {/* GPS ao vivo é só acompanhamento (sem ação) — libera pra quem programa
           o recebimento (logistica) também, não só quem confirma a chegada. */}
-      {(podeConfirmar || podeEditar) && <MapaChegadas recebimentos={recebimentos} />}
+      {(podeConfirmar || podeEditar) && (
+        <div className="rounded-xl border border-industrial-200 bg-industrial-100">
+          <button
+            type="button"
+            onClick={() => setMapaAberto(!mostrarMapa)}
+            aria-expanded={mostrarMapa}
+            className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-industrial-200/40"
+          >
+            <span className={cn('flex size-8 items-center justify-center rounded-lg', ativos > 0 ? 'bg-brand-500/15 text-brand-300' : 'bg-industrial-200 text-industrial-600')}>
+              <MapPin className="size-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-industrial-900">Motoristas a caminho</span>
+              <span className="block text-[11px] text-industrial-600">
+                {ativos > 0 ? `${ativos} ${ativos === 1 ? 'motorista compartilhando' : 'motoristas compartilhando'} a localização agora` : 'Ninguém compartilhando localização — o mapa abre sozinho quando alguém ativar o link de chegada'}
+              </span>
+            </span>
+            <span className={cn('rounded-full px-2 py-0.5 font-mono text-[11px] font-bold', ativos > 0 ? 'bg-brand-500/15 text-brand-300' : 'bg-industrial-200 text-industrial-600')}>
+              {ativos} {ativos === 1 ? 'ativo' : 'ativos'}
+            </span>
+            <ChevronDown className={cn('size-4 text-industrial-500 transition-transform', mostrarMapa && 'rotate-180')} />
+          </button>
+          {mostrarMapa && (
+            <div className="border-t border-industrial-200 p-2">
+              <MapaChegadas recebimentos={recebimentos} />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Grade da semana */}
-      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-3">
+      <div className="grid grid-cols-1 gap-4 md:flex md:flex-wrap md:items-start md:justify-center md:gap-4">
         {dias.map(({ nome, data }) => {
           const ehAmanha = data === amanha
           const ehHoje = data === hoje
@@ -313,13 +429,13 @@ export function RecebimentoSemana({
             <div
               key={data}
               className={cn(
-                'flex flex-col gap-2 rounded-xl border p-2.5',
+                'flex flex-col gap-2 rounded-xl border p-2.5 md:min-w-[240px] md:max-w-[380px] md:flex-1',
                 ehAmanha ? 'border-brand-500 bg-brand-500/10' : ehHoje ? 'border-industrial-500' : 'border-industrial-200',
               )}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-bold text-industrial-900">{nome}</p>
+                  <p className="font-display text-sm font-bold text-industrial-900">{nome}</p>
                   <p className="text-xs text-industrial-600">
                     {ddmm(data)}{ehAmanha && <span className="ml-1 text-brand-300 font-semibold">· amanhã</span>}{ehHoje && <span className="ml-1 text-industrial-500 font-semibold">· hoje</span>}
                   </p>
@@ -328,111 +444,95 @@ export function RecebimentoSemana({
               </div>
 
               <div className="flex flex-col gap-2">
-                {doDia(data).map((r) => (
+                {doDia(data).map((r) => {
+                  const status = getStatusRecebimento(r)
+                  const finalizado = status === 'FINALIZADO'
+                  const placa = labelPlacaCompleta(r)
+                  return (
                   <div
                     key={r.id}
                     className={cn(
-                      'rounded-lg border p-2 transition-colors',
-                      r.confirmado_em ? 'border-brand-500 bg-brand-500/15' : 'border-industrial-300 bg-industrial-100',
+                      'rounded-lg border p-2.5 transition-colors',
+                      finalizado ? 'border-brand-500 bg-brand-500/15'
+                        : status === 'DESCARREGANDO' ? 'border-info-500/60 bg-info-500/10'
+                        : status === 'AGUARDANDO_FILA' ? 'border-amber-500/50 bg-amber-500/10'
+                        : 'border-industrial-300 bg-industrial-100',
                     )}
                   >
+                    {/* Matéria-prima + ações */}
                     <div className="flex items-start justify-between gap-2">
-                      <span className="font-semibold text-industrial-900 text-sm leading-tight flex items-center gap-1.5">
-                        {labelMateriaPrima(r)}
-                        {r.confirmado_em && (
-                          <span
-                            className="inline-flex shrink-0"
-                            title={`Chegou às ${new Date(r.confirmado_em).toLocaleTimeString('pt-BR')}${r.confirmado_por ? ` · confirmado por ${r.confirmado_por}` : ''}`}
-                          >
-                            <Truck className="size-3.5 text-brand-600" />
-                          </span>
-                        )}
-                      </span>
+                      <div className="min-w-0">
+                        <p className="break-words text-sm font-semibold leading-snug text-industrial-900">{labelMateriaPrima(r)}</p>
+                        <p className="mt-0.5 font-mono text-base font-extrabold leading-none text-brand-300">
+                          {(r.quantidade_ton ?? 0).toFixed(2)}<span className="ml-1 text-[10px] font-normal text-industrial-500">ton</span>
+                        </p>
+                      </div>
                       {podeEditar && (
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex shrink-0 gap-0.5">
                           {!r.finalizado_em && (
-                            <button type="button" onClick={() => abrirEdicao(r)} title="Editar recebimento"
-                              className="text-industrial-600 hover:text-brand-300"><Pencil className="size-3.5" /></button>
+                            <button type="button" onClick={() => abrirEdicao(r)} title="Editar recebimento" aria-label="Editar recebimento"
+                              className="flex size-6 items-center justify-center rounded-md text-industrial-500 transition-colors hover:bg-industrial-200 hover:text-brand-300"><Pencil className="size-3.5" /></button>
                           )}
-                          <button type="button" onClick={() => remover(r)} title="Remover previsão"
-                            className="text-industrial-600 hover:text-red-400"><X className="size-3.5" /></button>
+                          <button type="button" onClick={() => remover(r)} title="Remover previsão" aria-label="Remover previsão"
+                            className="flex size-6 items-center justify-center rounded-md text-industrial-500 transition-colors hover:bg-industrial-200 hover:text-red-400"><Trash2 className="size-3.5" /></button>
                         </div>
                       )}
                     </div>
-                    <p className="text-xs text-industrial-500 mt-1">
-                      <span className="font-bold text-industrial-700">{(r.quantidade_ton ?? 0).toFixed(2)} ton</span>
-                      {' · '}{labelFornecedor(r)}
-                    </p>
-                    {(r.transportadora?.nome || r.motorista_nome) && (
-                      <p className="text-xs text-industrial-600 mt-0.5">
-                        {r.transportadora?.nome}{r.transportadora?.nome && r.motorista_nome && ' · '}{r.motorista_nome}
-                      </p>
-                    )}
-                    {labelPlacaCompleta(r) && (
-                      <p className="text-sm font-mono font-bold text-industrial-900 uppercase mt-0.5">
-                        {labelPlacaCompleta(r)}
-                      </p>
-                    )}
-                    {r.numero_nota && <p className="text-xs text-industrial-600 mt-0.5">NF-e: {r.numero_nota}</p>}
-                    {r.observacao && <p className="text-xs text-industrial-600 italic mt-1">{r.observacao}</p>}
 
-                    {r.confirmado_em && (
-                      <p className={cn(
-                        'text-[11px] font-semibold mt-1',
-                        getStatusRecebimento(r) === 'FINALIZADO' ? 'text-brand-300' : 'text-amber-400',
-                      )}>
-                        {STATUS_RECEBIMENTO_LABEL[getStatusRecebimento(r)]}
-                      </p>
-                    )}
+                    {/* Fornecedor, transportadora, placa, NF */}
+                    <div className="mt-1.5 flex flex-col gap-1 text-xs text-industrial-600">
+                      <p className="break-words"><span className="text-industrial-500">Fornecedor:</span> <span className="font-medium text-industrial-800">{labelFornecedor(r)}</span></p>
+                      {(r.transportadora?.nome || r.motorista_nome) && (
+                        <p className="flex items-start gap-1 break-words">
+                          <Container className="mt-px size-3 shrink-0 text-industrial-500" />
+                          <span>{r.transportadora?.nome}{r.transportadora?.nome && r.motorista_nome && ' · '}{r.motorista_nome}</span>
+                        </p>
+                      )}
+                      {(placa || r.numero_nota) && (
+                        <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                          {placa && <PlacaChip placa={placa} />}
+                          {r.numero_nota && (
+                            <span className="inline-flex items-center gap-1 rounded-md border border-industrial-300 bg-industrial-50 px-1.5 py-0.5 font-mono text-[10px] font-bold text-industrial-800">
+                              <FileText className="size-3 text-industrial-500" /> NF-e {r.numero_nota}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      {r.observacao && <p className="break-words italic">{r.observacao}</p>}
+                    </div>
 
-                    {podeConfirmar && r.confirmado_em && (
-                      <div className="mt-1">
-                        {getStatusRecebimento(r) === 'AGUARDANDO_FILA' && (
-                          <button
-                            type="button"
-                            onClick={() => iniciarDescarga(r)}
-                            disabled={processandoId === r.id}
-                            className="flex items-center gap-1 text-[11px] font-semibold text-brand-300 hover:text-brand-300 transition-colors disabled:opacity-50"
-                          >
-                            <PlayCircle className="size-3" />
-                            {processandoId === r.id ? 'Iniciando…' : 'Iniciar descarga'}
-                          </button>
+                    {/* Etapa + ações do Faturamento */}
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-industrial-200 pt-2">
+                      <StatusPill status={status} />
+                      {r.confirmado_em && (
+                        <span className="text-[10.5px] text-industrial-500" title={r.confirmado_por ? `Confirmado por ${r.confirmado_por}` : undefined}>
+                          chegou {new Date(r.confirmado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          {r.finalizado_em && ` · descarregado ${new Date(r.finalizado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`}
+                        </span>
+                      )}
+                    </div>
+                    {podeConfirmar && !finalizado && (
+                      <div className="mt-1.5 flex flex-wrap gap-1">
+                        {status === 'AGUARDANDO_CHEGADA' && (
+                          <AcaoBtn tone="primary" onClick={() => confirmarChegada(r)} disabled={processandoId === r.id}>
+                            <Truck className="size-3.5" /> {processandoId === r.id ? 'Confirmando…' : 'Confirmar chegada'}
+                          </AcaoBtn>
                         )}
-                        {getStatusRecebimento(r) === 'DESCARREGANDO' && (
-                          <button
-                            type="button"
-                            onClick={() => finalizarDescarga(r)}
-                            disabled={processandoId === r.id}
-                            className="flex items-center gap-1 text-[11px] font-semibold text-brand-300 hover:text-brand-300 transition-colors disabled:opacity-50"
-                          >
-                            <Flag className="size-3" />
-                            {processandoId === r.id ? 'Finalizando…' : 'Finalizar descarga'}
-                          </button>
+                        {status === 'AGUARDANDO_FILA' && (
+                          <AcaoBtn tone="primary" onClick={() => iniciarDescarga(r)} disabled={processandoId === r.id}>
+                            <PlayCircle className="size-3.5" /> {processandoId === r.id ? 'Iniciando…' : 'Iniciar descarga'}
+                          </AcaoBtn>
                         )}
-                      </div>
-                    )}
-
-                    {podeConfirmar && (
-                      <div className="mt-1.5">
-                        {r.confirmado_em ? (
-                          <span className="flex items-center gap-1 text-[11px] font-semibold text-brand-300">
-                            <CheckCircle2 className="size-3" /> Chegou às {new Date(r.confirmado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => confirmarChegada(r)}
-                            disabled={processandoId === r.id}
-                            className="flex items-center gap-1 text-[11px] font-semibold text-brand-300 hover:text-brand-300 transition-colors disabled:opacity-50"
-                          >
-                            <Truck className="size-3" />
-                            {processandoId === r.id ? 'Confirmando…' : 'Confirmar chegada do caminhão'}
-                          </button>
+                        {status === 'DESCARREGANDO' && (
+                          <AcaoBtn tone="primary" onClick={() => finalizarDescarga(r)} disabled={processandoId === r.id}>
+                            <Flag className="size-3.5" /> {processandoId === r.id ? 'Finalizando…' : 'Finalizar descarga'}
+                          </AcaoBtn>
                         )}
                       </div>
                     )}
                   </div>
-                ))}
+                  )
+                })}
 
                 {doDia(data).length === 0 && (
                   <p className="text-xs text-industrial-500 text-center py-2">—</p>
