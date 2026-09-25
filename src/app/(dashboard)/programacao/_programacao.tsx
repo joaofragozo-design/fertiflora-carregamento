@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Trash2, Pencil, X, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Printer, Send, CheckCircle2, Truck, Container, RotateCcw, EyeOff, Eye } from 'lucide-react'
+import { Plus, Trash2, Pencil, X, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Printer, Send, CheckCircle2, Truck, Container, RotateCcw, EyeOff, Eye, FileDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { AnimatePresence, motion, useReducedMotion, type Transition } from 'motion/react'
 import { createClient } from '@/lib/supabase/client'
@@ -22,8 +22,7 @@ import type { Transportadora } from '@/types/transportadora'
 import { SOLICITACAO_STATUS_LABEL } from '@/types/transportadora'
 import { MATERIAS_PRIMA, EMBALAGEM_LABEL, EMBALAGEM_OPCOES, calcularMateriaPrima, labelMateriaPrima, calcularTons } from '@/types/formula'
 import { cn } from '@/lib/utils/cn'
-import { Ticket, TicketRule, TicketLabel } from '@/components/ui/ticket'
-import { Stamp, type StampVariant } from '@/components/ui/stamp'
+import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
 interface ProgramacaoSemanaProps {
   initialItens:    Programacao[]
@@ -63,55 +62,87 @@ const SAIDA_COLUNA: Transition = { type: 'tween', duration: 0.26, ease: GLIDE }
 /** Estado "fora da prancheta" da coluna — no desktop ela fecha na largura; no celular (grid de 1 coluna) fecha na altura.
  *  O `overflow: hidden` da saída é aplicado na hora pelo Motion (valor não animável); na entrada quem
  *  corta é o wrapper interno, via `colunasProntas`, porque `transitionEnd` não devolvia o overflow. */
-const COLUNA_OCULTA_DESKTOP = { flexGrow: 0, flexBasis: '0px', minWidth: '0px', marginLeft: -24, opacity: 0 } as const
+const COLUNA_OCULTA_DESKTOP = { flexGrow: 0, flexBasis: '0px', minWidth: '0px', marginLeft: -16, opacity: 0 } as const
 const COLUNA_OCULTA_MOBILE = { height: 0, marginTop: -20, opacity: 0 } as const
 const SAIDA_OVERFLOW = { overflow: 'hidden' } as const
 /** Largura mínima de uma coluna aberta (mesmo valor do `md:min-w-[230px]` de antes: abaixo disso o
  *  carimbo e o nome do cliente já não cabem na ficha; em 1440 com a barra lateral aberta a 5ª coluna quebra
  *  de linha — comportamento anterior, mantido de propósito). */
-const COLUNA_MIN_PX = 230
+const COLUNA_MIN_PX = 240
 /** Tamanho em repouso da coluna (equivale a `md:flex-1 md:min-w-[200px]` / `md:w-[84px] md:shrink-0`, mas animável). */
 /** Teto de largura de uma coluna aberta: com dias minimizados, a(s) que sobra(m) não estica(m) até
  *  ocupar a prancheta inteira — ficam com largura de ficha e o conjunto se centraliza (`md:justify-center`). */
-const COLUNA_MAX_PX = 360
+const COLUNA_MAX_PX = 380
 function alvoColuna(colapsado: boolean) {
   return colapsado
     ? { flexGrow: 0, flexShrink: 0, flexBasis: '84px', minWidth: '84px', maxWidth: '84px', marginLeft: 0, height: 'auto', marginTop: 0, opacity: 1 }
     : { flexGrow: 1, flexShrink: 1, flexBasis: '0px', minWidth: `${COLUNA_MIN_PX}px`, maxWidth: `${COLUNA_MAX_PX}px`, marginLeft: 0, height: 'auto', marginTop: 0, opacity: 1 }
 }
 
-/**
- * Carga concluída (chegada confirmada pelo faturamento) recolhida a uma linha:
- * dentro do dia, só as cargas que ainda faltam aparecem com a ficha completa.
- * Clicar abre a ficha inteira; "Recolher" dentro dela devolve pra linha.
- */
-function FichaCompacta({ ag, onAbrir }: { ag: Programacao; onAbrir: () => void }) {
-  const hora = ag.confirmado_em
-    ? new Date(ag.confirmado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-    : null
+/** Botão de ícone dos cards: área de clique de verdade, hover com fundo — não um ícone solto. */
+function IconBtn({ title, small, danger, className, children, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { title: string; small?: boolean; danger?: boolean }) {
   return (
-    <Ticket
-      role="button"
-      tabIndex={0}
-      onClick={onAbrir}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onAbrir() } }}
-      title="Carga concluída — clique pra abrir a ficha"
-      className="cursor-pointer pb-2.5 pl-10 pr-3 pt-[17px] transition-[filter] hover:brightness-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+    <button
+      type="button"
+      title={title}
+      aria-label={title}
+      {...props}
+      className={cn(
+        'inline-flex items-center justify-center rounded-md text-industrial-500 transition-colors hover:bg-industrial-200 disabled:cursor-not-allowed disabled:opacity-25',
+        small ? 'size-5' : 'size-6',
+        danger ? 'hover:text-red-400' : 'hover:text-brand-300',
+        className,
+      )}
     >
-      <div className="flex items-center gap-2">
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-[12.5px] font-extrabold uppercase leading-tight text-ticket-ink" title={ag.cliente || undefined}>
-            {ag.cliente || <span className="font-normal normal-case text-ticket-soft">Sem cliente</span>}
-          </p>
-          <p className="mt-0.5 flex items-center gap-1.5 text-[11px] leading-none text-ticket-soft">
-            <CheckCircle2 className="size-3 shrink-0 text-stamp-confirmado" aria-hidden="true" />
-            <span className="font-bold text-ticket-ink">{tonsDoAgendamento(ag).toFixed(2)} ton</span>
-            {hora && <span>· chegou {hora}</span>}
-          </p>
-        </div>
-        <ChevronDown className="size-3.5 shrink-0 text-ticket-soft" aria-hidden="true" />
+      {children}
+    </button>
+  )
+}
+
+/** Ação de rodapé do card (ícone + texto), com estados neutro / ativo / alerta / primário. */
+function ActionBtn({ tone = 'neutral', active, className, children, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { tone?: 'neutral' | 'warn' | 'primary'; active?: boolean; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      {...props}
+      className={cn(
+        'inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50',
+        tone === 'primary' && 'bg-brand-600 text-white hover:bg-brand-500',
+        tone === 'warn' && 'text-amber-400 hover:bg-amber-400/10',
+        tone === 'neutral' && (active ? 'text-brand-300 hover:bg-brand-500/10' : 'text-industrial-500 hover:bg-industrial-200 hover:text-brand-300'),
+        className,
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
+/**
+ * Carga concluída (chegada confirmada pelo faturamento) recolhida a um card
+ * verde de duas linhas: dentro do dia, só as cargas que ainda faltam aparecem
+ * completas. Clicar abre o card inteiro; "Recolher" dentro dele devolve pra linha.
+ */
+function CardConcluido({ ag, hora, onAbrir }: { ag: Programacao; hora: string | null; onAbrir: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onAbrir}
+      title="Carga concluída — clique pra abrir o card"
+      className="flex w-full items-center gap-2 rounded-lg border border-brand-500 bg-brand-500/15 px-2.5 py-2 text-left transition-colors hover:bg-brand-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+    >
+      <CheckCircle2 className="size-4 shrink-0 text-brand-400" aria-hidden="true" />
+      <div className="min-w-0 flex-1">
+        <p className="break-words text-sm font-semibold leading-snug text-industrial-900">
+          {ag.cliente || <span className="font-normal text-industrial-500">Sem cliente</span>}
+        </p>
+        <p className="text-[11px] text-industrial-600">
+          <span className="font-mono font-bold text-industrial-800">{tonsDoAgendamento(ag).toFixed(2)} ton</span>
+          {hora && ` · chegou ${hora}`}
+        </p>
       </div>
-    </Ticket>
+      <ChevronDown className="size-4 shrink-0 text-industrial-500" aria-hidden="true" />
+    </button>
   )
 }
 
@@ -537,41 +568,35 @@ export function ProgramacaoSemana({
   const editandoNovoAgendamento = itemForm && !itemForm.agendamentoId
 
   return (
-    <div className="flex flex-col gap-4 font-mono">
-      <div className="via-tag">
-        <span className="via-num">2ª VIA</span>
-        <span className="via-name">PROGRAMAÇÃO DE CARREGAMENTO</span>
-        <span className="via-fill" />
-      </div>
-
+    <div className="flex flex-col gap-4">
       {/* Cabeçalho + navegação de semana */}
-      <div className="flex items-end justify-between flex-wrap gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-fluid-title font-extrabold tracking-tight text-industrial-900">Programação de Carregamento</h1>
-          <div className="flex items-center gap-1.5 mt-2">
+          <h1 className="font-display text-fluid-title font-extrabold tracking-tight text-industrial-900">Programação de Carregamento</h1>
+          <div className="mt-2 flex items-center gap-1.5">
             <button type="button" onClick={() => irParaSemana(addDiasIso(semanaInicio, -7))} aria-label="Semana anterior"
-              className="rounded-[2px] border border-industrial-300 p-1.5 text-industrial-600 hover:text-industrial-900 hover:border-brand-500 transition-colors">
+              className="rounded-lg border border-industrial-300 p-1.5 text-industrial-600 transition-colors hover:border-brand-500 hover:text-industrial-900">
               <ChevronLeft className="size-4" />
             </button>
-            <span className="text-sm font-medium text-industrial-800 px-2">
+            <span className="px-2 text-sm font-medium text-industrial-800">
               Semana de {ddmm(semanaInicio)} a {ddmm(semanaFim)}
             </span>
             <button type="button" onClick={() => irParaSemana(addDiasIso(semanaInicio, 7))} aria-label="Próxima semana"
-              className="rounded-[2px] border border-industrial-300 p-1.5 text-industrial-600 hover:text-industrial-900 hover:border-brand-500 transition-colors">
+              className="rounded-lg border border-industrial-300 p-1.5 text-industrial-600 transition-colors hover:border-brand-500 hover:text-industrial-900">
               <ChevronRight className="size-4" />
             </button>
           </div>
           {!podeEditar && !podeConfirmar && (
-            <p className="text-xs text-industrial-600 mt-1.5">Prévia (somente leitura) — quem programa é a Logística.</p>
+            <p className="mt-1.5 text-xs text-industrial-600">Prévia (somente leitura) — quem programa é a Logística.</p>
           )}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {podeEditar && (
             <button
               type="button"
               onClick={alternarSabado}
               title={ocultarSabado ? 'Mostrar a coluna de sábado' : 'Ocultar a coluna de sábado'}
-              className="flex items-center gap-1.5 rounded-[2px] border border-industrial-300 px-3 py-2 text-xs font-medium text-industrial-800 hover:border-brand-500 hover:text-brand-300 transition-colors"
+              className="flex items-center gap-1.5 rounded-lg border border-industrial-300 px-3 py-2 text-xs font-medium text-industrial-800 transition-colors hover:border-brand-500 hover:text-brand-300"
             >
               {ocultarSabado ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
               {ocultarSabado ? 'Mostrar sábado' : 'Ocultar sábado'}
@@ -580,30 +605,32 @@ export function ProgramacaoSemana({
           {podeEditar && (
             <Link
               href={ROUTES.ORDENS_RELATORIO}
-              className="flex items-center gap-1.5 rounded-[2px] border border-industrial-300 px-3 py-2 text-xs font-medium text-industrial-800 hover:border-brand-500 hover:text-brand-300 transition-colors"
+              className="flex items-center gap-1.5 rounded-lg border border-industrial-300 px-3 py-2 text-xs font-medium text-industrial-800 transition-colors hover:border-brand-500 hover:text-brand-300"
             >
               <Printer className="size-4" />
               Relatório do dia
             </Link>
           )}
-          <div className="bg-industrial-50 border border-industrial-200 px-4 py-2 min-w-[180px]">
-            <p className="text-[10px] tracking-[.1em] uppercase text-industrial-500">Total da semana</p>
-            <p className="text-2xl font-extrabold text-brand-500 leading-none">
-              {totalSemana.toFixed(2)}<span className="text-sm font-normal text-industrial-500 ml-1">ton</span>
+          <div className="min-w-[170px] rounded-lg border border-industrial-200 bg-industrial-50 px-4 py-2">
+            <p className="font-display text-[10px] font-bold uppercase tracking-wide text-industrial-500">Total da semana</p>
+            <p className="font-mono text-2xl font-extrabold leading-none text-brand-400">
+              {totalSemana.toFixed(2)}<span className="ml-1 text-sm font-normal text-industrial-500">ton</span>
             </p>
           </div>
         </div>
       </div>
 
-      {/* Grade da semana */}
-      <div className="grid grid-cols-1 gap-y-5 md:flex md:flex-wrap md:items-start md:justify-center md:gap-x-6 md:gap-y-6">
+      {/* Grade da semana: quadros de largura igual, em linhas centradas; dia minimizado vira um quadro estreito. */}
+      <div className="grid grid-cols-1 gap-y-4 md:flex md:flex-wrap md:items-start md:justify-center md:gap-4">
         <AnimatePresence initial={false}>
-        {diasVisiveis.map(({ nome, data }, index) => {
+        {diasVisiveis.map(({ nome, data }) => {
           const ehAmanha = data === amanha
           const ehHoje = data === hoje
           const insumos = insumosDoDia(data)
           const colapsado = diasColapsados.has(data)
-          const qtdCargas = agendamentosDoDia(data).length
+          const cargas = agendamentosDoDia(data)
+          const qtdCargas = cargas.length
+          const pendentes = cargas.filter((c) => !c.confirmado_em).length
           return (
             <motion.div
               key={data}
@@ -615,45 +642,53 @@ export function ProgramacaoSemana({
             >
             <div
               className={cn(
-                'flex h-full flex-col gap-3.5',
-                index > 0 && 'md:border-l md:border-dashed md:border-industrial-300 md:pl-5',
+                'flex h-full flex-col gap-2 rounded-xl border p-2.5',
+                ehAmanha ? 'border-brand-500 bg-brand-500/10' : ehHoje ? 'border-industrial-500' : 'border-industrial-200',
                 !colunasProntas.has(data) && 'overflow-hidden',
               )}
             >
-              <button
-                type="button"
-                onClick={() => alternarColapso(data)}
-                title={colapsado ? 'Mostrar o dia inteiro' : 'Minimizar o dia'}
-                className="flex items-center justify-between gap-2 border-b-2 border-industrial-200 pb-2 text-left hover:border-brand-500/60 transition-colors"
-              >
-                <div className="flex items-center gap-1.5 min-w-0">
-                  {colapsado ? <ChevronRight className="size-3.5 text-industrial-500 shrink-0" /> : <ChevronDown className="size-3.5 text-industrial-500 shrink-0" />}
+              {/* Cabeçalho do dia */}
+              <div className="flex items-start justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => alternarColapso(data)}
+                  title={colapsado ? 'Mostrar o dia inteiro' : 'Minimizar o dia'}
+                  className="flex min-w-0 items-center gap-1.5 rounded-md text-left transition-colors hover:text-brand-300"
+                >
+                  {colapsado ? <ChevronRight className="size-3.5 shrink-0 text-industrial-500" /> : <ChevronDown className="size-3.5 shrink-0 text-industrial-500" />}
                   <div className="min-w-0">
-                    <p className={cn('text-sm font-extrabold tracking-wide uppercase truncate', ehAmanha ? 'text-brand-500' : 'text-industrial-900')}>
-                      {colapsado ? nome.slice(0, 3) : nome}
-                    </p>
+                    <p className="font-display text-sm font-bold text-industrial-900">{colapsado ? nome.slice(0, 3) : nome}</p>
                     {!colapsado && (
-                      <p className="text-xs text-industrial-500">
-                        {ddmm(data)}{ehAmanha && <span className="ml-1 text-brand-500 font-semibold">· amanhã</span>}{ehHoje && <span className="ml-1 text-industrial-600 font-semibold">· hoje</span>}
+                      <p className="text-xs text-industrial-600">
+                        {ddmm(data)}{ehAmanha && <span className="ml-1 font-semibold text-brand-300">· amanhã</span>}{ehHoje && <span className="ml-1 font-semibold text-industrial-500">· hoje</span>}
                       </p>
                     )}
                   </div>
-                </div>
-                <span className="text-xs font-bold text-industrial-600 shrink-0">{totalDia(data).toFixed(2)}</span>
-              </button>
+                </button>
+                {!colapsado && (
+                  <span className="shrink-0 font-mono text-xs font-bold text-brand-300" title="Toneladas programadas no dia">{totalDia(data).toFixed(2)}</span>
+                )}
+              </div>
 
               {colapsado ? (
-                qtdCargas > 0 && (
-                  <p className="text-[11px] text-industrial-500">{qtdCargas} {qtdCargas === 1 ? 'carga' : 'cargas'}</p>
-                )
+                <div className="flex flex-col items-center gap-0.5 py-1 text-center">
+                  <span className="font-mono text-xs font-bold text-brand-300">{totalDia(data).toFixed(2)}</span>
+                  {qtdCargas > 0 && (
+                    <span className="text-[10px] leading-tight text-industrial-500">
+                      {qtdCargas} {qtdCargas === 1 ? 'carga' : 'cargas'}{pendentes > 0 && pendentes < qtdCargas ? ` · ${pendentes} falta${pendentes === 1 ? '' : 'm'}` : ''}
+                    </span>
+                  )}
+                </div>
               ) : (
               <>
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
                 <AnimatePresence initial={false}>
-                {agendamentosDoDia(data).map((ag) => {
-                  const stamp = stampInfo(ag)
+                {cargas.map((ag) => {
                   const concluida = !!ag.confirmado_em
                   const compacta = concluida && !fichasAbertas.has(ag.id)
+                  const horaChegada = ag.confirmado_em
+                    ? new Date(ag.confirmado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                    : null
                   return (
                     <motion.div
                       key={ag.id}
@@ -664,191 +699,184 @@ export function ProgramacaoSemana({
                       transition={reduceMotion ? { duration: 0 } : TRANSICAO_FICHA}
                     >
                     {compacta ? (
-                      <FichaCompacta ag={ag} onAbrir={() => abrirFicha(ag.id)} />
+                      <CardConcluido ag={ag} hora={horaChegada} onAbrir={() => abrirFicha(ag.id)} />
                     ) : (
-                    <Ticket
-                      seq={ag.numero_ordem ? `Nº ${String(ag.numero_ordem).padStart(6, '0')}` : undefined}
-                      seqHref={ag.numero_ordem ? `/api/programacao/${ag.id}/ordem-pdf` : undefined}
-                      seqTitle="Gerar ordem de carregamento em PDF"
+                    <div
+                      className={cn(
+                        'rounded-lg border p-2.5 transition-colors',
+                        concluida ? 'border-brand-500 bg-brand-500/15' : 'border-industrial-300 bg-industrial-100',
+                      )}
                     >
-                      <div className="flex items-start justify-between gap-2 pl-5">
+                      {/* Cliente + ações do agendamento */}
+                      <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <TicketLabel>Cliente</TicketLabel>
-                          <p
-                            className="text-[17px] md:text-[14px] xl:text-[12.5px] font-extrabold uppercase leading-tight text-ticket-ink truncate"
-                            title={ag.cliente ? `${ag.cliente}${ag.cliente_codigo != null ? ` #${ag.cliente_codigo}` : ''}` : undefined}
-                          >
-                            {ag.cliente || <span className="text-ticket-soft font-normal normal-case">Sem cliente</span>}
+                          <p className="break-words text-sm font-semibold leading-snug text-industrial-900">
+                            {ag.cliente || <span className="font-normal text-industrial-500">Sem cliente</span>}
                             {ag.cliente_codigo != null && (
-                              <span className="ml-1.5 text-[10px] font-normal normal-case text-ticket-soft">#{ag.cliente_codigo}</span>
+                              <span className="ml-1.5 whitespace-nowrap text-[10px] font-normal text-industrial-500" title="Código do cliente no ERP">#{ag.cliente_codigo}</span>
                             )}
                           </p>
+                          {concluida && (
+                            <p
+                              className="mt-0.5 flex items-center gap-1 text-[11px] font-semibold text-brand-300"
+                              title={`Caminhão chegou às ${new Date(ag.confirmado_em!).toLocaleTimeString('pt-BR')}${ag.confirmado_por ? ` · confirmado por ${ag.confirmado_por}` : ''}`}
+                            >
+                              <Truck className="size-3.5 shrink-0" /> Chegou às {horaChegada}
+                            </p>
+                          )}
                         </div>
                         {podeEditar && (
-                          <div className="flex gap-1.5 shrink-0 pt-0.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
-                            <button type="button" onClick={() => abrirEdicaoAgendamento(ag)} title="Editar data/cliente/observação"
-                              className="text-ticket-soft hover:text-ticket-ink"><Pencil className="size-3.5" /></button>
-                            <button type="button" onClick={() => excluirAgendamento(ag)} title="Remover agendamento"
-                              className="text-ticket-soft hover:text-danger-600"><Trash2 className="size-3.5" /></button>
+                          <div className="flex shrink-0 gap-0.5">
+                            <IconBtn title="Editar data/cliente/observação" onClick={() => abrirEdicaoAgendamento(ag)}><Pencil className="size-3.5" /></IconBtn>
+                            <IconBtn title="Remover agendamento" danger onClick={() => excluirAgendamento(ag)}><Trash2 className="size-3.5" /></IconBtn>
                           </div>
                         )}
                       </div>
 
-                      <TicketRule />
-
-                      <div className="flex flex-col">
-                        {(ag.itens ?? []).map((item, i) => (
-                          <div key={item.id} className={cn('flex items-start justify-between gap-3 py-2', i > 0 && 'ticket-dash')}>
+                      {/* Itens (fórmula / quantidade) */}
+                      <div className="mt-1.5 flex flex-col divide-y divide-industrial-200">
+                        {(ag.itens ?? []).map((item) => (
+                          <div key={item.id} className="flex items-start justify-between gap-2 py-1 first:pt-0 last:pb-0">
                             <div className="min-w-0">
-                              {item.formula?.nome && <p className="text-[13px] font-bold text-ticket-ink truncate">{item.formula.nome}</p>}
-                              <p className="text-[12.5px] text-ticket-soft whitespace-nowrap">
-                                {item.quantidade} {EMBALAGEM_LABEL[item.embalagem]} · <span className="font-bold text-ticket-ink">{(item.tons ?? 0).toFixed(2)} ton</span>
+                              {item.formula?.nome && <p className="break-words text-xs font-medium leading-snug text-brand-300">{item.formula.nome}</p>}
+                              <p className="text-xs text-industrial-500">
+                                {item.quantidade} {EMBALAGEM_LABEL[item.embalagem]} · <span className="font-mono font-bold text-industrial-700">{(item.tons ?? 0).toFixed(2)} ton</span>
                               </p>
                             </div>
                             {podeEditar && (
-                              <div className="flex gap-1 shrink-0 pt-0.5">
-                                <button type="button" onClick={() => abrirEdicaoItem(ag, item)} title="Editar item"
-                                  className="text-ticket-soft hover:text-ticket-ink"><Pencil className="size-3" /></button>
-                                <button
-                                  type="button" onClick={() => removerItem(ag, item)} title="Remover item"
-                                  disabled={(ag.itens ?? []).length <= 1}
-                                  className="text-ticket-soft hover:text-danger-600 disabled:opacity-20 disabled:cursor-not-allowed"
-                                >
-                                  <Trash2 className="size-3" />
-                                </button>
+                              <div className="flex shrink-0 gap-0.5">
+                                <IconBtn title="Editar item" small onClick={() => abrirEdicaoItem(ag, item)}><Pencil className="size-3" /></IconBtn>
+                                <IconBtn title="Remover item" small danger disabled={(ag.itens ?? []).length <= 1} onClick={() => removerItem(ag, item)}><Trash2 className="size-3" /></IconBtn>
                               </div>
                             )}
                           </div>
                         ))}
                       </div>
 
-                      {(ag.observacao || ag.transportadora?.nome || ag.motorista?.nome) && (
-                        <div className="ticket-dash pt-1.5 pb-0.5">
-                          {ag.observacao && <p className="text-[11.5px] text-ticket-soft italic">{ag.observacao}</p>}
-                          {(ag.transportadora?.nome || ag.motorista?.nome) && (
-                            <p className="text-[11.5px] text-ticket-soft truncate flex items-center gap-1">
-                              <Container className="size-3 shrink-0" />
-                              {ag.transportadora?.nome}{ag.motorista?.nome ? ` · ${ag.motorista.nome}` : ''}
-                            </p>
+                      {ag.observacao && <p className="mt-1.5 break-words text-xs italic text-industrial-600">{ag.observacao}</p>}
+
+                      {/* Total da carga */}
+                      <div className="mt-1.5 flex items-center justify-between border-t border-industrial-200 pt-1.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-industrial-500">Total</span>
+                        <span className="font-mono text-sm font-extrabold text-industrial-900">
+                          {tonsDoAgendamento(ag).toFixed(2)} <span className="text-[10px] font-normal text-industrial-500">ton</span>
+                        </span>
+                      </div>
+
+                      {/* Fluxo de transportadora */}
+                      {ag.solicitacao_status && (
+                        <p className={cn(
+                          'mt-1.5 flex items-start gap-1 text-[11px] font-semibold',
+                          ag.solicitacao_status === 'LIBERADO' ? 'text-brand-300' : 'text-amber-400',
+                        )}>
+                          <Container className="mt-px size-3 shrink-0" />
+                          <span className="break-words">
+                            {ag.transportadora?.nome ?? 'Transportadora'} · {SOLICITACAO_STATUS_LABEL[ag.solicitacao_status]}
+                            {ag.solicitacao_status !== 'ENVIADO_TRANSPORTADORA' && ag.motorista?.nome ? ` · ${ag.motorista.nome}` : ''}
+                          </span>
+                        </p>
+                      )}
+
+                      {/* Documento pra portaria — só existe depois de liberado (numero_ordem). */}
+                      {ag.numero_ordem && (
+                        <a
+                          href={`/api/programacao/${ag.id}/ordem-pdf`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Gerar ordem de carregamento em PDF"
+                          className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-brand-300 transition-colors hover:underline"
+                        >
+                          <FileDown className="size-3" /> Ordem Nº {String(ag.numero_ordem).padStart(6, '0')} · PDF
+                        </a>
+                      )}
+
+                      {podeEditar && (
+                        <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-industrial-200 pt-1.5">
+                          <ActionBtn onClick={() => abrirNovoItem(ag)}>
+                            <Plus className="size-3" /> Adicionar item
+                          </ActionBtn>
+                          <ActionBtn
+                            active={!!ag.solicitacao_status}
+                            onClick={() => setTranspModal({ agendamento: ag, transportadoraId: ag.transportadora_id ?? '' })}
+                            title={ag.solicitacao_status ? 'Reenviar / trocar a transportadora' : 'Enviar para uma transportadora indicar o motorista'}
+                          >
+                            <Container className="size-3" />
+                            {ag.solicitacao_status ? 'Transportadora ✓' : 'Transportadora'}
+                          </ActionBtn>
+                          {ag.solicitacao_status === 'LIBERADO' && (
+                            <ActionBtn
+                              tone="warn"
+                              onClick={() => reverterLiberacao(ag)}
+                              disabled={revertendoId === ag.id}
+                              title="Reverter liberação — volta pra fila de Solicitações sem perder transportadora/motorista/número da ordem"
+                            >
+                              <RotateCcw className="size-3" />
+                              {revertendoId === ag.id ? 'Revertendo…' : 'Reverter liberação'}
+                            </ActionBtn>
                           )}
+                          <ActionBtn
+                            active={!!ag.enviado_em}
+                            onClick={() => enviarParaOrdens(ag)}
+                            disabled={enviandoId === ag.id}
+                            title={ag.enviado_em ? `Enviado em ${new Date(ag.enviado_em).toLocaleString('pt-BR')} — clique para reenviar` : 'Enviar para Ordens do Dia'}
+                          >
+                            {ag.enviado_em ? <CheckCircle2 className="size-3" /> : <Send className="size-3" />}
+                            {enviandoId === ag.id ? 'Enviando…' : ag.enviado_em ? 'Enviado' : 'Enviar p/ Ordens'}
+                          </ActionBtn>
                         </div>
                       )}
 
-                      <TicketRule />
-
-                      <div className="flex items-end justify-between gap-3 min-h-[54px]">
-                        <div>
-                          <TicketLabel>Total</TicketLabel>
-                          <p className="text-[26px] font-extrabold leading-none text-ticket-ink">
-                            {tonsDoAgendamento(ag).toFixed(2)}<small className="text-sm font-semibold text-ticket-soft ml-1">ton</small>
-                          </p>
-                          {ag.confirmado_em && (
-                            <p className="text-[10.5px] text-ticket-soft mt-1">
-                              Chegou às {new Date(ag.confirmado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                            </p>
+                      {podeConfirmar && (
+                        <div className="mt-2 border-t border-industrial-200 pt-1.5">
+                          {ag.confirmado_em ? (
+                            <span className="flex items-center gap-1 text-[11px] font-semibold text-brand-300">
+                              <CheckCircle2 className="size-3" /> Chegada confirmada
+                            </span>
+                          ) : (
+                            <ActionBtn tone="primary" onClick={() => confirmarChegada(ag)} disabled={confirmandoId === ag.id}>
+                              <Truck className="size-3.5" />
+                              {confirmandoId === ag.id ? 'Confirmando…' : 'Confirmar chegada do caminhão'}
+                            </ActionBtn>
                           )}
                         </div>
-                        {stamp && <Stamp variant={stamp.variant} lines={stamp.lines} rotate={stamp.rotate} />}
-                      </div>
+                      )}
 
                       {concluida && (
                         <button
                           type="button"
                           onClick={() => recolherFicha(ag.id)}
-                          className="mt-2 flex items-center gap-1 self-start text-[11px] font-semibold text-ticket-soft transition-colors hover:text-ticket-ink"
+                          className="mt-1.5 flex items-center gap-1 text-[11px] font-semibold text-industrial-500 transition-colors hover:text-brand-300"
                         >
                           <ChevronUp className="size-3" /> Recolher
                         </button>
                       )}
-
-                      {podeEditar && (
-                        <div className="flex flex-col gap-1.5 mt-2.5 pt-2 border-t border-dashed border-ticket-rule/40 text-[11px] font-semibold">
-                          <button type="button" onClick={() => abrirNovoItem(ag)}
-                            className="flex items-center gap-1 self-start text-ticket-soft hover:text-brand-600 transition-colors">
-                            <Plus className="size-3" /> Adicionar item
-                          </button>
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                            <button
-                              type="button"
-                              onClick={() => setTranspModal({ agendamento: ag, transportadoraId: ag.transportadora_id ?? '' })}
-                              title={ag.solicitacao_status ? 'Reenviar / trocar a transportadora' : 'Enviar para uma transportadora indicar o motorista'}
-                              className={cn('flex items-center gap-1 whitespace-nowrap transition-colors', ag.solicitacao_status ? 'text-brand-600' : 'text-ticket-soft hover:text-brand-600')}
-                            >
-                              <Container className="size-3" />
-                              {ag.solicitacao_status ? 'Transportadora ✓' : 'Transportadora'}
-                            </button>
-                            {ag.solicitacao_status === 'LIBERADO' && (
-                              <button
-                                type="button"
-                                onClick={() => reverterLiberacao(ag)}
-                                disabled={revertendoId === ag.id}
-                                title="Reverter liberação — volta pra fila de Solicitações sem perder transportadora/motorista/número da ordem"
-                                className="flex items-center gap-1 whitespace-nowrap text-stamp-enviado hover:opacity-75 transition-opacity disabled:opacity-50"
-                              >
-                                <RotateCcw className="size-3" />
-                                {revertendoId === ag.id ? 'Revertendo…' : 'Reverter liberação'}
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => enviarParaOrdens(ag)}
-                              disabled={enviandoId === ag.id}
-                              title={ag.enviado_em ? `Enviado em ${new Date(ag.enviado_em).toLocaleString('pt-BR')} — clique para reenviar` : 'Enviar para Ordens do Dia'}
-                              className={cn('flex items-center gap-1 whitespace-nowrap transition-colors disabled:opacity-50', ag.enviado_em ? 'text-brand-600' : 'text-ticket-soft hover:text-brand-600')}
-                            >
-                              {ag.enviado_em ? <CheckCircle2 className="size-3" /> : <Send className="size-3" />}
-                              {enviandoId === ag.id ? 'Enviando…' : ag.enviado_em ? 'Enviado' : 'Enviar p/ Ordens'}
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {podeConfirmar && (
-                        <div className="mt-2 pt-2 border-t border-dashed border-ticket-rule/40 text-[11px] font-semibold">
-                          {ag.confirmado_em ? (
-                            <span className="flex items-center gap-1 text-stamp-confirmado">
-                              <CheckCircle2 className="size-3" /> Confirmado
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => confirmarChegada(ag)}
-                              disabled={confirmandoId === ag.id}
-                              className="flex items-center gap-1 text-ticket-soft hover:text-brand-600 transition-colors disabled:opacity-50"
-                            >
-                              <Truck className="size-3" />
-                              {confirmandoId === ag.id ? 'Confirmando…' : 'Confirmar chegada do caminhão'}
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </Ticket>
+                    </div>
                     )}
                     </motion.div>
                   )
                 })}
                 </AnimatePresence>
 
-                {agendamentosDoDia(data).length === 0 && (
-                  <p className="text-xs text-industrial-500 text-center py-2">—</p>
+                {qtdCargas === 0 && (
+                  <p className="py-2 text-center text-xs text-industrial-500">—</p>
                 )}
 
                 {podeEditar && (
                   <button type="button" onClick={() => abrirNovoAgendamento(data)}
-                    className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-industrial-400 py-1.5 text-xs font-medium text-industrial-600 hover:border-brand-500 hover:text-brand-300 transition-colors">
+                    className="flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-industrial-400 py-1.5 text-xs font-medium text-industrial-600 transition-colors hover:border-brand-500 hover:text-brand-300">
                     <Plus className="size-3.5" /> Adicionar cliente
                   </button>
                 )}
               </div>
 
               {insumos.length > 0 && (
-                <div className="rounded-lg bg-industrial-50 border border-industrial-300 p-2 mt-auto">
-                  <p className="text-[10px] font-bold uppercase tracking-wide text-industrial-600 mb-1.5">Matéria-prima do dia</p>
+                <div className="mt-auto rounded-lg border border-industrial-300 bg-industrial-50 p-2">
+                  <p className="mb-1.5 font-display text-[10px] font-bold uppercase tracking-wide text-industrial-600">Matéria-prima do dia</p>
                   <div className="flex flex-col gap-1">
                     {insumos.map((m) => (
                       <div key={m.label} className="flex items-center justify-between gap-2 text-xs">
-                        <span className="text-industrial-600 truncate">{m.label}</span>
-                        <span className="font-bold text-industrial-900 shrink-0">
+                        <span className="min-w-0 break-words text-industrial-600">{m.label}</span>
+                        <span className="shrink-0 font-mono font-bold text-industrial-900">
                           {m.kg.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} kg
                         </span>
                       </div>
@@ -1066,19 +1094,3 @@ export function ProgramacaoSemana({
 
 /** Carimbo de status a exibir no ticket — `confirmado_em` (chegada) supera o
  *  `solicitacao_status`, porque uma carga confirmada já passou por liberação. */
-function stampInfo(ag: Programacao): { variant: StampVariant; lines: [string] | [string, string]; rotate: number } | null {
-  const rotate = rotFor(ag.id)
-  if (ag.confirmado_em) return { variant: 'confirmado', lines: ['Confirmado'], rotate }
-  if (ag.solicitacao_status === 'LIBERADO') return { variant: 'liberado', lines: ['Liberado'], rotate }
-  if (ag.solicitacao_status === 'ENVIADO_TRANSPORTADORA') return { variant: 'enviado', lines: ['Enviado', 'Transportadora'], rotate }
-  if (ag.solicitacao_status === 'SOLICITADO') return { variant: 'solicitado', lines: ['Solicitado'], rotate }
-  return null
-}
-
-/** Rotação determinística (-6..6°) a partir do id — carimbos variam sem
- *  Math.random (que quebraria a hidratação SSR). */
-function rotFor(id: string): number {
-  let h = 0
-  for (const c of id) h = (h * 31 + c.charCodeAt(0)) | 0
-  return (Math.abs(h) % 13) - 6
-}
