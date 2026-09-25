@@ -653,9 +653,10 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
 
       {/* Caminhão na baia agora */}
       {emAndamento && (
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-info-500/40 border-l-4 border-l-info-500 bg-info-500/10 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-info-500/40 bg-info-500/10 px-4 py-3">
           <span className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-info-400">
-            <Truck className="size-4" /> Carregando agora
+            <span className="flex size-7 items-center justify-center rounded-lg bg-info-500/20"><Truck className="size-4" /></span>
+            Carregando agora
           </span>
           <span className="text-sm font-semibold text-industrial-900">{emAndamento.cliente || 'Sem cliente'}</span>
           <PlacaChip placa={emAndamento.placa} />
