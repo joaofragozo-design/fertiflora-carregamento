@@ -4,7 +4,10 @@ import { useState, useTransition, useMemo, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Trash2, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Check, Printer, GripVertical } from 'lucide-react'
+import {
+  Plus, Trash2, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Check, Printer, GripVertical,
+  Scale, Clock3, Truck, CheckCircle2, Play, Tag, Timer, PackageOpen, type LucideIcon,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { OrdensDiariasService } from '@/services/ordens-diarias.service'
@@ -47,6 +50,29 @@ const STATUS_LABEL: Record<StatusOrdem, string> = {
   AGUARDANDO:   'Aguardando',
   EM_ANDAMENTO: 'Em andamento',
   FINALIZADO:   'Finalizado',
+}
+
+// Ícone da pílula de status e barra de acento na borda esquerda da linha —
+// o status se lê pela cor E pela forma, não só pela cor.
+const STATUS_ICON: Record<StatusOrdem, LucideIcon> = {
+  AGUARDANDO:   Clock3,
+  EM_ANDAMENTO: Truck,
+  FINALIZADO:   CheckCircle2,
+}
+const STATUS_ACCENT: Record<StatusOrdem, string> = {
+  AGUARDANDO:   'border-l-industrial-400',
+  EM_ANDAMENTO: 'border-l-info-500',
+  FINALIZADO:   'border-l-brand-500',
+}
+
+/** Placa como chapa: mono, caixa alta, borda — lê de longe na tela e casa com a Ficha da portaria. */
+function PlacaChip({ placa }: { placa: string }) {
+  if (!placa) return <span className="text-industrial-500">—</span>
+  return (
+    <span className="inline-flex items-center rounded-md border border-industrial-400 bg-industrial-50 px-1.5 py-0.5 font-mono text-[11px] font-bold uppercase tracking-wider text-industrial-900">
+      {placa}
+    </span>
+  )
 }
 
 function fmtKg(n: number): string {
@@ -232,16 +258,31 @@ function StatusReadOnly({ on }: { on: boolean }) {
     : <span className="inline-block size-3.5 rounded-sm border-2 border-industrial-500 mx-auto" />
 }
 
-function Kpi({ label, value, unit, tone }: { label: string; value: string | number; unit?: string; tone?: 'brand' | 'amber' }) {
+/** Cartão de indicador: ícone no canto, número grande em mono e uma linha de contexto embaixo. */
+function Kpi({
+  label, value, unit, tone = 'neutral', icon: Icon, caption,
+}: {
+  label: string
+  value: string | number
+  unit?: string
+  tone?: 'neutral' | 'brand' | 'info'
+  icon: LucideIcon
+  caption?: React.ReactNode
+}) {
+  const cor = tone === 'brand' ? 'text-brand-400' : tone === 'info' ? 'text-info-400' : 'text-industrial-900'
+  const fundoIcone = tone === 'brand' ? 'bg-brand-500/15 text-brand-300' : tone === 'info' ? 'bg-info-500/15 text-info-400' : 'bg-industrial-200 text-industrial-600'
   return (
-    <div className="rounded-xl bg-industrial-100 border border-industrial-200 px-4 py-3">
-      <p className="text-xs text-industrial-600">{label}</p>
-      <p className={cn(
-        'text-2xl font-bold leading-tight mt-0.5',
-        tone === 'brand' ? 'text-brand-600' : tone === 'amber' ? 'text-amber-400' : 'text-industrial-900',
-      )}>
-        {value}{unit && <span className="text-sm font-normal text-industrial-600"> {unit}</span>}
-      </p>
+    <div className="flex items-start justify-between gap-3 rounded-xl border border-industrial-200 bg-industrial-100 px-4 py-3">
+      <div className="min-w-0">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-industrial-600">{label}</p>
+        <p className={cn('mt-1 font-mono text-2xl font-extrabold leading-none', cor)}>
+          {value}{unit && <span className="ml-1 text-sm font-normal text-industrial-600">{unit}</span>}
+        </p>
+        {caption && <p className="mt-1.5 truncate text-[11px] text-industrial-600">{caption}</p>}
+      </div>
+      <span className={cn('flex size-9 shrink-0 items-center justify-center rounded-lg', fundoIcone)}>
+        <Icon className="size-[18px]" />
+      </span>
     </div>
   )
 }
@@ -306,6 +347,27 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
   }, [ordens])
 
   const concluido = ordens.length ? Math.round((counts.finalizado / ordens.length) * 100) : 0
+
+  // Contexto dos indicadores: tonelagem já carregada, caminhão na baia, próximo da fila e ritmo médio.
+  const tonsFinalizadas = useMemo(() => ordens.filter((o) => o.finalizado).reduce((a, o) => a + tonsDaOrdem(o), 0), [ordens])
+  const pctTons = totalTons > 0 ? Math.round((tonsFinalizadas / totalTons) * 100) : 0
+  const emAndamento = useMemo(() => linhas.find((o) => o.iniciado && !o.finalizado) ?? null, [linhas])
+  const proxima = useMemo(() => linhas.find((o) => !o.iniciado && !o.finalizado) ?? null, [linhas])
+  const mediaDuracaoMs = useMemo(() => {
+    const ds = ordens
+      .filter((o) => o.finalizado && o.iniciado_em && o.finalizado_em)
+      .map((o) => new Date(o.finalizado_em!).getTime() - new Date(o.iniciado_em!).getTime())
+      .filter((d) => d > 0)
+    return ds.length ? ds.reduce((a, b) => a + b, 0) / ds.length : null
+  }, [ordens])
+  // Relógio do cronômetro do caminhão em andamento — só no cliente (evita mismatch de hidratação).
+  const [agora, setAgora] = useState<number | null>(null)
+  useEffect(() => {
+    setAgora(Date.now())
+    const id = setInterval(() => setAgora(Date.now()), 30_000)
+    return () => clearInterval(id)
+  }, [])
+  const decorridoMs = agora && emAndamento?.iniciado_em ? Math.max(0, agora - new Date(emAndamento.iniciado_em).getTime()) : null
 
   function navegar(d: string) {
     router.push(`${ROUTES.ORDENS}?data=${d}`)
@@ -547,23 +609,70 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Kpi label="Total do dia" value={totalTons.toFixed(2)} unit="ton" tone="brand" />
-        <Kpi label="Aguardando" value={counts.aguardando} />
-        <Kpi label="Em andamento" value={counts.andamento} tone="amber" />
-        <Kpi label="Finalizado" value={counts.finalizado} tone="brand" />
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <Kpi
+          label="Total do dia" value={totalTons.toFixed(2)} unit="ton" tone="brand" icon={Scale}
+          caption={ordens.length ? `${tonsFinalizadas.toFixed(2)} ton já carregadas · ${ordens.length} ${ordens.length === 1 ? 'caminhão' : 'caminhões'}` : 'Nenhuma ordem neste dia'}
+        />
+        <Kpi
+          label="Aguardando" value={counts.aguardando} icon={Clock3}
+          caption={proxima ? <>próximo: <span className="font-semibold text-industrial-800">{proxima.cliente || '—'}</span></> : 'fila vazia'}
+        />
+        <Kpi
+          label="Em andamento" value={counts.andamento} tone="info" icon={Truck}
+          caption={emAndamento ? <><span className="font-semibold text-industrial-800">{emAndamento.cliente || '—'}</span>{decorridoMs !== null ? ` · há ${formatDuracao(decorridoMs)}` : ''}</> : 'nenhum caminhão na baia'}
+        />
+        <Kpi
+          label="Finalizado" value={counts.finalizado} tone="brand" icon={CheckCircle2}
+          caption={mediaDuracaoMs ? `média de ${formatDuracao(mediaDuracaoMs)} por carga` : 'sem carga finalizada ainda'}
+        />
       </div>
 
-      {/* Progresso */}
-      <div>
-        <div className="flex justify-between text-xs text-industrial-600 mb-1">
-          <span>Progresso do dia</span>
-          <span>{concluido}% concluído</span>
+      {/* Progresso segmentado por status: verde finalizado, azul em andamento, cinza aguardando. */}
+      <div className="rounded-xl border border-industrial-200 bg-industrial-100 px-4 py-3">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <span className="font-medium text-industrial-800">Progresso do dia</span>
+          <span className="text-industrial-600">
+            <span className="font-mono font-bold text-brand-400">{concluido}%</span> dos caminhões · <span className="font-mono font-bold text-brand-400">{pctTons}%</span> da tonelagem
+          </span>
         </div>
-        <div className="h-2 rounded-full bg-industrial-200 overflow-hidden">
-          <div className="h-full bg-brand-500 transition-all" style={{ width: `${concluido}%` }} />
+        <div className="flex h-2.5 overflow-hidden rounded-full bg-industrial-200" role="progressbar" aria-valuenow={concluido} aria-valuemin={0} aria-valuemax={100} aria-label="Progresso do dia">
+          {ordens.length > 0 && (
+            <>
+              <div className="h-full bg-brand-500 transition-all" style={{ width: `${(counts.finalizado / ordens.length) * 100}%` }} />
+              <div className="h-full bg-info-500 transition-all" style={{ width: `${(counts.andamento / ordens.length) * 100}%` }} />
+            </>
+          )}
+        </div>
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-industrial-600">
+          <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-brand-500" />{counts.finalizado} finalizado{counts.finalizado === 1 ? '' : 's'}</span>
+          <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-info-500" />{counts.andamento} em andamento</span>
+          <span className="flex items-center gap-1.5"><span className="size-2 rounded-full bg-industrial-400" />{counts.aguardando} aguardando</span>
         </div>
       </div>
+
+      {/* Caminhão na baia agora */}
+      {emAndamento && (
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-info-500/40 border-l-4 border-l-info-500 bg-info-500/10 px-4 py-3">
+          <span className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-info-400">
+            <Truck className="size-4" /> Carregando agora
+          </span>
+          <span className="text-sm font-semibold text-industrial-900">{emAndamento.cliente || 'Sem cliente'}</span>
+          <PlacaChip placa={emAndamento.placa} />
+          <span className="text-xs text-industrial-700">
+            {(emAndamento.itens ?? []).map((it) => it.formula?.nome).filter(Boolean).join(' + ') || 'sem fórmula'}
+          </span>
+          <span className="font-mono text-sm font-bold text-brand-400">{tonsDaOrdem(emAndamento).toFixed(2)} <span className="text-[10px] font-normal text-industrial-600">ton</span></span>
+          {emAndamento.envelopar && (
+            <span className="inline-flex items-center gap-1 rounded-md border border-brand-500 bg-brand-500/15 px-1.5 py-0.5 text-[10px] font-bold text-brand-300"><Tag className="size-3" /> ENVELOPAR</span>
+          )}
+          {decorridoMs !== null && (
+            <span className="ml-auto flex items-center gap-1.5 font-mono text-sm font-bold text-info-400" title={`Iniciado às ${new Date(emAndamento.iniciado_em!).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`}>
+              <Timer className="size-4" /> {formatDuracao(decorridoMs)}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Tabela em card sutil */}
       <div className="rounded-xl border border-industrial-200 overflow-hidden">
@@ -617,7 +726,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
                     >
                       {primeiraLinha && (
                         <>
-                          <td className={cn(tdCls, 'text-center')} rowSpan={rowSpan}>
+                          <td className={cn(tdCls, 'text-center border-l-2', STATUS_ACCENT[status])} rowSpan={rowSpan}>
                             <div className="flex items-center justify-center gap-1">
                               {podeEditarDados && (
                                 <span
@@ -682,9 +791,11 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
                           </td>
 
                           <td className={cn(tdCls, 'text-center')} rowSpan={rowSpan}>
-                            <span className={cn('px-2 py-0.5 rounded text-[10px] font-bold', STATUS_STYLES[status])}>
-                              {STATUS_LABEL[status]}
-                            </span>
+                            {(() => { const Icon = STATUS_ICON[status]; return (
+                              <span className={cn('inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-0.5 text-[10px] font-bold', STATUS_STYLES[status])}>
+                                <Icon className="size-3" /> {STATUS_LABEL[status]}
+                              </span>
+                            ) })()}
                             {ordem.finalizado && ordem.iniciado_em && ordem.finalizado_em && (
                               <div className="text-[10px] text-industrial-500 mt-0.5" title="Tempo de carregamento">
                                 ⏱ {formatDuracao(new Date(ordem.finalizado_em).getTime() - new Date(ordem.iniciado_em).getTime())}
@@ -694,13 +805,19 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
 
                           <td className={cn(tdCls, 'text-center')} rowSpan={rowSpan}>
                             {podeMarcarStatus && !ordem.finalizado ? (
-                              <input
-                                type="checkbox"
-                                checked={ordem.iniciado}
+                              <button
+                                type="button"
+                                onClick={() => handleToggleIniciado(ordem)}
                                 disabled={!ordem.iniciado && ordens.some((x) => x.id !== ordem.id && x.iniciado && !x.finalizado)}
-                                onChange={() => handleToggleIniciado(ordem)}
-                                className="size-5 accent-brand-600 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                              />
+                                aria-pressed={ordem.iniciado}
+                                title={ordem.iniciado ? 'Desfazer início' : 'Iniciar carregamento deste caminhão'}
+                                className={cn(
+                                  'mx-auto flex size-7 items-center justify-center rounded-full border-2 transition-colors disabled:cursor-not-allowed disabled:opacity-30',
+                                  ordem.iniciado ? 'border-info-500 bg-info-500 text-white' : 'border-industrial-400 text-industrial-500 hover:border-info-500 hover:text-info-400',
+                                )}
+                              >
+                                <Play className="size-3.5" fill={ordem.iniciado ? 'currentColor' : 'none'} />
+                              </button>
                             ) : (
                               <StatusReadOnly on={ordem.iniciado} />
                             )}
@@ -708,13 +825,19 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
 
                           <td className={cn(tdCls, 'text-center')} rowSpan={rowSpan}>
                             {podeMarcarStatus ? (
-                              <input
-                                type="checkbox"
-                                checked={ordem.finalizado}
+                              <button
+                                type="button"
+                                onClick={() => handleToggleFinalizado(ordem)}
                                 disabled={!ordem.iniciado && !ordem.finalizado}
-                                onChange={() => handleToggleFinalizado(ordem)}
-                                className="size-5 accent-brand-600 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                              />
+                                aria-pressed={ordem.finalizado}
+                                title={ordem.finalizado ? 'Reabrir carregamento' : 'Finalizar carregamento'}
+                                className={cn(
+                                  'mx-auto flex size-7 items-center justify-center rounded-full border-2 transition-colors disabled:cursor-not-allowed disabled:opacity-30',
+                                  ordem.finalizado ? 'border-brand-500 bg-brand-600 text-white' : 'border-industrial-400 text-industrial-500 hover:border-brand-500 hover:text-brand-300',
+                                )}
+                              >
+                                <Check className="size-4" strokeWidth={3} />
+                              </button>
                             ) : (
                               <StatusReadOnly on={ordem.finalizado} />
                             )}
@@ -729,9 +852,7 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
                                 className="uppercase font-mono"
                               />
                             ) : (
-                              <span className="text-industrial-900 uppercase font-mono font-medium">
-                                {ordem.placa || <span className="text-industrial-500 font-normal normal-case">—</span>}
-                              </span>
+                              <PlacaChip placa={ordem.placa} />
                             )}
                           </td>
 
@@ -740,18 +861,20 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
                               <button
                                 type="button"
                                 onClick={() => handleEnvelopar(ordem.id, !ordem.envelopar)}
+                                aria-pressed={ordem.envelopar}
+                                title={ordem.envelopar ? 'Carga envelopada — clique pra desmarcar' : 'Marcar carga pra envelopar'}
                                 className={cn(
-                                  'px-2 py-0.5 rounded text-[10px] font-bold border transition-colors',
+                                  'inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-bold transition-colors',
                                   ordem.envelopar
-                                    ? 'bg-brand-500/15 border-brand-500 text-brand-300'
-                                    : 'bg-industrial-100 border-industrial-400 text-industrial-500',
+                                    ? 'border-brand-500 bg-brand-500/15 text-brand-300'
+                                    : 'border-industrial-400 bg-industrial-100 text-industrial-500 hover:border-brand-500 hover:text-brand-300',
                                 )}
                               >
-                                {ordem.envelopar ? 'SIM' : 'NÃO'}
+                                <Tag className="size-3" /> {ordem.envelopar ? 'SIM' : 'NÃO'}
                               </button>
                             ) : (
-                              <span className={cn('text-[11px] font-bold', ordem.envelopar ? 'text-brand-300' : 'text-industrial-500')}>
-                                {ordem.envelopar ? 'SIM' : 'NÃO'}
+                              <span className={cn('inline-flex items-center gap-1 text-[11px] font-bold', ordem.envelopar ? 'text-brand-300' : 'text-industrial-500')}>
+                                {ordem.envelopar && <Tag className="size-3" />}{ordem.envelopar ? 'SIM' : 'NÃO'}
                               </span>
                             )}
                           </td>
@@ -863,7 +986,8 @@ export function OrdensParnel({ initialOrdens, initialFormulas, initialClientes, 
 
               {ordens.length === 0 && (
                 <tr>
-                  <td colSpan={COLUNAS} className="text-center py-12 text-industrial-600">
+                  <td colSpan={COLUNAS} className="py-12 text-center text-industrial-600">
+                    <PackageOpen className="mx-auto mb-2 size-8 text-industrial-400" />
                     {podeEditarDados
                       ? 'Nenhuma ordem para este dia. Clique em “Adicionar linha” para começar.'
                       : 'Nenhuma ordem para este dia ainda.'}
