@@ -35,7 +35,7 @@ function addDias(d: Date, n: number): Date {
 export default async function ProgramacaoPage({
   searchParams,
 }: {
-  searchParams: Promise<{ semana?: string }>
+  searchParams: Promise<{ semana?: string; dia?: string }>
 }) {
   const { sessionUser, profile } = await getAuthContext()
   if (!sessionUser || !profile) redirect(ROUTES.LOGIN)
@@ -46,8 +46,12 @@ export default async function ProgramacaoPage({
   if (!podeVer) redirect(ROLE_DEFAULT_ROUTES[profile.role] ?? ROUTES.HOME)
 
   const sp = await searchParams
+  // ?dia=AAAA-MM-DD (calendário): abre a semana daquele dia com só ele expandido.
+  const diaFoco = sp?.dia && /^\d{4}-\d{2}-\d{2}$/.test(sp.dia) ? sp.dia : null
   const refValida = sp?.semana && /^\d{4}-\d{2}-\d{2}$/.test(sp.semana)
-  const segunda = refValida
+  const segunda = diaFoco
+    ? segundaDaSemana(new Date(diaFoco + 'T12:00:00'))
+    : refValida
     ? segundaDaSemana(new Date(sp!.semana + 'T12:00:00'))
     : segundaDaSemana(new Date())
   const semanaInicio = iso(segunda)
@@ -121,6 +125,7 @@ export default async function ProgramacaoPage({
       semanaInicio={semanaInicio}
       semanaFim={semanaFim}
       hoje={iso(new Date())}
+      diaFoco={diaFoco}
       podeEditar={podeEditar}
       podeConfirmar={profile.role === 'admin' || profile.role === 'faturamento'}
       usuario={profile.username}

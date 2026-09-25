@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Trash2, Pencil, X, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Printer, Send, CheckCircle2, Truck, Container, RotateCcw, EyeOff, Eye, FileDown } from 'lucide-react'
+import { Plus, Trash2, Pencil, X, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Printer, Send, CheckCircle2, Truck, Container, RotateCcw, EyeOff, Eye, FileDown, CalendarCheck, CalendarRange, CalendarDays } from 'lucide-react'
 import { toast } from 'sonner'
 import { AnimatePresence, motion, useReducedMotion, type Transition } from 'motion/react'
 import { createClient } from '@/lib/supabase/client'
@@ -33,6 +33,8 @@ interface ProgramacaoSemanaProps {
   semanaInicio:    string // segunda-feira (YYYY-MM-DD)
   semanaFim:       string // sábado (YYYY-MM-DD)
   hoje:            string
+  /** Dia escolhido no calendário (AAAA-MM-DD): a semana abre com só ele expandido. */
+  diaFoco?:        string | null
   podeEditar:      boolean // admin/logistica — programa a semana
   podeConfirmar:   boolean // admin/faturamento — só confirma chegada do caminhão
   usuario:         string
@@ -283,7 +285,7 @@ interface AgendamentoFormState {
 }
 
 export function ProgramacaoSemana({
-  initialItens, formulas, initialClientes, clientesErp, transportadoras, semanaInicio, semanaFim, hoje, podeEditar, podeConfirmar, usuario,
+  initialItens, formulas, initialClientes, clientesErp, transportadoras, semanaInicio, semanaFim, hoje, diaFoco = null, podeEditar, podeConfirmar, usuario,
 }: ProgramacaoSemanaProps) {
   const { agendamentos, setAgendamentos } = useProgramacaoSemana(initialItens, semanaInicio, semanaFim)
   const { clientes, adicionarCliente, editarCliente } = useClientes(initialClientes)
@@ -300,7 +302,20 @@ export function ProgramacaoSemana({
   const [enviandoTranspId, setEnviandoTranspId] = useState<string | null>(null)
   const [revertendoId, setRevertendoId] = useState<string | null>(null)
   const [ocultarSabado, setOcultarSabado] = useState(false)
-  const [diasColapsados, setDiasColapsados] = useState<Set<string>>(new Set())
+  // Veio do calendário com um dia em foco? Nasce com os outros dias recolhidos.
+  const [diasColapsados, setDiasColapsados] = useState<Set<string>>(() => {
+    if (!diaFoco) return new Set()
+    const datas = DIAS.map((_, i) => addDiasIso(semanaInicio, i))
+    return new Set(datas.filter((d) => d !== diaFoco))
+  })
+  const calendarioRef = useRef<HTMLInputElement>(null)
+  function abrirCalendario() {
+    const el = calendarioRef.current
+    if (!el) return
+    if (typeof el.showPicker === 'function') { try { el.showPicker(); return } catch { /* cai no focus */ } }
+    el.focus()
+    el.click()
+  }
   // Cargas concluídas que o usuário abriu de propósito (por padrão ficam recolhidas a uma linha).
   const [fichasAbertas, setFichasAbertas] = useState<Set<string>>(new Set())
   const abrirFicha = (id: string) => setFichasAbertas((prev) => new Set(prev).add(id))
@@ -354,6 +369,15 @@ export function ProgramacaoSemana({
     // Ao ocultar, sábado deixa de estar "pronto": quando voltar, entra cortado até terminar de abrir.
     const sabado = dias.find((d) => d.nome === 'Sábado')?.data
     if (sabado) setColunasProntas((prev) => { const next = new Set(prev); next.delete(sabado); return next })
+  }
+
+  // "Só hoje": recolhe todos os outros dias e deixa só o atual aberto; de novo, reabre a semana.
+  const hojeNaSemana = dias.some((d) => d.data === hoje)
+  const soHojeAtivo =
+    hojeNaSemana && diasVisiveis.every((d) => (d.data === hoje ? !diasColapsados.has(d.data) : diasColapsados.has(d.data)))
+  function alternarSoHoje() {
+    if (!hojeNaSemana) return
+    setDiasColapsados(soHojeAtivo ? new Set() : new Set(dias.filter((d) => d.data !== hoje).map((d) => d.data)))
   }
 
   const totalSemana = useMemo(() => agendamentos.reduce((s, ag) => s + tonsDoAgendamento(ag), 0), [agendamentos])
@@ -598,12 +622,53 @@ export function ProgramacaoSemana({
               className="rounded-lg border border-industrial-300 p-1.5 text-industrial-600 transition-colors hover:border-brand-500 hover:text-industrial-900">
               <ChevronRight className="size-4" />
             </button>
+            {/* Calendário: escolhe um dia qualquer e a tela puxa a semana dele com só aquele dia aberto. */}
+            <span className="relative ml-1 inline-flex">
+              <button
+                type="button"
+                onClick={abrirCalendario}
+                title="Escolher um dia no calendário"
+                className="flex items-center gap-1.5 rounded-lg border border-industrial-300 px-2.5 py-1.5 text-xs font-medium text-industrial-800 transition-colors hover:border-brand-500 hover:text-brand-300"
+              >
+                <CalendarDays className="size-4" />
+                Ir para o dia
+              </button>
+              <input
+                ref={calendarioRef}
+                type="date"
+                aria-label="Escolher um dia"
+                value={diaFoco ?? ''}
+                onChange={(e) => { if (e.target.value) router.push(`${ROUTES.PROGRAMACAO}?dia=${e.target.value}`) }}
+                className="absolute bottom-0 left-0 h-px w-px opacity-0"
+                tabIndex={-1}
+              />
+            </span>
           </div>
           {!podeEditar && !podeConfirmar && (
             <p className="mt-1.5 text-xs text-industrial-600">Prévia (somente leitura) — quem programa é a Logística.</p>
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={alternarSoHoje}
+            disabled={!hojeNaSemana}
+            aria-pressed={soHojeAtivo}
+            title={
+              !hojeNaSemana
+                ? 'Hoje não está na semana exibida'
+                : soHojeAtivo ? 'Reabrir todos os dias da semana' : 'Recolher os outros dias e mostrar só hoje'
+            }
+            className={cn(
+              'flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40',
+              soHojeAtivo
+                ? 'border-brand-500 bg-brand-500/15 text-brand-300 hover:bg-brand-500/25'
+                : 'border-industrial-300 text-industrial-800 hover:border-brand-500 hover:text-brand-300',
+            )}
+          >
+            {soHojeAtivo ? <CalendarRange className="size-4" /> : <CalendarCheck className="size-4" />}
+            {soHojeAtivo ? 'Mostrar semana' : 'Só hoje'}
+          </button>
           {podeEditar && (
             <button
               type="button"
