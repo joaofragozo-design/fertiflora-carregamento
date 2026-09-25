@@ -23,7 +23,7 @@ export const getAuthContext = cache(async (): Promise<AuthResult> => {
 
     const { data, error } = await supabase
       .from('profiles')
-      .select('id, username, role, created_at')
+      .select('id, username, role, created_at, apelido, avatar_url')
       .eq('id', user.id)
       .single()
 

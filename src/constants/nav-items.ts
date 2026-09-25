@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, ClipboardList, Truck, CalendarDays, CalendarRange, FileSpreadsheet, Container, Package, Tv, Inbox,
-  BookUser, Route, CalendarCheck,
+  BookUser, Route, CalendarCheck, Settings,
 } from 'lucide-react'
 import type { AppUser } from '@/types'
 
@@ -103,6 +103,11 @@ export const NAV_ENTRIES: NavEntry[] = [
   {
     kind: 'item',
     item: { href: '/transportadora', label: 'Meus Carregamentos', icon: Truck, roles: ['transportadora'] },
+  },
+  {
+    // Configurações do próprio perfil (foto e nome de exibição) — não mexe no login.
+    kind: 'item',
+    item: { href: '/configuracoes', label: 'Configurações', icon: Settings, roles: ['admin', 'logistica', 'logistica_02', 'faturamento', 'operador_carregamento', 'operador_pa'] },
   },
 ]
 

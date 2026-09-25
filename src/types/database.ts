@@ -16,6 +16,8 @@ export interface Database {
           role: 'operador_carregamento' | 'operador_pa' | 'admin' | 'logistica' | 'logistica_02' | 'faturamento'
           created_at: string
           insumo_prefs: Json
+          apelido: string | null
+          avatar_url: string | null
         }
         Insert: {
           id: string
@@ -23,11 +25,15 @@ export interface Database {
           role?: 'operador_carregamento' | 'operador_pa' | 'admin' | 'logistica' | 'logistica_02' | 'faturamento'
           created_at?: string
           insumo_prefs?: Json
+          apelido?: string | null
+          avatar_url?: string | null
         }
         Update: {
           username?: string
           role?: 'operador_carregamento' | 'operador_pa' | 'admin' | 'logistica' | 'logistica_02' | 'faturamento'
           insumo_prefs?: Json
+          apelido?: string | null
+          avatar_url?: string | null
         }
       }
 

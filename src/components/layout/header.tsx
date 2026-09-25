@@ -72,11 +72,16 @@ export function Header({ user, connectionStatus, onSignOut, onMenuToggle, onOpen
         {/* Usuário */}
         {user && (
           <div className="hidden items-center gap-2.5 border-l border-industrial-200 pl-3 md:flex">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-700 text-xs font-bold text-white uppercase">
-              {user.username.charAt(0)}
-            </div>
+            {user.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={user.avatar_url} alt="" className="h-7 w-7 rounded-full object-cover ring-2 ring-brand-600/40" />
+            ) : (
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-700 text-xs font-bold text-white uppercase">
+                {(user.apelido || user.username).charAt(0)}
+              </div>
+            )}
             <div className="text-right leading-none">
-              <p className="text-sm font-semibold text-industrial-900">{user.username}</p>
+              <p className="text-sm font-semibold text-industrial-900">{user.apelido || user.username}</p>
               <p className="text-[11px] text-industrial-500">{ROLE_LABELS[user.role] ?? user.role}</p>
             </div>
           </div>

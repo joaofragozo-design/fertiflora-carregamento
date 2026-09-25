@@ -148,7 +148,7 @@ export function Sidebar({ user, isOpen = true, collapsed = false, onClose, onSig
   const searchParams = useSearchParams()
   const reduceMotion = useReducedMotion() ?? false
   const entries      = useMemo(() => navEntriesForRole(user?.role), [user?.role])
-  const inicial      = (user?.username ?? '?').trim().charAt(0).toUpperCase()
+  const inicial      = (user?.apelido || user?.username || '?').trim().charAt(0).toUpperCase()
 
   const ativo = (item: NavItem) => isItemActive(item.href, pathname, searchParams)
   const grupoAtivoId = useMemo(
@@ -238,11 +238,20 @@ export function Sidebar({ user, isOpen = true, collapsed = false, onClose, onSig
         {user && (
           <div className="relative m-3 rounded-2xl border border-white/[0.06] bg-white/[0.07] p-3">
             <div className="flex items-center gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-400 font-display text-sm font-bold text-spruce-900 shadow-[0_0_0_3px_rgba(111,200,91,0.18)]">
-                {inicial}
-              </span>
+              {user.avatar_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={user.avatar_url}
+                  alt=""
+                  className="h-9 w-9 shrink-0 rounded-full object-cover shadow-[0_0_0_3px_rgba(111,200,91,0.18)]"
+                />
+              ) : (
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-400 font-display text-sm font-bold text-spruce-900 shadow-[0_0_0_3px_rgba(111,200,91,0.18)]">
+                  {inicial}
+                </span>
+              )}
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-white">{user.username}</p>
+                <p className="truncate text-sm font-semibold text-white">{user.apelido || user.username}</p>
                 <p className="text-xs text-spruce-200/80">{ROLE_LABELS[user.role] ?? user.role}</p>
               </div>
             </div>

@@ -6,6 +6,7 @@ export const ROUTES = {
   ORDENS:            '/ordens',
   ORDENS_RELATORIO:  '/ordens/relatorio',
   RESUMO:            '/resumo',
+  CONFIGURACOES:     '/configuracoes',
   PROGRAMACAO:       '/programacao',
   RECEBIMENTO:       '/recebimento',
   ADMIN_FORMULAS:    '/admin/formulas',

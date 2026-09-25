@@ -29,6 +29,7 @@ export default async function DashboardLayout({
     profile.role === 'logistica' &&
     !pathname.startsWith(ROUTES.ORDENS) &&
     !pathname.startsWith(ROUTES.RESUMO) &&
+    !pathname.startsWith(ROUTES.CONFIGURACOES) &&
     !pathname.startsWith(ROUTES.PROGRAMACAO) &&
     !pathname.startsWith(ROUTES.RECEBIMENTO) &&
     !pathname.startsWith('/admin') &&
@@ -42,6 +43,7 @@ export default async function DashboardLayout({
     profile.role === 'logistica_02' &&
     !pathname.startsWith(ROUTES.ORDENS) &&
     !pathname.startsWith(ROUTES.RESUMO) &&
+    !pathname.startsWith(ROUTES.CONFIGURACOES) &&
     !pathname.startsWith(ROUTES.PROGRAMACAO) &&
     !pathname.startsWith(ROUTES.RECEBIMENTO)
   ) {
@@ -52,6 +54,7 @@ export default async function DashboardLayout({
     profile.role === 'faturamento' &&
     !pathname.startsWith(ROUTES.ORDENS) &&
     !pathname.startsWith(ROUTES.RESUMO) &&
+    !pathname.startsWith(ROUTES.CONFIGURACOES) &&
     !pathname.startsWith(ROUTES.PROGRAMACAO) &&
     !pathname.startsWith(ROUTES.RECEBIMENTO)
   ) {

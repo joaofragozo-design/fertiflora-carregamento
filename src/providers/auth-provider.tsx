@@ -18,6 +18,8 @@ interface AuthContextValue {
   user: AppUser | null
   isLoading: boolean
   signOut: () => Promise<void>
+  /** Recarrega o profile do usuário logado (ex.: depois de trocar foto/apelido em Configurações). */
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -143,8 +145,16 @@ export function AuthProvider({ children, initialUser = null }: AuthProviderProps
     // onAuthStateChange SIGNED_OUT cuida do setUser(null) e redirect
   }, [])
 
+  const refreshUser = useCallback(async () => {
+    const supabase = createClient()
+    const { data: { user: sessao } } = await supabase.auth.getUser()
+    if (!sessao) return
+    const profile = await fetchProfile(sessao.id)
+    if (profile) setUser(profile)
+  }, [fetchProfile])
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, signOut }}>
+    <AuthContext.Provider value={{ user, isLoading, signOut, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

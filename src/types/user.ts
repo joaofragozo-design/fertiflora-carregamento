@@ -3,6 +3,9 @@ export type UserRole = 'operador_carregamento' | 'operador_pa' | 'admin' | 'logi
 export interface AppUser {
   id:         string
   username:   string
+  /** Nome de exibição escolhido em Configurações — não altera o login (username). */
+  apelido?:   string | null
+  avatar_url?: string | null
   role:       UserRole
   created_at: string
 }
