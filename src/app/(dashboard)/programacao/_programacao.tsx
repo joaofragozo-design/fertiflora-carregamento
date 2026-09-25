@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, Trash2, Pencil, X, ChevronLeft, ChevronRight, ChevronDown, Printer, Send, CheckCircle2, Truck, Container, RotateCcw, EyeOff, Eye } from 'lucide-react'
+import { Plus, Trash2, Pencil, X, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Printer, Send, CheckCircle2, Truck, Container, RotateCcw, EyeOff, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import { AnimatePresence, motion, useReducedMotion, type Transition } from 'motion/react'
 import { createClient } from '@/lib/supabase/client'
@@ -71,10 +71,48 @@ const SAIDA_OVERFLOW = { overflow: 'hidden' } as const
  *  de linha — comportamento anterior, mantido de propósito). */
 const COLUNA_MIN_PX = 230
 /** Tamanho em repouso da coluna (equivale a `md:flex-1 md:min-w-[200px]` / `md:w-[84px] md:shrink-0`, mas animável). */
+/** Teto de largura de uma coluna aberta: com dias minimizados, a(s) que sobra(m) não estica(m) até
+ *  ocupar a prancheta inteira — ficam com largura de ficha e o conjunto se centraliza (`md:justify-center`). */
+const COLUNA_MAX_PX = 360
 function alvoColuna(colapsado: boolean) {
   return colapsado
-    ? { flexGrow: 0, flexShrink: 0, flexBasis: '84px', minWidth: '84px', marginLeft: 0, height: 'auto', marginTop: 0, opacity: 1 }
-    : { flexGrow: 1, flexShrink: 1, flexBasis: '0px', minWidth: `${COLUNA_MIN_PX}px`, marginLeft: 0, height: 'auto', marginTop: 0, opacity: 1 }
+    ? { flexGrow: 0, flexShrink: 0, flexBasis: '84px', minWidth: '84px', maxWidth: '84px', marginLeft: 0, height: 'auto', marginTop: 0, opacity: 1 }
+    : { flexGrow: 1, flexShrink: 1, flexBasis: '0px', minWidth: `${COLUNA_MIN_PX}px`, maxWidth: `${COLUNA_MAX_PX}px`, marginLeft: 0, height: 'auto', marginTop: 0, opacity: 1 }
+}
+
+/**
+ * Carga concluída (chegada confirmada pelo faturamento) recolhida a uma linha:
+ * dentro do dia, só as cargas que ainda faltam aparecem com a ficha completa.
+ * Clicar abre a ficha inteira; "Recolher" dentro dela devolve pra linha.
+ */
+function FichaCompacta({ ag, onAbrir }: { ag: Programacao; onAbrir: () => void }) {
+  const hora = ag.confirmado_em
+    ? new Date(ag.confirmado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+    : null
+  return (
+    <Ticket
+      role="button"
+      tabIndex={0}
+      onClick={onAbrir}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onAbrir() } }}
+      title="Carga concluída — clique pra abrir a ficha"
+      className="cursor-pointer pb-2.5 pl-10 pr-3 pt-[17px] transition-[filter] hover:brightness-[1.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+    >
+      <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[12.5px] font-extrabold uppercase leading-tight text-ticket-ink" title={ag.cliente || undefined}>
+            {ag.cliente || <span className="font-normal normal-case text-ticket-soft">Sem cliente</span>}
+          </p>
+          <p className="mt-0.5 flex items-center gap-1.5 text-[11px] leading-none text-ticket-soft">
+            <CheckCircle2 className="size-3 shrink-0 text-stamp-confirmado" aria-hidden="true" />
+            <span className="font-bold text-ticket-ink">{tonsDoAgendamento(ag).toFixed(2)} ton</span>
+            {hora && <span>· chegou {hora}</span>}
+          </p>
+        </div>
+        <ChevronDown className="size-3.5 shrink-0 text-ticket-soft" aria-hidden="true" />
+      </div>
+    </Ticket>
+  )
 }
 
 function pad(n: number): string {
@@ -219,6 +257,10 @@ export function ProgramacaoSemana({
   const [revertendoId, setRevertendoId] = useState<string | null>(null)
   const [ocultarSabado, setOcultarSabado] = useState(false)
   const [diasColapsados, setDiasColapsados] = useState<Set<string>>(new Set())
+  // Cargas concluídas que o usuário abriu de propósito (por padrão ficam recolhidas a uma linha).
+  const [fichasAbertas, setFichasAbertas] = useState<Set<string>>(new Set())
+  const abrirFicha = (id: string) => setFichasAbertas((prev) => new Set(prev).add(id))
+  const recolherFicha = (id: string) => setFichasAbertas((prev) => { const next = new Set(prev); next.delete(id); return next })
   const alternarColapso = (data: string) =>
     setDiasColapsados((prev) => {
       const next = new Set(prev)
@@ -554,7 +596,7 @@ export function ProgramacaoSemana({
       </div>
 
       {/* Grade da semana */}
-      <div className="grid grid-cols-1 gap-y-5 md:flex md:flex-wrap md:items-start md:gap-x-6 md:gap-y-6">
+      <div className="grid grid-cols-1 gap-y-5 md:flex md:flex-wrap md:items-start md:justify-center md:gap-x-6 md:gap-y-6">
         <AnimatePresence initial={false}>
         {diasVisiveis.map(({ nome, data }, index) => {
           const ehAmanha = data === amanha
@@ -610,6 +652,8 @@ export function ProgramacaoSemana({
                 <AnimatePresence initial={false}>
                 {agendamentosDoDia(data).map((ag) => {
                   const stamp = stampInfo(ag)
+                  const concluida = !!ag.confirmado_em
+                  const compacta = concluida && !fichasAbertas.has(ag.id)
                   return (
                     <motion.div
                       key={ag.id}
@@ -619,6 +663,9 @@ export function ProgramacaoSemana({
                       exit={reduceMotion ? { opacity: 0, transition: { duration: 0 } } : FICHA_RETIRADA}
                       transition={reduceMotion ? { duration: 0 } : TRANSICAO_FICHA}
                     >
+                    {compacta ? (
+                      <FichaCompacta ag={ag} onAbrir={() => abrirFicha(ag.id)} />
+                    ) : (
                     <Ticket
                       seq={ag.numero_ordem ? `Nº ${String(ag.numero_ordem).padStart(6, '0')}` : undefined}
                       seqHref={ag.numero_ordem ? `/api/programacao/${ag.id}/ordem-pdf` : undefined}
@@ -704,6 +751,16 @@ export function ProgramacaoSemana({
                         {stamp && <Stamp variant={stamp.variant} lines={stamp.lines} rotate={stamp.rotate} />}
                       </div>
 
+                      {concluida && (
+                        <button
+                          type="button"
+                          onClick={() => recolherFicha(ag.id)}
+                          className="mt-2 flex items-center gap-1 self-start text-[11px] font-semibold text-ticket-soft transition-colors hover:text-ticket-ink"
+                        >
+                          <ChevronUp className="size-3" /> Recolher
+                        </button>
+                      )}
+
                       {podeEditar && (
                         <div className="flex flex-col gap-1.5 mt-2.5 pt-2 border-t border-dashed border-ticket-rule/40 text-[11px] font-semibold">
                           <button type="button" onClick={() => abrirNovoItem(ag)}
@@ -766,6 +823,7 @@ export function ProgramacaoSemana({
                         </div>
                       )}
                     </Ticket>
+                    )}
                     </motion.div>
                   )
                 })}

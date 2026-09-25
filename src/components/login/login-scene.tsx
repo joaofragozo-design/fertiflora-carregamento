@@ -146,9 +146,8 @@ export function LoginScene({ children, carregado }: LoginSceneProps) {
           <section className="mx-auto flex min-h-svh w-full max-w-[1180px] flex-col px-5 pt-5 md:px-10 md:pt-6">
             {/* Fenda + papel andam juntos e ficam centrados na tela alta; em tela baixa encostam no topo. */}
             <div className="my-auto flex shrink-0 flex-col">
-            <div className="flex shrink-0 items-center justify-between pb-2.5 text-[11px] uppercase tracking-[.14em] text-industrial-500">
-              <span>Fertiflora · Balança rodoviária</span>
-              <span className="tabular-nums text-industrial-400">{agora ?? '—'}</span>
+            <div className="flex shrink-0 items-center justify-end pb-2.5 text-[11px] uppercase tracking-[.14em] text-industrial-400">
+              <span className="tabular-nums">{agora ?? '—'}</span>
             </div>
             <div className="panel-rule shrink-0" />
 

@@ -109,6 +109,8 @@ Rejeições confirmadas: nada de card genérico com sombra suave flutuante (a hi
 
 **2ª via (Programação) — motion (2026-09-24):** ficha nova (criada aqui ou chegando pelo realtime) cai na coluna e assenta (`FICHA_NO_AR` → spring, rotação −3° → 0°); ficha removida esmaece; as vizinhas deslizam com `layout="position"` (só translação, nunca escala — texto não distorce). A coluna de sábado desliza pra dentro/fora da prancheta animando `flexGrow`/`flexBasis`/`minWidth` (desktop) ou `height` (celular) — as outras colunas reacomodam por reflow real, sem scale de layout animation. O colapso de um dia usa a mesma transição. O carimbo bate ao trocar de status (`Stamp`, `initial={false}` → nunca no load).
 
+**Prancheta centrada e cargas concluídas recolhidas (2026-09-25):** uma coluna aberta tem teto de largura (`COLUNA_MAX_PX` = 360) e a prancheta é `justify-center` — ao minimizar dias, as colunas que sobram não esticam até ocupar a tela: ficam com largura de ficha e o conjunto (minimizadas + abertas, na ordem da semana) se centraliza. Dentro do dia, carga **concluída = chegada confirmada pelo faturamento** (`confirmado_em`) nasce recolhida a uma ficha de duas linhas (`FichaCompacta`: cliente, tonelagem, hora da chegada, seta) — só as cargas que ainda faltam aparecem com a ficha completa. Clicar na compacta abre a ficha inteira (estado `fichasAbertas`, por sessão); "Recolher" dentro dela devolve pra linha. É a mesma superfície de papel, só menos linhas impressas — não é um card diferente.
+
 **Key Characteristics:**
 - Cartão de carga = ticket de papel (claro) sobre fundo escuro — não card com sombra.
 - Estado = carimbo de borracha (cor + rotação + textura), nunca badge/pílula.
