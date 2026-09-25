@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, ClipboardList, Truck, CalendarDays, CalendarRange, FileSpreadsheet, Container, Package, Tv, Inbox,
-  BookUser, Route,
+  BookUser, Route, CalendarCheck,
 } from 'lucide-react'
 import type { AppUser } from '@/types'
 
@@ -69,6 +69,11 @@ export const NAV_ENTRIES: NavEntry[] = [
   {
     kind: 'item',
     item: { href: '/', label: 'Centro de Comando', icon: LayoutDashboard, roles: ['admin'] },
+  },
+  {
+    // Resumo fica solto, fora dos grupos (pedido de 2026-09-25): agenda mensal do que foi carregado.
+    kind: 'item',
+    item: { href: '/resumo', label: 'Resumo', icon: CalendarCheck, roles: ['admin', 'logistica', 'logistica_02', 'faturamento'] },
   },
   {
     kind: 'group',

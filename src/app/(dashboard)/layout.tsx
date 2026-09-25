@@ -24,10 +24,11 @@ export default async function DashboardLayout({
   if (profile.role === 'operador_carregamento' && pathname.startsWith(ROUTES.PA)) {
     redirect(ROUTES.CARREGAMENTO)
   }
-  // logística: /ordens, /programacao, /recebimento, /admin e /transportadoras (gestão)
+  // logística: /resumo, /ordens, /programacao, /recebimento, /admin e /transportadoras (gestão)
   if (
     profile.role === 'logistica' &&
     !pathname.startsWith(ROUTES.ORDENS) &&
+    !pathname.startsWith(ROUTES.RESUMO) &&
     !pathname.startsWith(ROUTES.PROGRAMACAO) &&
     !pathname.startsWith(ROUTES.RECEBIMENTO) &&
     !pathname.startsWith('/admin') &&
@@ -40,6 +41,7 @@ export default async function DashboardLayout({
   if (
     profile.role === 'logistica_02' &&
     !pathname.startsWith(ROUTES.ORDENS) &&
+    !pathname.startsWith(ROUTES.RESUMO) &&
     !pathname.startsWith(ROUTES.PROGRAMACAO) &&
     !pathname.startsWith(ROUTES.RECEBIMENTO)
   ) {
@@ -49,6 +51,7 @@ export default async function DashboardLayout({
   if (
     profile.role === 'faturamento' &&
     !pathname.startsWith(ROUTES.ORDENS) &&
+    !pathname.startsWith(ROUTES.RESUMO) &&
     !pathname.startsWith(ROUTES.PROGRAMACAO) &&
     !pathname.startsWith(ROUTES.RECEBIMENTO)
   ) {
