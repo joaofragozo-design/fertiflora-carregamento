@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { X, Bell, Truck } from 'lucide-react'
+import Link from 'next/link'
+import { X, Bell, Truck, CalendarRange } from 'lucide-react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { createClient } from '@/lib/supabase/client'
+import { ROUTES } from '@/constants/routes'
 
 interface Banner {
   id: string
@@ -102,6 +105,7 @@ export function ConfirmacaoChegadaListener() {
   const [banners, setBanners] = useState<Banner[]>([])
   const [notifPermitida, setNotifPermitida] = useState(false)
   const supabase = useRef(createClient()).current
+  const reduceMotion = useReducedMotion()
 
   useEffect(() => {
     setMounted(true)
@@ -173,6 +177,10 @@ export function ConfirmacaoChegadaListener() {
     addDismissed(id)
     setBanners((prev) => prev.filter((b) => b.id !== id))
   }
+  function fecharTodas() {
+    for (const b of banners) addDismissed(b.id)
+    setBanners([])
+  }
 
   async function ativarNotificacoes() {
     tocarBeep() // mesmo gesto do usuário também desbloqueia o áudio no navegador
@@ -189,34 +197,79 @@ export function ConfirmacaoChegadaListener() {
         <button
           type="button"
           onClick={ativarNotificacoes}
-          className="fixed bottom-4 right-4 z-[9998] flex items-center gap-2 rounded-full bg-industrial-100 border border-industrial-300 px-4 py-2 text-xs font-medium text-industrial-800 shadow-industrial hover:border-brand-500 hover:text-brand-400 transition-colors"
+          className="fixed bottom-4 right-4 z-[9998] flex items-center gap-2 rounded-full border border-industrial-300 bg-industrial-100 py-1.5 pl-1.5 pr-4 text-xs font-medium text-industrial-800 shadow-industrial transition-colors hover:border-brand-500 hover:text-brand-300"
         >
-          <Bell className="size-3.5" /> Ativar notificações de chegada
+          <span className="relative flex size-7 items-center justify-center rounded-full bg-brand-500/15 text-brand-300">
+            <Bell className="size-3.5" />
+            <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-brand-400 ring-2 ring-industrial-100" />
+          </span>
+          Ativar notificações de chegada
         </button>
       )}
 
       {banners.length > 0 && (
-        <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2 w-[calc(100%-2rem)] max-w-sm">
-          {banners.map((b) => (
-            <div key={b.id} className="flex items-start gap-3 rounded-xl bg-brand-600 text-white shadow-2xl p-4 animate-slide-in-right">
-              <Truck className="size-6 shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm">Caminhão chegou</p>
-                <p className="text-sm text-brand-50">{b.cliente || 'Cliente'} — confirmado pelo faturamento</p>
-                <p className="text-[11px] text-brand-100 mt-0.5">
-                  {new Date(b.confirmado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => fechar(b.id)}
-                className="text-white/80 hover:text-white shrink-0"
-                aria-label="Fechar notificação"
-              >
-                <X className="size-4" />
-              </button>
+        <div className="fixed right-4 top-4 z-[9999] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-2">
+          {banners.length > 1 && (
+            <div className="flex items-center justify-between px-1 text-[11px] text-industrial-500">
+              <span>{banners.length} chegadas</span>
+              <button type="button" onClick={fecharTodas} className="font-semibold transition-colors hover:text-industrial-900">Dispensar todas</button>
             </div>
-          ))}
+          )}
+          <AnimatePresence initial={false}>
+            {banners.map((b) => {
+              const hora = new Date(b.confirmado_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+              return (
+                <motion.div
+                  key={b.id}
+                  layout
+                  role="status"
+                  initial={reduceMotion ? false : { x: 96, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={reduceMotion ? { opacity: 0, transition: { duration: 0 } } : { x: 96, opacity: 0, transition: { duration: 0.18 } }}
+                  transition={reduceMotion ? { duration: 0 } : { type: 'spring', stiffness: 380, damping: 30 }}
+                  className="relative flex items-start gap-3 overflow-hidden rounded-xl border border-brand-500/40 bg-industrial-100 p-3.5 pl-4 shadow-[0_16px_40px_-16px_rgba(0,0,0,0.85),0_0_0_1px_rgba(79,177,66,0.12)]"
+                >
+                  <span aria-hidden="true" className="absolute inset-y-0 left-0 w-1 bg-brand-500" />
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-brand-300">
+                    <Truck className="size-[18px]" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-bold text-industrial-900">Caminhão chegou</p>
+                      <span className="shrink-0 font-mono text-[11px] text-industrial-500">{hora}</span>
+                    </div>
+                    <p className="mt-0.5 break-words text-sm text-industrial-700">
+                      <span className="font-semibold text-industrial-900">{b.cliente || 'Cliente'}</span> · confirmado pelo faturamento
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <Link
+                        href={`${ROUTES.PROGRAMACAO}?dia=${b.data}`}
+                        onClick={() => fechar(b.id)}
+                        className="inline-flex items-center gap-1 rounded-md border border-brand-500/60 px-2 py-1 text-[11px] font-semibold text-brand-300 transition-colors hover:bg-brand-500/15"
+                      >
+                        <CalendarRange className="size-3.5" /> Ver na programação
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => fechar(b.id)}
+                        className="rounded-md px-2 py-1 text-[11px] font-semibold text-industrial-500 transition-colors hover:bg-industrial-200 hover:text-industrial-900"
+                      >
+                        Dispensar
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => fechar(b.id)}
+                    className="shrink-0 rounded-md p-1 text-industrial-500 transition-colors hover:bg-industrial-200 hover:text-industrial-900"
+                    aria-label="Fechar notificação"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </motion.div>
+              )
+            })}
+          </AnimatePresence>
         </div>
       )}
     </>,

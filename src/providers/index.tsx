@@ -21,11 +21,16 @@ export function Providers({ children, initialUser }: ProvidersProps) {
           theme="dark"
           richColors
           closeButton
+          duration={4500}
           toastOptions={{
+            // Mesma superfície/borda dos cards do app; richColors continua
+            // colorindo sucesso/erro por cima.
             style: {
-              background: '#1C2213',
-              border: '1px solid rgba(244,247,236,0.1)',
+              background: '#191E11',
+              border: '1px solid rgba(244,247,236,0.12)',
               color: '#F4F7EC',
+              borderRadius: '12px',
+              boxShadow: '0 16px 40px -16px rgba(0,0,0,0.85)',
             },
           }}
         />
