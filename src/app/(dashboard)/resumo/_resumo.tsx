@@ -70,7 +70,7 @@ function semanasDoMes(mes: string): Semana[] {
   const ultimo = new Date(y, m, 0)
   const cursor = new Date(primeiro)
   const dow = cursor.getDay() // 0 = domingo
-  cursor.setDate(cursor.getDate() + (dow === 0 ? -6 : 1 - dow)) // segunda da 1ª semana
+  cursor.setDate(cursor.getDate() + (dow === 0 ? 1 : 1 - dow)) // segunda da 1ª semana (dia 1 no domingo: começa no dia 2)
   const semanas: Semana[] = []
   while (cursor <= ultimo) {
     const dias: DiaCelula[] = []
@@ -94,18 +94,20 @@ export function ResumoMensal({ mes, mesAtual, primeiroMes, hoje, dias }: ResumoM
   const semanas = useMemo(() => semanasDoMes(mes), [mes])
   const meses = useMemo(() => mesesDisponiveis(primeiroMes, mesAtual), [primeiroMes, mesAtual])
 
-  const temSabado = semanas.some((s) => { const sab = s.dias[5]; return sab.noMes && (dias[sab.iso]?.tons ?? 0) > 0 })
+  const temSabado = semanas.some((s) => (dias[s.dias[5].iso]?.tons ?? 0) > 0)
   const colunas = temSabado ? 6 : 5
 
   const totalMes = useMemo(() => {
     let tons = 0, cargas = 0, diasComCarga = 0
-    for (const d of Object.values(dias)) {
+    // Só os dias do próprio mês: as pontas das semanas vizinhas entram no total da semana, não no do mês.
+    for (const [data, d] of Object.entries(dias)) {
+      if (!data.startsWith(mes)) continue
       tons += d.tons
       cargas += d.cargas
       if (d.cargas > 0) diasComCarga++
     }
     return { tons, cargas, diasComCarga }
-  }, [dias])
+  }, [dias, mes])
 
   const irParaMes = (novo: string) => router.push(`${ROUTES.RESUMO}?mes=${novo}`)
   const anterior = addMeses(mes, -1)
@@ -173,7 +175,6 @@ export function ResumoMensal({ mes, mesAtual, primeiroMes, hoje, dias }: ResumoM
               const diasVisiveis = semana.dias.slice(0, colunas)
               const totalSemana = diasVisiveis.reduce(
                 (acc, d) => {
-                  if (!d.noMes) return acc
                   const info = dias[d.iso]
                   return info ? { tons: acc.tons + info.tons, cargas: acc.cargas + info.cargas } : acc
                 },
@@ -186,28 +187,29 @@ export function ResumoMensal({ mes, mesAtual, primeiroMes, hoje, dias }: ResumoM
                   style={{ gridTemplateColumns: `repeat(${colunas}, minmax(0, 1fr)) minmax(120px, 0.9fr)` }}
                 >
                   {diasVisiveis.map((d) => {
-                    const info = d.noMes ? dias[d.iso] : undefined
+                    const info = dias[d.iso]
                     const ehHoje = d.iso === hoje
                     const comCarga = !!info && info.cargas > 0
                     return (
                       <div
                         key={d.iso}
-                        aria-label={d.noMes ? `${d.dia}: ${info ? `${fmtTons(info.tons)} toneladas em ${info.cargas} ${info.cargas === 1 ? 'carga' : 'cargas'}` : 'sem carga'}` : undefined}
+                        aria-label={`${d.dia}${d.noMes ? '' : ' (mês vizinho)'}: ${info ? `${fmtTons(info.tons)} toneladas em ${info.cargas} ${info.cargas === 1 ? 'carga' : 'cargas'}` : 'sem carga'}`}
+                        title={d.noMes ? undefined : 'Dia do mês vizinho: entra no total da semana, não no total do mês'}
                         className={cn(
                           'flex min-h-[92px] flex-col rounded-xl border p-2.5 transition-colors',
-                          !d.noMes && 'border-transparent bg-transparent',
-                          d.noMes && !comCarga && 'border-industrial-200 bg-industrial-100/40',
-                          d.noMes && comCarga && 'border-brand-500/40 bg-brand-500/10',
+                          !d.noMes && 'border-dashed opacity-55',
+                          !comCarga && 'border-industrial-200 bg-industrial-100/40',
+                          comCarga && 'border-brand-500/40 bg-brand-500/10',
                           ehHoje && 'ring-1 ring-brand-500',
                         )}
                       >
                         <div className="flex items-start justify-between">
-                          <span className={cn('font-mono text-sm font-bold leading-none', d.noMes ? (ehHoje ? 'text-brand-300' : 'text-industrial-800') : 'text-industrial-300')}>
-                            {pad(d.dia)}
+                          <span className={cn('font-mono text-sm font-bold leading-none', d.noMes ? (ehHoje ? 'text-brand-300' : 'text-industrial-800') : 'text-industrial-700')}>
+                            {pad(d.dia)}{!d.noMes && <span className="ml-1 text-[10px] font-medium">/{d.iso.slice(5, 7)}</span>}
                           </span>
                           {ehHoje && <span className="text-[10px] font-semibold text-brand-300">hoje</span>}
                         </div>
-                        {d.noMes && (
+                        {(
                           <div className="mt-auto">
                             {comCarga ? (
                               <>
@@ -230,7 +232,12 @@ export function ResumoMensal({ mes, mesAtual, primeiroMes, hoje, dias }: ResumoM
 
                   {/* Total da semana */}
                   <div className="flex min-h-[92px] flex-col justify-between rounded-xl border border-industrial-300 bg-industrial-50 p-2.5 text-right">
-                    <span className="font-display text-[10px] font-bold uppercase tracking-wide text-industrial-500">Semana {idx + 1}</span>
+                    <span className="font-display text-[10px] font-bold uppercase tracking-wide text-industrial-500">
+                      Semana {idx + 1}
+                      <span className="block font-mono font-medium normal-case tracking-normal text-industrial-400">
+                        {diasVisiveis[0].iso.slice(8)}/{diasVisiveis[0].iso.slice(5, 7)} – {diasVisiveis[diasVisiveis.length - 1].iso.slice(8)}/{diasVisiveis[diasVisiveis.length - 1].iso.slice(5, 7)}
+                      </span>
+                    </span>
                     <div>
                       <p className={cn('font-mono text-lg font-extrabold leading-none', totalSemana.tons > 0 ? 'text-industrial-900' : 'text-industrial-400')}>
                         {fmtTons(totalSemana.tons)}<span className="ml-1 text-[10px] font-normal text-industrial-500">ton</span>

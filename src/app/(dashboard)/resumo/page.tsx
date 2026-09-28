@@ -17,9 +17,21 @@ function hojeEmBrasilia(): { iso: string; mes: string } {
   const iso = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date())
   return { iso, mes: iso.slice(0, 7) }
 }
-function ultimoDiaDoMes(mes: string): string {
+/**
+ * Intervalo das semanas que aparecem na agenda do mês: da segunda da semana do dia 1 ao sábado da
+ * semana do último dia. As semanas que atravessam o mês (ex.: 31/08–05/09) somam os 6 dias; só o
+ * total do mês, no rodapé, fica restrito aos dias do próprio mês.
+ */
+function intervaloDasSemanas(mes: string): { inicio: string; fim: string } {
   const [y, m] = mes.split('-').map(Number)
-  return `${mes}-${pad(new Date(y, m, 0).getDate())}`
+  const iso = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  const primeiro = new Date(y, m - 1, 1, 12)
+  const ultimo = new Date(y, m, 0, 12)
+  const dowP = primeiro.getDay()
+  primeiro.setDate(primeiro.getDate() + (dowP === 0 ? 1 : 1 - dowP)) // domingo dia 1 -> semana começa no dia 2
+  const dowU = ultimo.getDay()
+  ultimo.setDate(ultimo.getDate() + (dowU === 0 ? -1 : 6 - dowU))
+  return { inicio: iso(primeiro), fim: iso(ultimo) }
 }
 
 /**
@@ -62,8 +74,8 @@ export default async function ResumoPage({
     .from('ordens_diarias')
     .select('data, itens:ordem_itens(tons)')
     .eq('finalizado', true)
-    .gte('data', `${mes}-01`)
-    .lte('data', ultimoDiaDoMes(mes))
+    .gte('data', intervaloDasSemanas(mes).inicio)
+    .lte('data', intervaloDasSemanas(mes).fim)
 
   const dias: Record<string, DiaCarregado> = {}
   for (const o of (ordens ?? []) as { data: string; itens: { tons: number | null }[] | null }[]) {
