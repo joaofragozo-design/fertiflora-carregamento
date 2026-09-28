@@ -67,10 +67,11 @@ const SAIDA_COLUNA: Transition = { type: 'tween', duration: 0.26, ease: GLIDE }
 const COLUNA_OCULTA_DESKTOP = { flexGrow: 0, flexBasis: '0px', minWidth: '0px', marginLeft: -16, opacity: 0 } as const
 const COLUNA_OCULTA_MOBILE = { height: 0, marginTop: -20, opacity: 0 } as const
 const SAIDA_OVERFLOW = { overflow: 'hidden' } as const
-/** Largura mínima de uma coluna aberta (mesmo valor do `md:min-w-[230px]` de antes: abaixo disso o
- *  carimbo e o nome do cliente já não cabem na ficha; em 1440 com a barra lateral aberta a 5ª coluna quebra
- *  de linha — comportamento anterior, mantido de propósito). */
-const COLUNA_MIN_PX = 240
+/** Largura mínima de uma coluna aberta. A semana fica SEMPRE numa linha só (pedido da Logística em
+ *  28/09: ninguém quer rolar pra baixo pra achar a sexta); as colunas encolhem até aqui e, se ainda
+ *  não couber, a linha vira rolagem lateral com botões ◀ ▶. Abaixo de ~180 px o nome do cliente
+ *  quebra em linhas demais; 172 faz os 6 dias caberem em 1440 com o menu aberto. */
+const COLUNA_MIN_PX = 172
 /** Tamanho em repouso da coluna (equivale a `md:flex-1 md:min-w-[200px]` / `md:w-[84px] md:shrink-0`, mas animável). */
 /** Teto de largura de uma coluna aberta: com dias minimizados, a(s) que sobra(m) não estica(m) até
  *  ocupar a prancheta inteira — ficam com largura de ficha e o conjunto se centraliza (`md:justify-center`). */
@@ -131,19 +132,19 @@ function CardConcluido({ ag, hora, onAbrir }: { ag: Programacao; hora: string | 
       type="button"
       onClick={onAbrir}
       title="Carga concluída — clique pra abrir o card"
-      className="flex w-full items-center gap-2 rounded-lg border border-brand-500 bg-brand-500/15 px-2.5 py-2 text-left transition-colors hover:bg-brand-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+      className="flex w-full items-start gap-1 rounded-lg border border-brand-500 bg-brand-500/15 px-2.5 py-2 text-left transition-colors hover:bg-brand-500/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
     >
-      <CheckCircle2 className="size-4 shrink-0 text-brand-400" aria-hidden="true" />
       <div className="min-w-0 flex-1">
-        <p className="break-words text-sm font-semibold leading-snug text-industrial-900">
-          {ag.cliente || <span className="font-normal text-industrial-500">Sem cliente</span>}
+        <p className="text-sm font-semibold leading-snug text-industrial-900 [overflow-wrap:anywhere]" title={ag.cliente || undefined}>
+          {partirCliente(ag.cliente).nome || <span className="font-normal text-industrial-500">Sem cliente</span>}
         </p>
-        <p className="text-[11px] text-industrial-600">
+        <p className="mt-0.5 flex flex-wrap items-center gap-x-1 text-[11px] text-industrial-600">
+          <CheckCircle2 className="size-3.5 shrink-0 text-brand-400" aria-hidden="true" />
           <span className="font-mono font-bold text-industrial-800">{tonsDoAgendamento(ag).toFixed(2)} ton</span>
-          {hora && ` · chegou ${hora}`}
+          {hora && <span>· chegou {hora}</span>}
         </p>
       </div>
-      <ChevronDown className="size-4 shrink-0 text-industrial-500" aria-hidden="true" />
+      <ChevronDown className="mt-0.5 size-3.5 shrink-0 text-industrial-500" aria-hidden="true" />
     </button>
   )
 }
@@ -163,6 +164,14 @@ function ddmm(iso: string): string {
 }
 
 /** Soma as toneladas de todos os itens de um agendamento. */
+/** "AGROIZAK(274984)" -> { nome: "AGROIZAK", codigo: "274984" }: o código vai pra linha de baixo,
+ *  pra coluna estreita não quebrar o nome no meio. */
+function partirCliente(cliente: string | null | undefined): { nome: string; codigo: string | null } {
+  const txt = (cliente ?? '').trim()
+  const m = txt.match(/^(.*?)\s*\((\d+)\)\s*$/)
+  return m ? { nome: m[1], codigo: m[2] } : { nome: txt, codigo: null }
+}
+
 function tonsDoAgendamento(ag: Programacao): number {
   return (ag.itens ?? []).reduce((s, it) => s + (it.tons ?? 0), 0)
 }
@@ -292,6 +301,38 @@ export function ProgramacaoSemana({
   const reduceMotion = useReducedMotion()
   const desktop = useMediaQuery('(min-width: 768px)', true)
   const colunaOculta = desktop ? COLUNA_OCULTA_DESKTOP : COLUNA_OCULTA_MOBILE
+
+  // Rolagem lateral da semana: botões só aparecem quando há dias escondidos daquele lado.
+  const gradeRef = useRef<HTMLDivElement>(null)
+  const [rolagem, setRolagem] = useState({ esquerda: false, direita: false })
+  const medirRolagem = () => {
+    const el = gradeRef.current
+    if (!el || !desktop) { setRolagem({ esquerda: false, direita: false }); return }
+    const esquerda = el.scrollLeft > 4
+    const direita = el.scrollLeft + el.clientWidth < el.scrollWidth - 4
+    setRolagem((r) => (r.esquerda === esquerda && r.direita === direita ? r : { esquerda, direita }))
+  }
+  useEffect(() => {
+    const el = gradeRef.current
+    if (!el) return
+    medirRolagem()
+    const ro = new ResizeObserver(() => medirRolagem())
+    ro.observe(el)
+    for (const filho of Array.from(el.children)) ro.observe(filho)
+    // colunas abrindo/fechando mudam a largura sem mudar o tamanho da grade
+    const mo = new MutationObserver(() => { for (const filho of Array.from(el.children)) ro.observe(filho); medirRolagem() })
+    mo.observe(el, { childList: true })
+    return () => { ro.disconnect(); mo.disconnect() }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [desktop])
+  /** Anda uma coluna pro lado. */
+  function rolarDias(dir: -1 | 1) {
+    const el = gradeRef.current
+    if (!el) return
+    const primeira = el.firstElementChild as HTMLElement | null
+    const passo = (primeira?.getBoundingClientRect().width ?? 240) + 16
+    el.scrollBy({ left: dir * passo, behavior: reduceMotion ? 'auto' : 'smooth' })
+  }
   const [itemForm, setItemForm] = useState<ItemFormState | null>(null)
   const [agForm, setAgForm] = useState<AgendamentoFormState | null>(null)
   const [salvando, setSalvando] = useState(false)
@@ -698,8 +739,38 @@ export function ProgramacaoSemana({
         </div>
       </div>
 
-      {/* Grade da semana: quadros de largura igual, em linhas centradas; dia minimizado vira um quadro estreito. */}
-      <div className="grid grid-cols-1 gap-y-4 md:flex md:flex-wrap md:items-start md:justify-center md:gap-4">
+      {/* Grade da semana: todos os dias numa linha só (desktop), encolhendo pra caber; se não couber,
+          rolagem lateral com botões. "safe center" centraliza quando sobra espaço e não corta a
+          primeira coluna quando falta. No celular continua um dia embaixo do outro. */}
+      <div className="relative">
+        {rolagem.esquerda && (
+          <button
+            type="button"
+            onClick={() => rolarDias(-1)}
+            aria-label="Ver dias anteriores"
+            title="Ver dias anteriores"
+            className="absolute left-0 top-2 z-20 hidden size-10 -translate-x-1/2 items-center justify-center rounded-full border border-industrial-300 bg-industrial-100 text-industrial-800 shadow-industrial transition-colors hover:border-brand-500 hover:text-brand-300 md:flex"
+          >
+            <ChevronLeft className="size-5" />
+          </button>
+        )}
+        {rolagem.direita && (
+          <button
+            type="button"
+            onClick={() => rolarDias(1)}
+            aria-label="Ver próximos dias"
+            title="Ver próximos dias"
+            className="absolute right-0 top-2 z-20 hidden size-10 translate-x-1/2 items-center justify-center rounded-full border border-industrial-300 bg-industrial-100 text-industrial-800 shadow-industrial transition-colors hover:border-brand-500 hover:text-brand-300 md:flex"
+          >
+            <ChevronRight className="size-5" />
+          </button>
+        )}
+      <div
+        ref={gradeRef}
+        onScroll={medirRolagem}
+        style={desktop ? { justifyContent: 'safe center' } : undefined}
+        className="grid grid-cols-1 gap-y-4 md:flex md:flex-nowrap md:items-start md:gap-4 md:overflow-x-auto md:scroll-smooth md:pb-2"
+      >
         <AnimatePresence initial={false}>
         {diasVisiveis.map(({ nome, data }) => {
           const ehAmanha = data === amanha
@@ -789,14 +860,18 @@ export function ProgramacaoSemana({
                       )}
                     >
                       {/* Cliente + ações do agendamento */}
-                      <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
                         <div className="min-w-0">
-                          <p className="break-words text-sm font-semibold leading-snug text-industrial-900">
-                            {ag.cliente || <span className="font-normal text-industrial-500">Sem cliente</span>}
-                            {ag.cliente_codigo != null && (
-                              <span className="ml-1.5 whitespace-nowrap text-[10px] font-normal text-industrial-500" title="Código do cliente no ERP">#{ag.cliente_codigo}</span>
-                            )}
-                          </p>
+                          {(() => { const c = partirCliente(ag.cliente); return (
+                            <>
+                              <p className="text-sm font-semibold leading-snug text-industrial-900 [overflow-wrap:anywhere]" title={ag.cliente || undefined}>
+                                {c.nome || <span className="font-normal text-industrial-500">Sem cliente</span>}
+                              </p>
+                              {(c.codigo || ag.cliente_codigo != null) && (
+                                <p className="font-mono text-[10px] text-industrial-500" title="Código do cliente no ERP">#{c.codigo ?? ag.cliente_codigo}</p>
+                              )}
+                            </>
+                          ) })()}
                           {concluida && (
                             <p
                               className="mt-0.5 flex items-center gap-1 text-[11px] font-semibold text-brand-300"
@@ -806,26 +881,20 @@ export function ProgramacaoSemana({
                             </p>
                           )}
                         </div>
-                        {podeEditar && (
-                          <div className="flex shrink-0 gap-0.5">
-                            <IconBtn title="Editar data/cliente/observação" onClick={() => abrirEdicaoAgendamento(ag)}><Pencil className="size-3.5" /></IconBtn>
-                            <IconBtn title="Remover agendamento" danger onClick={() => excluirAgendamento(ag)}><Trash2 className="size-3.5" /></IconBtn>
-                          </div>
-                        )}
                       </div>
 
                       {/* Itens (fórmula / quantidade) */}
                       <div className="mt-1.5 flex flex-col divide-y divide-industrial-200">
                         {(ag.itens ?? []).map((item) => (
-                          <div key={item.id} className="flex items-start justify-between gap-2 py-1 first:pt-0 last:pb-0">
+                          <div key={item.id} className="group/item relative flex items-start justify-between gap-2 py-1 first:pt-0 last:pb-0">
                             <div className="min-w-0">
-                              {item.formula?.nome && <p className="break-words text-xs font-medium leading-snug text-brand-300">{item.formula.nome}</p>}
+                              {item.formula?.nome && <p className="text-xs font-medium leading-snug text-brand-300 [overflow-wrap:anywhere]">{item.formula.nome}</p>}
                               <p className="text-xs text-industrial-500">
                                 {item.quantidade} {EMBALAGEM_LABEL[item.embalagem]} · <span className="font-mono font-bold text-industrial-700">{(item.tons ?? 0).toFixed(2)} ton</span>
                               </p>
                             </div>
                             {podeEditar && (
-                              <div className="flex shrink-0 gap-0.5">
+                              <div className="flex shrink-0 gap-0.5 rounded-md bg-industrial-100 md:absolute md:right-0 md:top-0.5 md:opacity-0 md:shadow-industrial md:transition-opacity md:group-hover/item:opacity-100 md:focus-within:opacity-100">
                                 <IconBtn title="Editar item" small onClick={() => abrirEdicaoItem(ag, item)}><Pencil className="size-3" /></IconBtn>
                                 <IconBtn title="Remover item" small danger disabled={(ag.itens ?? []).length <= 1} onClick={() => removerItem(ag, item)}><Trash2 className="size-3" /></IconBtn>
                               </div>
@@ -851,7 +920,7 @@ export function ProgramacaoSemana({
                           ag.solicitacao_status === 'LIBERADO' ? 'text-brand-300' : 'text-amber-400',
                         )}>
                           <Container className="mt-px size-3 shrink-0" />
-                          <span className="break-words">
+                          <span className="min-w-0 [overflow-wrap:anywhere]">
                             {ag.transportadora?.nome ?? 'Transportadora'} · {SOLICITACAO_STATUS_LABEL[ag.solicitacao_status]}
                             {ag.solicitacao_status !== 'ENVIADO_TRANSPORTADORA' && ag.motorista?.nome ? ` · ${ag.motorista.nome}` : ''}
                           </span>
@@ -873,6 +942,10 @@ export function ProgramacaoSemana({
 
                       {podeEditar && (
                         <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-industrial-200 pt-1.5">
+                          <div className="ml-auto flex gap-0.5 [order:99]">
+                            <IconBtn title="Editar data/cliente/observação" onClick={() => abrirEdicaoAgendamento(ag)}><Pencil className="size-3.5" /></IconBtn>
+                            <IconBtn title="Remover agendamento" danger onClick={() => excluirAgendamento(ag)}><Trash2 className="size-3.5" /></IconBtn>
+                          </div>
                           <ActionBtn onClick={() => abrirNovoItem(ag)}>
                             <Plus className="size-3" /> Adicionar item
                           </ActionBtn>
@@ -972,6 +1045,7 @@ export function ProgramacaoSemana({
           )
         })}
         </AnimatePresence>
+      </div>
       </div>
 
       {/* Total de matéria-prima carregado na semana inteira (todos os dias somados) */}
