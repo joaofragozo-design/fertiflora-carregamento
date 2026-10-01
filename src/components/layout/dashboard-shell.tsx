@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { Header } from './header'
 import { Sidebar } from './sidebar'
 import { CommandPalette } from './command-palette'
@@ -18,7 +19,9 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
   // Overlay da sidebar em telas pequenas (some ao navegar/clicar fora)
   const [mobileOpen, setMobileOpen] = useState(false)
   // Recolher/expandir a sidebar em telas grandes (persiste até o usuário clicar de novo)
-  const [collapsed, setCollapsed] = useState(false)
+  // Nas telas da Pá Carregadeira (tablet/celular) a sidebar nasce recolhida: a tela é do painel.
+  const pathname = usePathname()
+  const [collapsed, setCollapsed] = useState(() => pathname.startsWith('/carregamento') || pathname.startsWith('/pa'))
   const [paletteOpen, setPaletteOpen] = useState(false)
   const { user: authUser, signOut } = useAuth()
   const { connectionStatus } = useRealtimeContext()

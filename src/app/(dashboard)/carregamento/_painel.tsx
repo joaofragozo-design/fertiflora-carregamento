@@ -1,12 +1,13 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import { ClipboardList, Zap, Trash2 } from 'lucide-react'
+import { ClipboardList, CheckCircle2, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { useOrdens } from '@/hooks/use-ordens'
 import { OrdemService } from '@/services/ordem.service'
 import { createClient } from '@/lib/supabase/client'
 import { CreateOrderForm } from '@/components/forms/create-order-form'
+import { NaPaAgora, FilaLinha, porChegada, horaCurta } from '@/components/pa/pa-ui'
 import type { AppUser, Carregamento } from '@/types'
 
 interface CarregamentoPainelProps {
@@ -52,202 +53,79 @@ export function CarregamentoPainel({ initialOrdens, user }: CarregamentoPainelPr
     }
   }
 
-  const totalAtivos = solicitados.length + liberados.length
+  const fila       = [...solicitados].sort(porChegada)
+  const hoje       = new Date().toDateString()
+  const feitasHoje = concluidos.filter((o) => o.finished_at && new Date(o.finished_at).toDateString() === hoje)
 
   return (
     <div className="space-y-5">
-
-      {/* ── Cabeçalho ──────────────────────────────────────── */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h1 className="font-display text-lg font-bold tracking-tight text-industrial-900">Central de Solicitações</h1>
-          <p className="text-sm text-industrial-500">Olá, {user.username}.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {solicitados.length > 0 && (
-            <Pill label="Aguardando" value={solicitados.length} color="bg-industrial-300" />
-          )}
-          {liberados.length > 0 && (
-            <Pill label="Liberado" value={liberados.length} color="bg-brand-500 animate-pulse" />
-          )}
-          {concluidos.length > 0 && (
-            <Pill label="Concluído" value={concluidos.length} color="bg-brand-400" />
-          )}
+          <h1 className="font-display text-2xl font-bold tracking-tight text-industrial-900">Central de Solicitações</h1>
+          <p className="text-sm text-industrial-600">Olá, {user.apelido ?? user.username}.</p>
         </div>
       </div>
 
-      {/* ── Formulário ─────────────────────────────────────── */}
-      <div className="rounded-xl border border-industrial-200 bg-industrial-100 p-4">
-        <CreateOrderForm user={user} onCreated={handleCriado} />
-      </div>
-
-      {/* ── Solicitados (aguardando liberação) ─────────────── */}
-      {solicitados.length > 0 && (
-        <section>
-          <SectionLabel text={`Aguardando liberação — ${solicitados.length}`} />
-          <div className="flex flex-col gap-2">
-            {solicitados.map((item) => (
-              <SolicitadoCard
-                key={item.id}
-                item={item}
-                loading={loadingId === item.id}
-                onLiberar={handleLiberar}
-                onCancelar={handleCancelar}
-              />
-            ))}
-          </div>
+      <div className="grid items-start gap-5 lg:grid-cols-2">
+        {/* ── Nova solicitação ─────────────────────────────── */}
+        <section aria-label="Nova solicitação" className="rounded-2xl border border-industrial-200 bg-industrial-100 p-5 md:p-6">
+          <h2 className="mb-4 font-display text-lg font-bold text-brand-300">Nova solicitação</h2>
+          <CreateOrderForm user={user} onCreated={handleCriado} />
         </section>
-      )}
 
-      {/* ── Liberados (em execução) ─────────────────────────── */}
-      {liberados.length > 0 && (
-        <section>
-          <SectionLabel text={`Em execução — ${liberados.length}`} />
-          <div className="flex flex-col gap-2">
-            {liberados.map((item) => (
-              <LiberadoCard key={item.id} item={item} loading={loadingId === item.id} onCancelar={handleCancelar} />
-            ))}
-          </div>
-        </section>
-      )}
+        <div className="space-y-5">
+          <NaPaAgora liberados={liberados} vazio="Libere uma solicitação da fila pra pá começar." loadingId={loadingId} onCancelar={handleCancelar} />
 
-      {/* ── Concluídos ─────────────────────────────────────── */}
-      {concluidos.length > 0 && (
-        <section>
-          <SectionLabel text={`Concluídos — ${concluidos.length}`} />
-          <div className="flex flex-col gap-2">
-            {concluidos.map((item) => (
-              <ConcluidoCard key={item.id} item={item} />
-            ))}
-          </div>
-        </section>
-      )}
+          {/* ── Fila ─────────────────────────────────────────── */}
+          <section aria-label="Fila" className="rounded-2xl border border-industrial-200 bg-industrial-100 p-5 md:p-6">
+            <h2 className="mb-3 flex items-baseline gap-2 font-display text-sm font-bold uppercase tracking-[0.14em] text-industrial-600">
+              Fila <span className="font-sans text-sm font-normal normal-case tracking-normal">· aguardando liberação</span>
+              {fila.length > 0 && <span className="ml-auto font-mono text-base text-industrial-800">{fila.length}</span>}
+            </h2>
+            {fila.length > 0 ? (
+              <ol className="flex flex-col gap-2">
+                {fila.map((item, i) => (
+                  <FilaLinha
+                    key={item.id}
+                    item={item}
+                    posicao={i + 1}
+                    loading={loadingId === item.id}
+                    onLiberar={handleLiberar}
+                    onCancelar={handleCancelar}
+                  />
+                ))}
+              </ol>
+            ) : (
+              <p className="flex items-center gap-2 py-3 text-base text-industrial-600">
+                <ClipboardList className="size-5 shrink-0" />
+                Nenhuma solicitação esperando. Escolha a matéria-prima e as conchas ao lado e envie.
+              </p>
+            )}
+          </section>
 
-      {/* ── Empty state ────────────────────────────────────── */}
-      {totalAtivos === 0 && concluidos.length === 0 && (
-        <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-industrial-200 py-12 text-center">
-          <ClipboardList className="h-7 w-7 text-industrial-500" />
-          <p className="text-sm text-industrial-500">Nenhuma solicitação ainda.</p>
-          <p className="text-xs text-industrial-500">Selecione uma matéria prima acima e envie.</p>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── Sub-componentes ──────────────────────────────────────────
-
-function SolicitadoCard({ item, loading, onLiberar, onCancelar }: {
-  item: Carregamento; loading: boolean
-  onLiberar: (i: Carregamento) => void
-  onCancelar: (i: Carregamento) => void
-}) {
-  return (
-    <div className="flex items-center justify-between rounded-xl border-2 border-industrial-300 bg-industrial-100 px-4 py-3">
-      <div>
-        <p className="text-sm font-bold text-industrial-900">{item.insumo}</p>
-        <p className="text-xs text-industrial-500">{item.quantidade} conchas · {tempoRelativo(item.created_at)}</p>
-      </div>
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          disabled={loading}
-          onClick={() => onCancelar(item)}
-          title="Cancelar solicitação"
-          className="rounded-lg border border-danger-400/40 p-1.5 text-danger-400 transition-colors hover:bg-danger-400/10 hover:border-danger-400 disabled:opacity-40"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          disabled={loading}
-          onClick={() => onLiberar(item)}
-          className="flex items-center gap-1.5 rounded-lg border-2 border-brand-600 bg-brand-600 px-3 py-1.5 text-sm font-bold text-white transition-all hover:bg-brand-500 disabled:opacity-50"
-        >
-          <Zap className="h-3.5 w-3.5" />
-          {loading ? 'Liberando...' : 'Liberar'}
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function LiberadoCard({ item, loading, onCancelar }: {
-  item: Carregamento; loading: boolean
-  onCancelar: (i: Carregamento) => void
-}) {
-  const executadas = item.conchas_executadas ?? 0
-  const total      = item.quantidade
-  const pct        = Math.round((executadas / total) * 100)
-
-  return (
-    <div className="rounded-xl border-2 border-brand-500/50 bg-brand-500/5 px-4 py-3">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-brand-500" />
-          <p className="text-sm font-bold text-industrial-900">{item.insumo}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-brand-300">{executadas}/{total} conchas</span>
-          <button
-            type="button"
-            disabled={loading}
-            onClick={() => {
-              if (window.confirm(`Cancelar a descarga de ${item.insumo} já liberada (${executadas}/${total} conchas)?`)) onCancelar(item)
-            }}
-            title="Cancelar descarga liberada"
-            className="rounded-lg border border-danger-400/40 p-1.5 text-danger-400 transition-colors hover:bg-danger-400/10 hover:border-danger-400 disabled:opacity-40"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+          {/* ── Concluídas hoje ──────────────────────────────── */}
+          <details className="group rounded-2xl border border-industrial-200 bg-industrial-100">
+            <summary className="flex min-h-14 cursor-pointer list-none items-center gap-3 px-5 text-base text-industrial-700 [&::-webkit-details-marker]:hidden">
+              <CheckCircle2 className="size-5 text-brand-400" />
+              Concluídas hoje: <span className="font-mono font-bold text-industrial-900">{feitasHoje.length}</span>
+              <ChevronRight className="ml-auto size-5 text-industrial-500 transition-transform group-open:rotate-90" />
+            </summary>
+            {feitasHoje.length > 0 ? (
+              <ul className="divide-y divide-industrial-200 border-t border-industrial-200">
+                {feitasHoje.map((item) => (
+                  <li key={item.id} className="flex items-center gap-3 px-5 py-3 text-base">
+                    <span className="font-display font-bold text-industrial-900">{item.insumo}</span>
+                    <span className="text-industrial-600"><span className="font-mono">{item.quantidade}</span> {item.quantidade === 1 ? 'concha' : 'conchas'}</span>
+                    <span className="ml-auto font-mono text-sm text-industrial-600">{item.finished_at ? horaCurta(item.finished_at) : '—'}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="border-t border-industrial-200 px-5 py-3 text-sm text-industrial-600">Nenhuma descarga concluída hoje ainda.</p>
+            )}
+          </details>
         </div>
       </div>
-      {/* Barra de progresso */}
-      <div className="h-2 w-full rounded-full bg-industrial-200">
-        <div
-          className="h-2 rounded-full bg-brand-500 transition-all duration-500"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
     </div>
   )
-}
-
-function ConcluidoCard({ item }: { item: Carregamento }) {
-  return (
-    <div className="flex items-center justify-between rounded-xl border border-industrial-200 bg-industrial-100 px-4 py-3">
-      <div className="flex items-center gap-3">
-        <span className="h-2 w-2 rounded-full bg-brand-500" />
-        <span className="text-sm font-semibold text-industrial-700">{item.insumo}</span>
-        <span className="text-sm font-bold text-industrial-900">{item.quantidade} conchas</span>
-      </div>
-      <span className="text-xs text-industrial-500">
-        {item.finished_at ? tempoRelativo(item.finished_at) : '—'}
-      </span>
-    </div>
-  )
-}
-
-function Pill({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <div className="flex items-center gap-1.5 rounded-full border border-industrial-200 bg-industrial-100 px-3 py-1">
-      <span className={`h-2 w-2 rounded-full ${color}`} />
-      <span className="text-xs font-semibold text-industrial-900">{value}</span>
-      <span className="text-xs text-industrial-500">{label}</span>
-    </div>
-  )
-}
-
-function SectionLabel({ text }: { text: string }) {
-  return (
-    <p className="font-display mb-2 text-xs font-semibold uppercase tracking-wider text-industrial-500">{text}</p>
-  )
-}
-
-function tempoRelativo(iso: string): string {
-  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000)
-  if (s < 60)    return 'agora'
-  if (s < 3600)  return `há ${Math.floor(s / 60)} min`
-  if (s < 86400) return `há ${Math.floor(s / 3600)} h`
-  return `há ${Math.floor(s / 86400)} d`
 }

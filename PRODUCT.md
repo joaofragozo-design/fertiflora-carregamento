@@ -8,7 +8,8 @@ web
 
 ## Users
 
-- **Equipe interna (escritório/desktop)** — Logística, Admin, Faturamento e operadores (`operador_carregamento`, `operador_pa`) programam a semana de carregamento, liberam solicitações, conferem chegada de caminhões e geram ordens/relatórios. Uso concentrado, sessões longas, tela grande.
+- **Equipe interna (escritório/desktop)** — Logística, Admin e Faturamento programam a semana de carregamento, liberam solicitações, conferem chegada de caminhões e geram ordens/relatórios. Uso concentrado, sessões longas, tela grande.
+- **Pá Carregadeira (pátio)** — `operador_carregamento` (Richardson) pede e libera descargas num **tablet deitado**; `operador_pa` (Reginaldo) executa concha a concha num **celular em pé, preso no suporte da cabine da pá** — lido a ~1 m, sob sol, toque rápido possivelmente de luva. Alerta por voz/bipe/flash ao liberar.
 - **Transportadoras e motoristas (operação/celular)** — reps de transportadora usam um painel próprio pra indicar motorista e liberar solicitações; motoristas não logam no app — recebem tudo por WhatsApp automático (regras da fábrica, PDF da ordem, localização). Uso rápido, muitas vezes ao ar livre no pátio/portaria da fábrica, possivelmente sol forte e conexão instável.
 
 Ambos os contextos pesam igualmente neste redesign — não é só uma tela de escritório.

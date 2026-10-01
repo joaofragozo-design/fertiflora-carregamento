@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { PenLine, Send, Pin, PinOff, EyeOff, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react'
+import { Plus, Send, Pin, PinOff, EyeOff, RotateCcw, ChevronDown, ChevronUp, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { OrdemService } from '@/services/ordem.service'
 import { createClient } from '@/lib/supabase/client'
@@ -105,15 +105,12 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
 
   // ── Render ───────────────────────────────────────────────────────
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
 
       {/* ── Cabeçalho da seção Insumo ──────────────────────────── */}
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wider text-industrial-500">
-          Matéria Prima
-          {insumoFinal && (
-            <span className="ml-2 normal-case font-bold text-brand-300">{insumoFinal}</span>
-          )}
+        <p className="text-sm font-semibold uppercase tracking-wider text-industrial-600">
+          Matéria-prima
         </p>
         <button
           type="button"
@@ -132,34 +129,14 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
         </button>
       </div>
 
-      {/* ── Fixados ────────────────────────────────────────────── */}
-      {pinnedList.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-yellow-400/60">
-            ⭐ Fixados
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {pinnedList.map((nome) => (
-              <InsumoChip
-                key={nome}
-                nome={nome}
-                selected={insumo === nome && !manual}
-                variant="pinned"
-                onClick={() => selecionarInsumo(nome)}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ── Grid normal ────────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-2">
-        {normalList.map((nome) => (
+      {/* ── Teclado de matérias-primas (fixados primeiro) ─────── */}
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-2">
+        {[...pinnedList, ...normalList].map((nome) => (
           <InsumoChip
             key={nome}
             nome={nome}
             selected={insumo === nome && !manual}
-            variant="normal"
+            variant={prefs.pinned.includes(nome) ? 'pinned' : 'normal'}
             onClick={() => selecionarInsumo(nome)}
           />
         ))}
@@ -167,14 +144,15 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
         <button
           type="button"
           onClick={abrirManual}
+          aria-pressed={manual}
           className={cn(
-            'flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-semibold transition-all',
+            'flex min-h-[3.75rem] items-center justify-center gap-2 rounded-xl border-2 px-2 font-display text-base font-bold transition-colors active:scale-[0.97]',
             manual
-              ? 'border-2 border-brand-500 text-brand-300'
-              : 'border-2 border-dashed border-industrial-400 text-industrial-500 hover:border-industrial-600 hover:text-industrial-900'
+              ? 'border-brand-500 bg-brand-500/15 text-brand-300'
+              : 'border-dashed border-industrial-400 text-industrial-600 hover:border-industrial-600 hover:text-industrial-900'
           )}
         >
-          <PenLine className="h-3.5 w-3.5" />
+          <Plus className="size-5" />
           Outro
         </button>
       </div>
@@ -274,13 +252,11 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
         </div>
       )}
 
-      {/* ── Conchas ────────────────────────────────────────────── */}
+      {/* ── Conchas + Enviar: presos no rodapé do cartão pra nunca sumirem no tablet ── */}
+      <div className="sticky bottom-0 -mx-5 -mb-5 space-y-4 rounded-b-2xl border-t border-industrial-200 bg-industrial-100 px-5 pb-5 pt-4 md:-mx-6 md:-mb-6 md:px-6 md:pb-6">
       <div>
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-industrial-500">
+        <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-industrial-600">
           Conchas
-          {quantidade !== null && (
-            <span className="ml-2 normal-case font-bold text-brand-300">{quantidade} conchas</span>
-          )}
         </p>
 
         <div className="grid grid-cols-3 gap-3">
@@ -289,14 +265,16 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
               key={qtd}
               type="button"
               onClick={() => { setQuantidade(qtd); setErroQtd('') }}
+              aria-pressed={quantidade === qtd}
               className={cn(
-                'flex h-20 items-center justify-center rounded-2xl border-2 text-4xl font-black transition-all select-none active:scale-95',
+                'flex h-20 flex-col items-center justify-center rounded-xl border-2 transition-colors select-none active:scale-[0.97]',
                 quantidade === qtd
-                  ? 'border-2 border-brand-600 bg-brand-600 text-white'
-                  : 'border-2 border-industrial-300 bg-transparent text-industrial-600 hover:border-industrial-600 hover:text-industrial-900'
+                  ? 'border-brand-400 bg-brand-500/15 text-brand-200'
+                  : 'border-industrial-300 text-industrial-800 hover:border-industrial-600 hover:text-industrial-900'
               )}
             >
-              {qtd}
+              <span className="font-mono text-4xl font-bold leading-none">{qtd}</span>
+              <span className={cn('mt-1 text-sm', quantidade === qtd ? 'text-brand-200/85' : 'text-industrial-600')}>{qtd === 1 ? 'concha' : 'conchas'}</span>
             </button>
           ))}
         </div>
@@ -304,40 +282,35 @@ export function CreateOrderForm({ user, onCreated }: CreateOrderFormProps) {
         {erroQtd && <p className="mt-1.5 text-xs text-danger-400">{erroQtd}</p>}
       </div>
 
-      {/* ── Preview ────────────────────────────────────────────── */}
-      {insumoFinal && quantidade !== null && (
-        <div className="rounded-xl border border-brand-500/30 bg-brand-500/5 px-4 py-3">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-brand-300">
-            Solicitação
-          </p>
-          <p className="text-base font-bold text-industrial-900">
-            {insumoFinal}
-            <span className="ml-3 text-brand-600">{quantidade} conchas</span>
-          </p>
-        </div>
-      )}
-
       {/* ── Enviar ─────────────────────────────────────────────── */}
       <button
         type="button"
         disabled={!pronto || loading}
         onClick={enviar}
         className={cn(
-          'w-full flex items-center justify-center gap-3 rounded-2xl py-5 text-lg font-black uppercase tracking-wider transition-all active:scale-[0.98]',
+          'flex min-h-[4.5rem] w-full items-center justify-center gap-3 rounded-xl px-4 py-3 font-display text-xl font-bold uppercase tracking-wide transition-colors active:scale-[0.99]',
           pronto && !loading
-            ? 'border-2 border-brand-600 bg-brand-600 text-white hover:bg-brand-500 hover:border-brand-500 cursor-pointer'
-            : 'border-2 border-industrial-300 bg-transparent text-industrial-400 cursor-not-allowed'
+            ? 'bg-brand-600 text-white hover:bg-brand-500 active:bg-brand-700'
+            : 'border-2 border-industrial-300 text-industrial-500 cursor-not-allowed'
         )}
       >
         {loading ? (
-          <span className="animate-pulse">Enviando...</span>
+          <span className="animate-pulse">Enviando…</span>
         ) : (
           <>
-            <Send className="h-5 w-5" />
-            Enviar Solicitação
+            <Send className="size-6 shrink-0" />
+            <span className="flex flex-col items-start leading-tight">
+              Enviar solicitação
+              {pronto && (
+                <span className="font-sans text-sm font-semibold normal-case tracking-normal text-white/85">
+                  {insumoFinal} · {quantidade} {quantidade === 1 ? 'concha' : 'conchas'}
+                </span>
+              )}
+            </span>
           </>
         )}
       </button>
+      </div>
     </div>
   )
 }
@@ -354,18 +327,18 @@ function InsumoChip({ nome, selected, variant, onClick }: {
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={selected}
       className={cn(
-        'rounded-lg border-2 px-3 py-1.5 text-sm font-semibold transition-all active:scale-95',
-        selected && variant === 'pinned'
-          ? 'border-yellow-500 bg-yellow-500/10 text-yellow-300'
-          : selected
-          ? 'border-brand-600 bg-brand-600 text-white'
-          : variant === 'pinned'
-          ? 'border-yellow-400 bg-yellow-500/10 text-yellow-400 hover:border-yellow-500 hover:text-yellow-300'
-          : 'border-industrial-300 bg-transparent text-industrial-600 hover:border-industrial-600 hover:text-industrial-900'
+        'relative flex min-h-[3.75rem] items-center justify-center break-words rounded-xl border-2 px-2 text-center font-display font-bold leading-tight transition-colors active:scale-[0.97]',
+        nome.length > 8 ? 'text-sm' : 'text-base',
+        selected
+          ? 'border-brand-400 bg-brand-500/15 text-brand-200'
+          : 'border-industrial-300 text-industrial-800 hover:border-industrial-600 hover:text-industrial-900'
       )}
     >
-      {variant === 'pinned' && <span className="mr-1">⭐</span>}
+      {variant === 'pinned' && (
+        <Star className="absolute right-2 top-2 size-3.5 fill-yellow-400 text-yellow-400" aria-label="Fixado" />
+      )}
       {nome}
     </button>
   )
