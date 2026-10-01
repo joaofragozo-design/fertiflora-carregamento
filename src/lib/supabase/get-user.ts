@@ -17,7 +17,13 @@ export const getAuthContext = cache(async (): Promise<AuthResult> => {
   try {
     const supabase = await createClient()
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    let { data: { user }, error: authError } = await supabase.auth.getUser()
+    // Falha passageira (rede/5xx) ≠ sessão inválida: tenta mais uma vez antes de
+    // o layout mandar a pessoa pro login.
+    if (!user && authError && authError.name !== 'AuthSessionMissingError' && !(authError.status && authError.status < 500)) {
+      await new Promise((resolve) => setTimeout(resolve, 400))
+      ;({ data: { user }, error: authError } = await supabase.auth.getUser())
+    }
 
     if (authError || !user) return { sessionUser: null, profile: null }
 

@@ -55,7 +55,10 @@ export class AuthService {
   }
 
   async signOut(): Promise<void> {
-    const { error } = await this.supabase.auth.signOut()
+    // scope 'local': sai só deste aparelho. O padrão do SDK ('global') revoga a
+    // sessão em TODOS os aparelhos do usuário — com contas compartilhadas
+    // (logistica, operadores) um "Sair" derrubava todo mundo (01/10/2026).
+    const { error } = await this.supabase.auth.signOut({ scope: 'local' })
     if (error) throw new Error(`Erro ao sair: ${error.message}`)
   }
 

@@ -49,6 +49,10 @@ export async function updateSession(request: NextRequest) {
         cookiesToSet.forEach(({ name, value }) =>
           request.cookies.set(name, value)
         )
+        // O `requestHeaders` foi clonado ANTES da renovação: sem isto as páginas do
+        // servidor recebiam o cookie velho (token vencido + refresh token já
+        // trocado), não achavam usuário e mandavam pro login a cada ~1 h (01/10/2026).
+        requestHeaders.set('cookie', request.cookies.toString())
         // Preserva requestHeaders ao recriar a resposta para não perder x-pathname
         supabaseResponse = NextResponse.next({
           request: { headers: requestHeaders },
@@ -82,7 +86,16 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route))
 
-  if (!user && !isPublicRoute) {
+  // Sem usuário por falha passageira (rede, 5xx, limite de taxa) não é logout:
+  // deixa passar — o layout valida de novo. Só expulsa sem sessão de verdade.
+  const semSessao =
+    !user && (
+      !error ||
+      error.name === 'AuthSessionMissingError' ||
+      error.status === 400 || error.status === 401 || error.status === 403
+    )
+
+  if (semSessao && !isPublicRoute) {
     const url = request.nextUrl.clone()
     url.pathname = ROUTES.LOGIN
     url.searchParams.set('next', pathname)
