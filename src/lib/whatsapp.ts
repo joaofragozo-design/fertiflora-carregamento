@@ -43,9 +43,8 @@ interface MensagemLiberacaoParams {
 export function regrasFabrica(temSacaria: boolean): string[] {
   return [
     `• Este agendamento tem validade de ${VALIDADE_LIBERACAO_HORAS} horas.`,
-    '• Início dos carregamentos: 05h da manhã.',
-    '• Horário para marcação: das 05h às 16h.',
-    '• Carregamentos de segunda a sexta-feira, das 05h às 22h.',
+    '• Horário de carregamento: de segunda a sexta-feira, das 07h30 às 17h.',
+    '• Horário para marcação: das 07h30 às 14h.',
     ...(temSacaria ? ['• Carga em SACARIA: marcação até as 10h da manhã.'] : []),
     '• Não há horário marcado: o carregamento segue a ordem definida pela indústria (veículos com a mesma fórmula carregam em sequência).',
     '• Aguarde dentro do caminhão até ser chamado — não circule pelas dependências da fábrica.',
@@ -72,20 +71,22 @@ export function montarMensagemLiberacao({ motorista, transportadora, data, itens
 
   const regras = regrasFabrica(temSacaria).join('\n')
 
+  // Emojis de 1 caractere só, sem seletor de variação (o ⚠️ é 2 caracteres e
+  // aparece como "?" em celular antigo). *texto* = negrito no WhatsApp.
   return [
     `Olá, ${motorista}! Aqui é da FERTIFLORA Fertilizantes.`,
     '',
-    '✅ Seu carregamento foi LIBERADO.',
+    '✅ Seu carregamento foi *LIBERADO*.',
     '',
-    `📅 Data: ${dataFormatada}`,
-    `🚛 Transportadora: ${transportadora}`,
-    '📦 Carga:',
+    `📅 *Data:* ${dataFormatada}`,
+    `🚚 *Transportadora:* ${transportadora}`,
+    '📦 *Carga:*',
     linhasCarga,
     '',
-    '⚠️ ORIENTAÇÕES DA FÁBRICA:',
+    '❗ *ORIENTAÇÕES DA FÁBRICA:*',
     regras,
     '',
-    '📍 Localização da fábrica',
+    '📍 *Localização da fábrica:*',
     LOCALIZACAO_FABRICA_URL,
   ].join('\n')
 }
