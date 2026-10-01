@@ -160,7 +160,12 @@ export function PainelTransportadora({ transportadora, initialAgendamentos, init
     try {
       const upd = await progSvc.enviarSolicitacao(ag.id, motoristaId)
       setAgendamentos((prev) => prev.map((a) => (a.id === upd.id ? upd : a)))
-      toast.success('Solicitação enviada — aguarde a liberação da Fertiflora.')
+      // Carga já confirmada pela Fertiflora: o banco libera na hora e gera a ordem (migration 074).
+      if (upd.solicitacao_status === 'LIBERADO') {
+        toast.success(`Carga liberada — ordem nº ${String(upd.numero_ordem ?? '').padStart(6, '0')} gerada.`)
+      } else {
+        toast.success('Solicitação enviada — aguarde a liberação da Fertiflora.')
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erro ao enviar solicitação.')
     } finally {
