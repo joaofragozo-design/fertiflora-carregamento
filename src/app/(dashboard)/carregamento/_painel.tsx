@@ -105,7 +105,7 @@ export function CarregamentoPainel({ initialOrdens, user }: CarregamentoPainelPr
           <SectionLabel text={`Em execução — ${liberados.length}`} />
           <div className="flex flex-col gap-2">
             {liberados.map((item) => (
-              <LiberadoCard key={item.id} item={item} />
+              <LiberadoCard key={item.id} item={item} loading={loadingId === item.id} onCancelar={handleCancelar} />
             ))}
           </div>
         </section>
@@ -172,7 +172,10 @@ function SolicitadoCard({ item, loading, onLiberar, onCancelar }: {
   )
 }
 
-function LiberadoCard({ item }: { item: Carregamento }) {
+function LiberadoCard({ item, loading, onCancelar }: {
+  item: Carregamento; loading: boolean
+  onCancelar: (i: Carregamento) => void
+}) {
   const executadas = item.conchas_executadas ?? 0
   const total      = item.quantidade
   const pct        = Math.round((executadas / total) * 100)
@@ -184,7 +187,20 @@ function LiberadoCard({ item }: { item: Carregamento }) {
           <span className="h-2 w-2 animate-pulse rounded-full bg-brand-500" />
           <p className="text-sm font-bold text-industrial-900">{item.insumo}</p>
         </div>
-        <span className="text-xs font-semibold text-brand-300">{executadas}/{total} conchas</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-brand-300">{executadas}/{total} conchas</span>
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() => {
+              if (window.confirm(`Cancelar a descarga de ${item.insumo} já liberada (${executadas}/${total} conchas)?`)) onCancelar(item)
+            }}
+            title="Cancelar descarga liberada"
+            className="rounded-lg border border-danger-400/40 p-1.5 text-danger-400 transition-colors hover:bg-danger-400/10 hover:border-danger-400 disabled:opacity-40"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
       </div>
       {/* Barra de progresso */}
       <div className="h-2 w-full rounded-full bg-industrial-200">

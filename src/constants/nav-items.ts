@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, ClipboardList, Truck, CalendarDays, CalendarRange, FileSpreadsheet, Container, Package, Tv, Inbox,
-  BookUser, Route, CalendarCheck, Settings,
+  BookUser, Route, CalendarCheck, Settings, Forklift,
 } from 'lucide-react'
 import type { AppUser } from '@/types'
 
@@ -52,6 +52,18 @@ const cadastroTransportadoras: NavItem = {
   icon:  BookUser,
   roles: ['admin', 'logistica'],
 }
+const centralSolicitacoes: NavItem = {
+  href:  '/carregamento',
+  label: 'Central de Solicitações',
+  icon:  ClipboardList,
+  roles: ['operador_carregamento', 'admin'],
+}
+const centroOperacional: NavItem = {
+  href:  '/pa',
+  label: 'Centro Operacional',
+  icon:  Truck,
+  roles: ['operador_pa', 'admin'],
+}
 const solicitacoes: NavItem = {
   href:  '/solicitacoes',
   label: 'Solicitações',
@@ -88,12 +100,11 @@ export const NAV_ENTRIES: NavEntry[] = [
     group: { id: 'transportadoras', label: 'Transportadoras', icon: Container, items: [cadastroTransportadoras, solicitacoes] },
   },
   {
-    kind: 'item',
-    item: { href: '/carregamento', label: 'Central de Solicitações', icon: ClipboardList, roles: ['operador_carregamento', 'admin'] },
-  },
-  {
-    kind: 'item',
-    item: { href: '/pa', label: 'Centro Operacional', icon: Truck, roles: ['operador_pa', 'admin'] },
+    // Pá Carregadeira (2026-10-01): as duas telas da descarga num grupo só.
+    // Cada operador continua vendo só a sua (Richardson → Central, Reginaldo →
+    // Centro Operacional); o admin vê as duas.
+    kind: 'group',
+    group: { id: 'pa-carregadeira', label: 'Pá Carregadeira', icon: Forklift, items: [centralSolicitacoes, centroOperacional] },
   },
   {
     // Fórmulas saiu do perfil logistica (2026-09-25) — só admin mexe no catálogo.

@@ -20,7 +20,7 @@ export default async function CarregamentoPage() {
   const { data: ativas } = await supabase
     .from('carregamentos')
     .select('*')
-    .in('status', ['PENDENTE', 'CARREGANDO'])
+    .in('status', ['SOLICITADO', 'LIBERADO'])
     .order('created_at', { ascending: false })
 
   const { data: recentes } = await supabase

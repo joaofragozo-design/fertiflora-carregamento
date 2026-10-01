@@ -191,8 +191,10 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
 
   // ── Tela do operador_pa (Reginaldo) ─────────────────────
   if (!isAdmin) {
-    const liberado    = ordens.find((o) => o.status === 'LIBERADO') ?? null
-    const solicitado  = ordens.find((o) => o.status === 'SOLICITADO') ?? null
+    // Fila por ordem de chegada (a lista do hook vem da mais nova pra mais antiga)
+    const fila        = [...ordens].sort((a, b) => a.created_at.localeCompare(b.created_at))
+    const liberado    = fila.find((o) => o.status === 'LIBERADO') ?? null
+    const solicitado  = fila.find((o) => o.status === 'SOLICITADO') ?? null
     const tarefa      = liberado ?? solicitado
     const semServico  = !tarefa
 
@@ -304,9 +306,9 @@ export function PaPainel({ initialOrdens, user }: PaPainelProps) {
             </button>
 
             {/* Fila */}
-            {ordens.filter((o) => o.status === 'SOLICITADO').length > 1 && (
+            {fila.length > 1 && (
               <p className="text-center text-sm text-industrial-400">
-                +{ordens.filter((o) => o.status === 'SOLICITADO').length - 1} na fila
+                +{fila.length - 1} na fila: {fila.filter((o) => o.id !== tarefa.id).map((o) => o.insumo).join(', ')}
               </p>
             )}
           </div>

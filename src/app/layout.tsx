@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, JetBrains_Mono, Outfit } from 'next/font/google'
+import { Inter, Outfit } from 'next/font/google'
+import localFont from 'next/font/local'
 import { Providers } from '@/providers'
 import { getAuthUser } from '@/lib/supabase/get-user'
 import { SwRegister } from '@/components/pwa/sw-register'
@@ -13,10 +14,13 @@ const inter = Inter({
   subsets: ['latin'],
 })
 
-const jetbrainsMono = JetBrains_Mono({
+// JetBrains Mono 2.304 (variável) com o ponto de dentro do 0 removido: o 0
+// pontilhado era confundido com 8 no pátio. Mesma largura, layout intacto.
+const jetbrainsMono = localFont({
+  src: '../fonts/JetBrainsMono-SemZero.woff2',
   variable: '--font-mono',
-  weight: ['400', '500', '600', '700'],
-  subsets: ['latin'],
+  weight: '100 800',
+  display: 'swap',
 })
 
 /** Geométrica de display para títulos de telas de marca (login, onboarding) */

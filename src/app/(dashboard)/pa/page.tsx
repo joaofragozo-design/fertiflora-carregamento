@@ -26,7 +26,7 @@ export default async function PaPage() {
       supabase
         .from('carregamentos')
         .select('*')
-        .in('status', ['PENDENTE', 'CARREGANDO'])
+        .in('status', ['SOLICITADO', 'LIBERADO'])
         .order('created_at', { ascending: true }),
       supabase
         .from('carregamentos')
@@ -44,7 +44,7 @@ export default async function PaPage() {
     const { data } = await supabase
       .from('carregamentos')
       .select('*')
-      .in('status', ['PENDENTE', 'CARREGANDO'])
+      .in('status', ['SOLICITADO', 'LIBERADO'])
       .order('created_at', { ascending: true })
     initialOrdens = (data ?? []) as Carregamento[]
   }

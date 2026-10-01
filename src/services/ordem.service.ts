@@ -63,7 +63,7 @@ export class OrdemService {
       .from('carregamentos')
       .update({ status: 'CANCELADO' })
       .eq('id', id)
-      .eq('status', 'SOLICITADO')
+      .in('status', ['SOLICITADO', 'LIBERADO'])
 
     if (error) throw new Error(this.traduzirErro(error.message, 'cancelar'))
   }
