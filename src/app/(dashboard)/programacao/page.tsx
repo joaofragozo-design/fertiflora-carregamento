@@ -47,13 +47,15 @@ export default async function ProgramacaoPage({
 
   const sp = await searchParams
   // ?dia=AAAA-MM-DD (calendário): abre a semana daquele dia com só ele expandido.
+  // "Hoje" no fuso da fábrica — o servidor da Vercel roda em UTC e viraria o dia às 21h.
+  const hoje = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date())
   const diaFoco = sp?.dia && /^\d{4}-\d{2}-\d{2}$/.test(sp.dia) ? sp.dia : null
   const refValida = sp?.semana && /^\d{4}-\d{2}-\d{2}$/.test(sp.semana)
   const segunda = diaFoco
     ? segundaDaSemana(new Date(diaFoco + 'T12:00:00'))
     : refValida
     ? segundaDaSemana(new Date(sp!.semana + 'T12:00:00'))
-    : segundaDaSemana(new Date())
+    : segundaDaSemana(new Date(hoje + 'T12:00:00'))
   const semanaInicio = iso(segunda)
   const semanaFim = iso(addDias(segunda, 5)) // sábado incluso
 
@@ -124,7 +126,7 @@ export default async function ProgramacaoPage({
       transportadoras={(transportadoras ?? []) as Transportadora[]}
       semanaInicio={semanaInicio}
       semanaFim={semanaFim}
-      hoje={iso(new Date())}
+      hoje={hoje}
       diaFoco={diaFoco}
       podeEditar={podeEditar}
       podeConfirmar={profile.role === 'admin' || profile.role === 'faturamento'}

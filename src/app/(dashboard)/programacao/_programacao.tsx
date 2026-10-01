@@ -792,7 +792,7 @@ export function ProgramacaoSemana({
             <div
               className={cn(
                 'flex h-full flex-col gap-2 rounded-xl border p-2.5',
-                ehAmanha ? 'border-brand-500 bg-brand-500/10' : ehHoje ? 'border-industrial-500' : 'border-industrial-200',
+                ehHoje ? 'border-brand-500 bg-brand-500/10' : 'border-industrial-200',
                 !colunasProntas.has(data) && 'overflow-hidden',
               )}
             >
@@ -809,7 +809,7 @@ export function ProgramacaoSemana({
                     <p className="font-display text-sm font-bold text-industrial-900">{colapsado ? nome.slice(0, 3) : nome}</p>
                     {!colapsado && (
                       <p className="text-xs text-industrial-600">
-                        {ddmm(data)}{ehAmanha && <span className="ml-1 font-semibold text-brand-300">· amanhã</span>}{ehHoje && <span className="ml-1 font-semibold text-industrial-500">· hoje</span>}
+                        {ddmm(data)}{ehHoje && <span className="ml-1 font-semibold text-brand-300">· hoje</span>}{ehAmanha && <span className="ml-1 font-semibold text-industrial-500">· amanhã</span>}
                       </p>
                     )}
                   </div>
